@@ -1,12 +1,15 @@
+from asyncio import to_thread
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Response
+from fastapi.security import HTTPAuthorizationCredentials
+from jwt import InvalidTokenError
 from sqlalchemy import select, text
 
-from app.api.dependencies import AdminUser, CurrentUser, Session, require_origin
+from app.api.dependencies import AdminUser, CurrentUser, Session, bearer, require_origin
 from app.core.config import get_settings
-from app.core.security import hash_password, token_digest, verify_password
+from app.core.security import decode_access, hash_password, token_digest, verify_password
 from app.models.tables import (
     Achievement,
     AuthSession,
@@ -15,6 +18,7 @@ from app.models.tables import (
     Lesson,
     Project,
     ProjectSubmission,
+    Question,
     QuizAttempt,
     Topic,
     UserAchievement,
@@ -42,6 +46,7 @@ from app.schemas.contracts import (
     ProjectInput,
     ProjectSubmissionView,
     ProjectView,
+    QuestionView,
     Register,
     TheorySection,
     TopicView,
@@ -53,6 +58,26 @@ from app.services.progress import award, get_progress
 from app.services.quizzes import attempt_result, start_attempt, submit_attempt
 
 router = APIRouter(prefix="/api")
+
+
+@router.get("/questions", response_model=list[QuestionView], tags=["questions"])
+async def questions(
+    topic_id: str,
+    session: Session,
+    limit: Annotated[int, Query(ge=1, le=100)] = 32,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[QuestionView]:
+    topic = await session.get(Topic, topic_id)
+    if topic is None or not topic.published:
+        raise HTTPException(404, "Опубликованная тема не найдена")
+    rows = await session.scalars(
+        select(Question)
+        .where(Question.topic_id == topic_id)
+        .order_by(Question.id)
+        .offset(offset)
+        .limit(limit)
+    )
+    return [QuestionView.model_validate(question) for question in rows]
 
 
 def set_refresh(response: Response, token: str) -> None:
@@ -117,16 +142,27 @@ async def refresh(
 async def logout(
     session: Session,
     response: Response,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     token: Annotated[str | None, Cookie(alias="refresh")] = None,
 ) -> Message:
-    if token:
+    auth_session: AuthSession | None = None
+    if credentials:
+        try:
+            user_id, session_id = decode_access(credentials.credentials)
+            candidate = await session.get(AuthSession, session_id, with_for_update=True)
+            if candidate and candidate.user_id == user_id:
+                auth_session = candidate
+        except InvalidTokenError, ValueError:
+            pass
+    if auth_session is None and token:
         auth_session = await session.scalar(
             select(AuthSession)
             .where(AuthSession.token_hash == token_digest(token))
             .with_for_update()
         )
-        if auth_session:
-            auth_session.revoked = True
+    if auth_session:
+        # Revoke the stable session even if refresh rotated after the logout request started.
+        auth_session.revoked = True
     response.delete_cookie(
         "refresh",
         path="/api/auth",
@@ -155,9 +191,10 @@ async def update_profile(payload: ProfileUpdate, user: CurrentUser, session: Ses
 
 @router.post("/users/me/password", response_model=Message, tags=["users"])
 async def change_password(payload: PasswordChange, user: CurrentUser, session: Session) -> Message:
-    if not verify_password(payload.current_password, user.password_hash):
+    await session.refresh(user, with_for_update=True)
+    if not await to_thread(verify_password, payload.current_password, user.password_hash):
         raise HTTPException(400, "Текущий пароль неверен")
-    user.password_hash = hash_password(payload.new_password)
+    user.password_hash = await to_thread(hash_password, payload.new_password)
     await auth.revoke_sessions(session, user)
     return Message(message="Пароль изменён. Войдите снова на всех устройствах.")
 

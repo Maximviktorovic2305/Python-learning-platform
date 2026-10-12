@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
@@ -35,7 +36,7 @@ async def register(session: AsyncSession, payload: Register) -> tuple[AuthView, 
     user = User(
         email=str(payload.email).lower(),
         username=payload.username,
-        password_hash=hash_password(payload.password),
+        password_hash=await to_thread(hash_password, payload.password),
     )
     session.add(user)
     await session.flush()
@@ -43,8 +44,12 @@ async def register(session: AsyncSession, payload: Register) -> tuple[AuthView, 
 
 
 async def login(session: AsyncSession, payload: Login) -> tuple[AuthView, str]:
-    user = await session.scalar(select(User).where(User.email == str(payload.email).lower()))
-    valid = verify_password(payload.password, user.password_hash if user else DUMMY_HASH)
+    user = await session.scalar(
+        select(User).where(User.email == str(payload.email).lower()).with_for_update()
+    )
+    valid = await to_thread(
+        verify_password, payload.password, user.password_hash if user else DUMMY_HASH
+    )
     if user is None or not valid:
         raise HTTPException(401, "Неверный email или пароль")
     return await create_session(session, user)

@@ -69,7 +69,7 @@ services:
     profiles: [sandbox]
     environment:
       DOCKER_HOST: tcp://sandbox-daemon:2375
-      RUNNER_TOKEN: ${RUNNER_TOKEN:?Set RUNNER_TOKEN in .env}
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
     depends_on:
       sandbox-daemon: {condition: service_healthy}
     networks: [execution, sandbox-control]

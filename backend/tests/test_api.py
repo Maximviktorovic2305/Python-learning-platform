@@ -24,6 +24,13 @@ async def test_catalog_and_idempotent_seed(
     assert course["question_count"] == 480
     assert (await client.get("/api/lessons/classes")).status_code == 404
     assert (await client.get("/api/lessons/first-program")).status_code == 200
+    questions = (await client.get("/api/questions?topic_id=first-program&limit=5")).json()
+    assert len(questions) == 5
+    assert all("correct_answer" not in q and "explanation" not in q for q in questions)
+    following = (await client.get("/api/questions?topic_id=first-program&limit=5&offset=5")).json()
+    assert {q["id"] for q in questions}.isdisjoint(q["id"] for q in following)
+    assert (await client.get("/api/questions?topic_id=classes")).status_code == 404
+    assert (await client.get("/api/questions?topic_id=first-program&limit=101")).status_code == 422
 
 
 async def test_auth_refresh_rotation_logout_and_revocation(
@@ -37,7 +44,11 @@ async def test_auth_refresh_rotation_logout_and_revocation(
     assert client.cookies.get("refresh") != old_refresh
     replay = await client.post("/api/auth/refresh", headers={"Cookie": f"refresh={old_refresh}"})
     assert replay.status_code == 401
-    assert (await client.post("/api/auth/logout")).status_code == 200
+    assert (
+        await client.post(
+            "/api/auth/logout", headers={**student, "Cookie": f"refresh={old_refresh}"}
+        )
+    ).status_code == 200
     assert (
         await client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
     ).status_code == 401

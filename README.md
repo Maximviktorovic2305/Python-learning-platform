@@ -1,38 +1,120 @@
 # Python Lab
 
-Образовательная платформа Python: Next.js App Router + FSD, типизированный FastAPI,
-SQLAlchemy и PostgreSQL. Работа над первой версией идёт по этапам; текущая ветка
-содержит промежуточную реализацию, а не подтверждённый production-релиз.
+Образовательная платформа: от первой программы на Python до профессиональной разработки. Next.js App Router, React, строгий TypeScript, FastAPI, SQLAlchemy, PostgreSQL и отдельный исполнитель Python.
 
-## Приложения
+## Что работает
 
-- `frontend/`: пользовательский интерфейс, порт 3010.
-- `backend/`: API, порт 8010; схема OpenAPI является источником TypeScript-контрактов.
-- Уровни 0–2: 15 крупных тем, 120 задач, 480 вопросов.
-- Уровни 3–11: программа следующих этапов; не опубликованные уроки не выдаются за готовые.
+- Регистрация, вход, восстановление сессии, выход, профиль и смена пароля.
+- Программа из 12 уровней, 24 модулей и 116 тем. Уровни **0–2 опубликованы полностью**: 15 крупных тем, 180 исполняемых примеров, 120 задач и 480 вопросов. Уровни 3–11 содержат программу и метаданные, явно обозначены как ещё не опубликованные.
+- Уроки: теория, примеры, восемь задач, случайный тест из десяти вопросов и закрепление. Распределение теста: 4 easy, 4 medium, 2 hard. По 32 разных вопроса на опубликованную тему; варианты, объяснения и подсказки основаны на её реальных примерах.
+- Python в браузере с подсветкой, номерами строк, остановкой, ограничением времени и вывода. Runtime поставляется вместе с приложением.
+- Независимая серверная проверка в одноразовых контейнерах. Браузерный результат не используется для выдачи XP.
+- XP, серия занятий с часовым поясом, дневная цель, история активности, прогресс темы/модуля/уровня/курса, слабые темы и 16 достижений.
+- Восемь проектов с заданиями и критериями. Отправка ссылки на работу; 500 XP только после одобрения администратором через API.
+- Лендинг с анимацией Python, адаптивная навигация, тёмная и светлая темы, клавиатурное управление и reduced motion.
 
-## Разработка
+Это первая рабочая версия в объёме начального наполнения ТЗ. Архитектура полного курса присутствует; продвинутые уроки и эксплуатационные проверки для публичного запуска перечислены в [ARCHITECTURE.md](ARCHITECTURE.md).
 
-Python >=3.13, Node.js >=24. PostgreSQL 18.
+## Быстрый запуск в Docker
 
-```powershell
+Нужны Docker с Linux containers и Compose v2, Python для генерации локальной конфигурации. Запускать из корня репозитория:
+
+```sh
+python scripts/configure_dev.py
+docker compose --profile sandbox up --build -d
+```
+
+Откройте **http://localhost:3010**. Используйте именно `localhost`: Origin проверяется при операциях с сессией. При занятом порте поменяйте в `.env` одновременно `FRONTEND_PORT` и `ALLOWED_ORIGIN`, затем пересоберите frontend. Его `WEB_ORIGIN` и адрес API фиксируются при сборке.
+
+Скрипт генерирует три независимых секрета и сохраняет существующий `.env`. Миграции и seed выполняются отдельным сервисом до запуска API. PostgreSQL и runner не публикуют порты на хост. Первый запуск загружает образы и Python runtime; runner дополнительно загружает образ песочницы.
+
+```sh
+docker compose ps
+docker compose logs --tail 50 backend runner
+docker compose --profile sandbox down
+```
+
+`down` сохраняет данные. Не добавляйте `-v`, если хотите сохранить аккаунты и прогресс.
+
+Для запуска без серверного исполнителя установите `EXECUTION_RUNNER=disabled` в `.env` и выполните `docker compose up --build -d`. Локальный Python и тесты продолжают работать; серверная проверка задач возвращает понятную ошибку 503 и не выдаёт XP. Пустой `RUNNER_TOKEN` в этом режиме допустим.
+
+## Разработка без контейнеров приложения
+
+Требуются Python 3.14+, Node.js 24+, npm и PostgreSQL 18. Создайте базу `python_lab` и задайте строку подключения в `backend/.env`, используя [backend/.env.example](backend/.env.example). `JWT_SECRET` должен содержать минимум 32 символа; секреты создавайте через `secrets.token_hex(40)` и сохраняйте локально. Frontend использует [frontend/.env.example](frontend/.env.example).
+
+```sh
 python -m venv .venv
+# PowerShell: .venv\Scripts\Activate.ps1
+# bash: source .venv/bin/activate
+python -m pip install -r backend/requirements-dev.lock -e backend
 cd backend
-..\.venv\Scripts\python -m pip install -e . --group dev
-# Создайте .env из .env.example и задайте DATABASE_URL / JWT_SECRET.
-..\.venv\Scripts\python -m alembic upgrade head
-..\.venv\Scripts\python -m app.seed
-..\.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8010
+alembic upgrade head
+python -m app.seed
+uvicorn app.main:app --host 127.0.0.1 --port 8010 --reload
 ```
 
 В другом терминале:
 
-```powershell
+```sh
 cd frontend
 npm ci
-npm run dev -- --port 3010
+npm run dev -- --port 3010 --hostname 127.0.0.1
 ```
 
-Локальный запуск упражнений выполняется через Pyodide в Web Worker. Серверная
-проверка требует отдельного изолированного runner; без него API возвращает 503,
-а XP за упражнение не начисляются.
+Для серверной проверки при нативном запуске нужен Docker. Сначала `docker pull python:3.14-slim`. В `backend/.env` задайте `EXECUTION_RUNNER=remote`, `RUNNER_URL=http://127.0.0.1:8090`, случайный `RUNNER_TOKEN` длиной не менее 32 символов. Передайте **тот же** токен в окружение процесса runner, затем из каталога `runner` запустите `uvicorn main:app --host 127.0.0.1 --port 8090`. API и runner перезапускаются после изменения окружения.
+
+Swagger доступен на http://127.0.0.1:8010/docs только вне production. Проверка готовности: `/api/health`, включая обращение к БД. Привилегированные операции требуют роли `admin`; seed не создаёт администратора или аккаунт с известным паролем.
+
+## Проверки
+
+```sh
+# Из корня, с активированным окружением Python
+ruff check backend runner
+ruff format --check backend runner
+cd backend
+mypy
+mypy --strict ../runner/main.py
+pytest -q
+alembic check
+```
+
+Без `TEST_DATABASE_URL` API-тесты используют SQLite в памяти. Для проверки транзакций и конкуренции создайте отдельную PostgreSQL-базу **python_lab_test** и передайте `TEST_DATABASE_URL` в окружение. Fixtures удаляют и пересоздают таблицы только в тестовой базе; использование рабочего имени базы отклоняется. Сценарий конкурентного начисления XP требует PostgreSQL.
+
+```sh
+# Из корня; RUN_DOCKER_TESTS=1 в окружении, Docker запущен
+pytest runner/test_sandbox.py -q
+
+cd frontend
+npm run typecheck
+npm run lint
+npm run lint:fsd
+npm run format:check
+npm audit --omit=dev --audit-level=low
+npm run build
+npx playwright install chromium
+npm test
+```
+
+Для E2E должен работать весь стек с `EXECUTION_RUNNER=remote`. `PLAYWRIGHT_BASE_URL` позволяет проверять другой порт. Сценарии создают отдельные учебные аккаунты. Не запускайте две копии Playwright одновременно с общим `test-results`; для параллельных запусков задавайте разные `--output`.
+
+Проверено локально: **42 backend-теста на PostgreSQL, 4 Docker-теста песочницы, 4 браузерных сценария**, production-сборка в Linux-контейнере, миграции туда/обратно, повторный seed, строгие типы Python/TypeScript, lint и FSD. Axe проверяет пять публичных страниц в двух темах; это автоматическая проверка, не замена ручного тестирования со скринридером.
+
+В dev-дереве npm audit обнаруживает пять high findings через ESLint → micromatch → braces; проверка runtime-зависимостей не обнаруживает уязвимостей. Автоматическое `npm audit fix --force` предлагает несовместимые изменения и не применяется. Контролировать обновления инструментов и повторять полный аудит перед релизом.
+
+GitHub Actions повторяет типизацию, lint, проверку OpenAPI, PostgreSQL-тесты, Docker-изоляцию, сборку и браузерные сценарии на каждом push/PR. Все используемые Actions закреплены на commit SHA.
+
+## API-контракт
+
+Pydantic-схемы — источник контракта. После изменения схем:
+
+```sh
+cd backend
+python -m app.export_openapi
+cd ../frontend
+npm run api:generate
+npx prettier --write src/shared/api/schema.ts
+```
+
+Не редактируйте `schema.ts` вручную. `requirements.lock` содержит только runtime-замыкание зависимостей; `requirements-dev.lock` добавляет инструменты разработки. Обновлять lock-файлы нужно в отдельном окружении после установки согласованных версий: `python backend/scripts/lock_dependencies.py`. Скрипт фиксирует установленные версии, проверяет ограничения и не является независимым resolver.
+
+Архитектура, гарантии прогресса, границы исполнения и порядок публичного развёртывания: [ARCHITECTURE.md](ARCHITECTURE.md).

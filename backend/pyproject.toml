@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 strict = true
 plugins = ["pydantic.mypy"]
 files = ["app", "migrations/env.py"]
