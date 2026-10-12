@@ -1,9 +1,4 @@
 import { BODY_SEGMENTS, createSnakeMotion, type SnakePose } from "./motion";
-import {
-  createVenomReaction,
-  drawVenomDroplets,
-  drawVenomMouth,
-} from "./reaction";
 
 type BodyPoint = SnakePose & Readonly<{ radius: number; sourceX: number }>;
 type SourceColumn = Readonly<{ center: number; radius: number }>;
@@ -119,7 +114,6 @@ function drawHead(
   pixelScale: number,
   spacing: number,
   time: number,
-  opening: number,
 ) {
   context.save();
   context.translate(head.x, head.y);
@@ -132,7 +126,7 @@ function drawHead(
   const height = sprite.headBottom - sprite.headTop + 2;
   const tip = (sprite.image.naturalWidth - sprite.bodyEnd) * pixelScale;
   const tongue = Math.max(0, Math.sin(time * 2.2) - 0.75) / 0.25;
-  if (tongue > 0 && opening < 0.1) {
+  if (tongue > 0) {
     context.strokeStyle = "#a46978";
     context.lineWidth = spacing * 0.16;
     context.lineCap = "round";
@@ -155,7 +149,6 @@ function drawHead(
     sourceWidth * pixelScale,
     height * pixelScale,
   );
-  drawVenomMouth(context, tip, spacing / 5.5, opening);
   context.restore();
 }
 
@@ -164,8 +157,7 @@ function drawSnake(
   motion: ReturnType<typeof createSnakeMotion>,
   light: boolean,
   sprite: SnakeSprite,
-  reaction: ReturnType<typeof createVenomReaction>,
-): readonly BodyPoint[] {
+) {
   const { spacing, scale, time } = motion;
   const pixelScale =
     (spacing * (BODY_SEGMENTS - 1)) / (sprite.bodyEnd - sprite.bodyStart);
@@ -186,70 +178,7 @@ function drawSnake(
   context.imageSmoothingQuality = "high";
   drawBody(context, points, sprite, pixelScale, spacing, light);
   const head = points[0];
-  if (head)
-    drawHead(
-      context,
-      head,
-      sprite,
-      pixelScale,
-      spacing,
-      time,
-      reaction.opening,
-    );
-  drawVenomDroplets(context, reaction.droplets);
-  return points;
-}
-
-function hitsSnake(
-  pointer: Readonly<{ x: number; y: number }>,
-  points: readonly BodyPoint[],
-  sprite: SnakeSprite,
-  scale: number,
-): boolean {
-  const head = points[0];
-  if (!head) return false;
-  const pixelScale =
-    (5.5 * scale * (BODY_SEGMENTS - 1)) / (sprite.bodyEnd - sprite.bodyStart);
-  const dx = pointer.x - head.x;
-  const dy = pointer.y - head.y;
-  const localX = dx * Math.cos(head.angle) + dy * Math.sin(head.angle);
-  const localY = -dx * Math.sin(head.angle) + dy * Math.cos(head.angle);
-  const sourceX = Math.round(sprite.bodyEnd + localX / pixelScale);
-  const column = sprite.columns[sourceX];
-  const neckCenter = sprite.columns[sprite.bodyEnd]?.center ?? 0;
-  if (
-    sourceX >= sprite.bodyEnd &&
-    column &&
-    column.radius > 0 &&
-    Math.abs(localY - (column.center - neckCenter) * pixelScale) <=
-      column.radius * pixelScale + 2 * scale
-  )
-    return true;
-  for (let index = 1; index < points.length; index++) {
-    const before = points[index - 1];
-    const after = points[index];
-    if (!before || !after) continue;
-    const x = after.x - before.x;
-    const y = after.y - before.y;
-    const fraction = Math.max(
-      0,
-      Math.min(
-        1,
-        ((pointer.x - before.x) * x + (pointer.y - before.y) * y) /
-          (x * x + y * y || 1),
-      ),
-    );
-    const radius = before.radius + (after.radius - before.radius) * fraction;
-    if (
-      Math.hypot(
-        pointer.x - before.x - x * fraction,
-        pointer.y - before.y - y * fraction,
-      ) <=
-      radius + 2 * scale
-    )
-      return true;
-  }
-  return false;
+  if (head) drawHead(context, head, sprite, pixelScale, spacing, time);
 }
 
 export function startSnakeAnimation(canvas: HTMLCanvasElement): {
@@ -271,66 +200,17 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
   let paused = false;
   let visible = true;
   let sprite: SnakeSprite | null = null;
-  let points: readonly BodyPoint[] = [];
-  let pointer: Readonly<{ x: number; y: number }> | null = null;
-  let hovered = false;
-  const reaction = createVenomReaction();
   let light = document.documentElement.dataset.theme === "light";
 
   function draw() {
     if (!context) return;
     context.clearRect(0, 0, width, height);
-    if (sprite && motion)
-      points = drawSnake(context, motion, light, sprite, reaction);
-  }
-  function updateHover() {
-    if (!sprite || !motion) return;
-    const bounds = canvas.getBoundingClientRect();
-    const next =
-      pointer !== null &&
-      hitsSnake(
-        { x: pointer.x - bounds.left, y: pointer.y - bounds.top },
-        points,
-        sprite,
-        motion.scale,
-      );
-    if (next === hovered) return;
-    hovered = next;
-    reaction.setActive(hovered, paused || reducedMotion.matches);
-    canvas.dataset.hovered = String(hovered);
-  }
-  function movePointer(event: PointerEvent) {
-    const interactive =
-      event.target instanceof Element &&
-      event.target.closest(
-        'a, button, input, select, textarea, [role="button"]',
-      );
-    pointer =
-      event.pointerType === "mouse" && !interactive
-        ? { x: event.clientX, y: event.clientY }
-        : null;
-    updateHover();
-    draw();
-  }
-  function clearPointer() {
-    pointer = null;
-    updateHover();
-    draw();
+    if (sprite && motion) drawSnake(context, motion, light, sprite);
   }
   function tick(timestamp: number) {
     const delta = lastFrame ? (timestamp - lastFrame) / 1000 : 0;
     lastFrame = timestamp;
-    updateHover();
-    if (!hovered) motion?.advance(delta);
-    const head = points[0];
-    if (head && sprite && motion) {
-      const tip =
-        ((sprite.image.naturalWidth - sprite.bodyEnd) *
-          motion.spacing *
-          (BODY_SEGMENTS - 1)) /
-        (sprite.bodyEnd - sprite.bodyStart);
-      reaction.advance(delta, head, tip, motion.scale);
-    }
+    motion?.advance(delta);
     draw();
     frame = window.requestAnimationFrame(tick);
   }
@@ -338,8 +218,6 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
     if (frame !== null) window.cancelAnimationFrame(frame);
     frame = null;
     lastFrame = 0;
-    if (document.hidden) clearPointer();
-    reaction.setActive(hovered, paused || reducedMotion.matches);
     draw();
     if (
       sprite &&
@@ -398,11 +276,6 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
     }
   });
   visibilityObserver.observe(canvas);
-  container.addEventListener("pointermove", movePointer, { passive: true });
-  container.addEventListener("pointerleave", clearPointer);
-  container.addEventListener("pointercancel", clearPointer);
-  window.addEventListener("blur", clearPointer);
-  window.addEventListener("scroll", clearPointer, { passive: true });
   window.addEventListener("resize", resize);
   document.addEventListener("visibilitychange", synchronize);
   reducedMotion.addEventListener("change", synchronize);
@@ -415,12 +288,6 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
     dispose() {
       if (frame !== null) window.cancelAnimationFrame(frame);
       image.onload = null;
-      container?.removeEventListener("pointermove", movePointer);
-      container?.removeEventListener("pointerleave", clearPointer);
-      container?.removeEventListener("pointercancel", clearPointer);
-      window.removeEventListener("blur", clearPointer);
-      window.removeEventListener("scroll", clearPointer);
-      delete canvas.dataset.hovered;
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", synchronize);
       reducedMotion.removeEventListener("change", synchronize);
