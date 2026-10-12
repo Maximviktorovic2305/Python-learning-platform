@@ -95,7 +95,19 @@ export function HeroPythonGif() {
                 tableValues="0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
               />
             </feComponentTransfer>
-            <feComposite in="transparent" in2="SourceGraphic" operator="in" />
+            {/* Trim the GIF's black matte, then soften only the alpha edge. */}
+            <feMorphology
+              in="transparent"
+              operator="erode"
+              radius="1"
+              result="trimmed"
+            />
+            <feGaussianBlur
+              in="trimmed"
+              stdDeviation="0.35"
+              result="softened"
+            />
+            <feComposite in="SourceGraphic" in2="softened" operator="in" />
           </filter>
         </defs>
       </svg>
