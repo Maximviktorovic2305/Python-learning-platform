@@ -1,14 +1,32 @@
 import Link from "next/link";
-import { ArrowUpRight, AlertCircle, LoaderCircle } from "lucide-react";
+import { ArrowUpRight, AlertCircle } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Skeleton } from "./skeleton";
+export {
+  Skeleton,
+  SkeletonRegion,
+  SkeletonLines,
+  SkeletonCode,
+} from "./skeleton";
 export function Button({
   children,
   className = "",
+  pending = false,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { pending?: boolean }) {
   return (
-    <button className={`button ${className}`} {...props}>
-      {children}
+    <button
+      className={`button ${pending ? "button-pending" : ""} ${className}`}
+      {...props}
+      disabled={pending || props.disabled}
+      aria-busy={pending || undefined}
+    >
+      {pending ? (
+        <span className="button-pending-content">{children}</span>
+      ) : (
+        children
+      )}
+      {pending && <Skeleton className="button-skeleton" />}
     </button>
   );
 }
@@ -54,14 +72,6 @@ export function ProgressBar({
       aria-valuemax={100}
     >
       <span style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
-    </div>
-  );
-}
-export function Loading({ text = "Загружаем данные…" }: { text?: string }) {
-  return (
-    <div className="state" role="status">
-      <LoaderCircle className="spin" size={22} />
-      <p>{text}</p>
     </div>
   );
 }

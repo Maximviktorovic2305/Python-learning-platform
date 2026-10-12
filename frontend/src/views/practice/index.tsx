@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Code2, ArrowUpRight } from "lucide-react";
-import { AppShell } from "@/widgets/app-shell";
+import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery, allTopics } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
-import { PageHeading, Tag, Loading, ErrorState } from "@/shared/ui";
+import { PageHeading, Tag, Skeleton, ErrorState } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function PracticePage() {
   const { user } = useAuth();
@@ -29,8 +29,14 @@ export function PracticePage() {
       />
       <div className="curriculum-toolbar">
         <p>
-          {progress.data?.exercise_ids.length ?? 0} /{" "}
-          {course.data?.exercise_count ?? 120} заданий решено
+          {course.isPending || (user && progress.isPending) ? (
+            <Skeleton width={170} height={16} />
+          ) : (
+            <>
+              {progress.data?.exercise_ids.length ?? 0} /{" "}
+              {course.data?.exercise_count ?? 120} заданий решено
+            </>
+          )}
         </p>
         <div className="filter-tabs">
           <button
@@ -47,8 +53,9 @@ export function PracticePage() {
           </button>
         </div>
       </div>
-      {course.isPending ? (
-        <Loading />
+      {course.isPending ||
+      (!course.error && filter === "weak" && user && progress.isPending) ? (
+        <PageSkeleton variant="practice" />
       ) : course.error ? (
         <ErrorState message={errorMessage(course.error)} />
       ) : !topics.length ? (

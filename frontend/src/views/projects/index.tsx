@@ -2,11 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { FolderCode, ArrowUpRight, Check, ClipboardList } from "lucide-react";
 import Link from "next/link";
-import { AppShell } from "@/widgets/app-shell";
+import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { projectsQuery, submissionsQuery } from "@/entities/project";
 import { useAuth } from "@/features/auth";
 import { ProjectForm } from "@/features/submit-project";
-import { PageHeading, Tag, ErrorState, Loading } from "@/shared/ui";
+import { PageHeading, Tag, ErrorState } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function ProjectsPage() {
   const { user } = useAuth();
@@ -20,7 +20,7 @@ export function ProjectsPage() {
         description="Восемь проектов, чтобы связать отдельные темы в полноценное приложение."
       />
       {projects.isPending ? (
-        <Loading />
+        <PageSkeleton variant="projects" />
       ) : projects.error ? (
         <ErrorState message={errorMessage(projects.error)} />
       ) : (

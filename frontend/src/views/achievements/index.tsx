@@ -1,10 +1,10 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { Award, Flame, Code2, Trophy, LockKeyhole, Check } from "lucide-react";
-import { AppShell } from "@/widgets/app-shell";
+import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { achievementsQuery } from "@/entities/achievement";
 import { useAuth } from "@/features/auth";
-import { PageHeading, Tag, ErrorState, Loading } from "@/shared/ui";
+import { PageHeading, Tag, ErrorState, Skeleton } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function AchievementsPage() {
   const { user } = useAuth();
@@ -18,14 +18,20 @@ export function AchievementsPage() {
         description="Достижения отмечают вашу практику, точность и регулярность."
         action={
           <Tag tone="yellow">
-            {earned} / {query.data?.length ?? 16} ОТКРЫТО
+            {query.isPending ? (
+              <Skeleton width={110} height={15} />
+            ) : (
+              <>
+                {earned} / {query.data?.length ?? 16} ОТКРЫТО
+              </>
+            )}
           </Tag>
         }
       />
       {query.error ? (
         <ErrorState message={errorMessage(query.error)} />
       ) : query.isPending ? (
-        <Loading />
+        <PageSkeleton variant="achievements" />
       ) : (
         <div className="achievements-grid">
           {query.data.map((a) => {

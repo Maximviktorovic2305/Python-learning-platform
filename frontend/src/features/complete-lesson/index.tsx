@@ -30,7 +30,7 @@ export function CompleteLesson({
     <div>
       <Button
         onClick={() => (completed ? onComplete() : mutation.mutate())}
-        disabled={mutation.isPending}
+        pending={mutation.isPending}
       >
         {completed ? <Check size={16} /> : <ArrowRight size={16} />}
         {completed ? "Перейти к практике" : "Теория изучена · +20 XP"}

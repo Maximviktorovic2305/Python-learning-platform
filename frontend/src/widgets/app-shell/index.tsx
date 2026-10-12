@@ -17,7 +17,16 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
-import { Loading } from "@/shared/ui";
+import {
+  AppShellSkeleton,
+  PublicSkeleton,
+  type PageSkeletonVariant,
+} from "./skeleton";
+export {
+  AppShellSkeleton,
+  PageSkeleton,
+  LessonNavigationSkeleton,
+} from "./skeleton";
 import { errorMessage } from "@/shared/api";
 
 const items = [
@@ -28,6 +37,27 @@ const items = [
   { href: "/achievements", title: "Достижения", icon: Award },
   { href: "/profile", title: "Профиль", icon: UserRound },
 ];
+function skeletonVariant(path: string): PageSkeletonVariant {
+  if (path.startsWith("/learn/")) return "lesson";
+  const variants: Record<string, PageSkeletonVariant> = {
+    "/dashboard": "dashboard",
+    "/curriculum": "curriculum",
+    "/practice": "practice",
+    "/projects": "projects",
+    "/achievements": "achievements",
+    "/profile": "profile",
+  };
+  return variants[path] ?? "dashboard";
+}
+
+export function RouteSkeleton() {
+  const path = usePathname();
+  if (path === "/" || path === "/login" || path === "/register")
+    return (
+      <PublicSkeleton auth={path !== "/"} register={path === "/register"} />
+    );
+  return <AppShellSkeleton variant={skeletonVariant(path)} />;
+}
 export function AppShell({
   children,
   protectedPage = true,
@@ -44,7 +74,7 @@ export function AppShell({
     if (protectedPage && !loading && !user) router.replace("/login");
   }, [protectedPage, loading, user, router]);
   if (protectedPage && (loading || !user))
-    return <Loading text="Открываем вашу лабораторию…" />;
+    return <AppShellSkeleton variant={skeletonVariant(path)} />;
   return (
     <div className="app-shell">
       <aside className={`app-sidebar ${open ? "open" : ""}`}>

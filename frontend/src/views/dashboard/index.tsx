@@ -1,11 +1,11 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell } from "@/widgets/app-shell";
+import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { DashboardOverview } from "@/widgets/dashboard-overview";
 import { courseQuery } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
-import { ErrorState, Loading } from "@/shared/ui";
+import { ErrorState } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function DashboardPage() {
   const { user } = useAuth();
@@ -24,7 +24,7 @@ export function DashboardPage() {
       ) : course.data && progress.data ? (
         <DashboardOverview course={course.data} progress={progress.data} />
       ) : (
-        <Loading />
+        <PageSkeleton variant="dashboard" heading />
       )}
     </AppShell>
   );

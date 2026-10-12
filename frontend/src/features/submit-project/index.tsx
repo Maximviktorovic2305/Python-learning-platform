@@ -60,9 +60,7 @@ export function ProjectForm({
           rows={4}
         />
       </label>
-      <Button disabled={pending}>
-        {pending ? "Сохраняем…" : "Сохранить работу"}
-      </Button>
+      <Button pending={pending}>Сохранить работу</Button>
       {message && <p role="status">{message}</p>}
     </form>
   );

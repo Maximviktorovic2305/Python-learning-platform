@@ -3,7 +3,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Clock3, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { AppShell } from "@/widgets/app-shell";
+import {
+  AppShell,
+  PageSkeleton,
+  LessonNavigationSkeleton,
+} from "@/widgets/app-shell";
 import { CodeEditor } from "@/widgets/code-editor";
 import { QuizPanel } from "@/widgets/quiz-panel";
 import { LessonNavigation } from "@/widgets/lesson-navigation";
@@ -13,7 +17,7 @@ import { exerciseQuery } from "@/entities/exercise";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { CompleteLesson } from "@/features/complete-lesson";
-import { Button, Tag, Loading, ErrorState } from "@/shared/ui";
+import { Button, Tag, ErrorState } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
 
@@ -56,7 +60,7 @@ export function LessonPage({
           >
             Навигация по урокам
           </button>
-          {course.data && (
+          {course.data ? (
             <div
               className={
                 navOpen ? "lesson-nav-mobile open" : "lesson-nav-mobile"
@@ -68,6 +72,12 @@ export function LessonPage({
                 completed={progress.data?.lesson_ids ?? []}
               />
             </div>
+          ) : course.error ? (
+            <div className="lesson-sidebar">
+              <ErrorState message={errorMessage(course.error)} />
+            </div>
+          ) : (
+            <LessonNavigationSkeleton />
           )}
           <article className="lesson-main">
             <div className="lesson-heading">
@@ -243,7 +253,7 @@ export function LessonPage({
                       </div>
                     </>
                   ) : (
-                    <Loading />
+                    <PageSkeleton variant="exercise" />
                   )}
                 </div>
               )}
@@ -277,7 +287,7 @@ export function LessonPage({
           </article>
         </div>
       ) : (
-        <Loading />
+        <PageSkeleton variant="lesson" />
       )}
     </AppShell>
   );

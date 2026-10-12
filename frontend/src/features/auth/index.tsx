@@ -150,12 +150,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           {error}
         </p>
       )}
-      <Button disabled={pending}>
-        {pending
-          ? "Подождите…"
-          : mode === "register"
-            ? "Создать аккаунт"
-            : "Войти в лабораторию"}
+      <Button pending={pending}>
+        {mode === "register" ? "Создать аккаунт" : "Войти в лабораторию"}
       </Button>
       <p className="form-foot">
         {mode === "register" ? "Уже учитесь с нами?" : "Пока нет аккаунта?"}{" "}

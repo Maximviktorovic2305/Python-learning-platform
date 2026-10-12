@@ -10,14 +10,14 @@ import {
   LockKeyhole,
   Circle,
 } from "lucide-react";
-import { AppShell } from "@/widgets/app-shell";
+import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import {
   PageHeading,
   Tag,
-  Loading,
+  Skeleton,
   ErrorState,
   ProgressBar,
 } from "@/shared/ui";
@@ -69,9 +69,21 @@ export function CurriculumPage() {
           </p>
         </div>
         <div>
-          <strong>{course.data?.question_count ?? "—"}</strong>
+          <strong>
+            {course.isPending ? (
+              <Skeleton width={64} height={34} />
+            ) : (
+              (course.data?.question_count ?? "—")
+            )}
+          </strong>
           <span>вопросов для проверки знаний</span>
-          <strong>{course.data?.exercise_count ?? "—"}</strong>
+          <strong>
+            {course.isPending ? (
+              <Skeleton width={64} height={34} />
+            ) : (
+              (course.data?.exercise_count ?? "—")
+            )}
+          </strong>
           <span>практических задач</span>
         </div>
       </div>
@@ -101,7 +113,7 @@ export function CurriculumPage() {
         </div>
       </div>
       {course.isPending ? (
-        <Loading />
+        <PageSkeleton variant="curriculum" />
       ) : course.error ? (
         <ErrorState
           message={errorMessage(course.error)}

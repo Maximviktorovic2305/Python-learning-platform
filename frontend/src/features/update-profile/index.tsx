@@ -86,9 +86,7 @@ export function ProfileForm({
         </select>
         <small>Серия занятий и дневная цель учитывают ваш часовой пояс.</small>
       </label>
-      <Button disabled={pending}>
-        {pending ? "Сохраняем…" : "Сохранить изменения"}
-      </Button>
+      <Button pending={pending}>Сохранить изменения</Button>
       {message && <p role="status">{message}</p>}
     </form>
   );
@@ -142,8 +140,8 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
           Не менее 12 символов. После смены пароля потребуется войти снова.
         </small>
       </label>
-      <Button className="secondary" disabled={pending}>
-        {pending ? "Меняем…" : "Изменить пароль"}
+      <Button className="secondary" pending={pending}>
+        Изменить пароль
       </Button>
       {message && <p role="alert">{message}</p>}
     </form>

@@ -13,9 +13,42 @@ import Link from "next/link";
 import { startQuiz, submitQuiz } from "@/features/submit-quiz";
 import { useAuth } from "@/features/auth";
 import type { Attempt, QuizResult } from "@/entities/quiz";
-import { Button, Tag, ProgressBar } from "@/shared/ui";
+import {
+  Button,
+  Tag,
+  ProgressBar,
+  Skeleton,
+  SkeletonRegion,
+  SkeletonLines,
+} from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
+
+function QuizSkeleton() {
+  return (
+    <SkeletonRegion label="Готовим вопросы теста…" className="skeleton-quiz">
+      <div className="skeleton-stack">
+        <div className="skeleton-row">
+          <Skeleton width={130} height={12} />
+          <Skeleton width={60} height={23} />
+        </div>
+        <Skeleton height={5} />
+        <Skeleton width="85%" height={28} />
+        <SkeletonLines count={2} />
+        {Array.from({ length: 4 }, (_, index) => (
+          <div className="skeleton-quiz-option" key={index}>
+            <Skeleton width={22} height={22} circle />
+            <Skeleton width={`${70 - index * 7}%`} height={14} />
+          </div>
+        ))}
+        <div className="skeleton-row">
+          <Skeleton width={90} height={44} />
+          <Skeleton width={120} height={44} />
+        </div>
+      </div>
+    </SkeletonRegion>
+  );
+}
 
 export function QuizPanel({ topicId }: { topicId: string }) {
   const { user } = useAuth();
@@ -67,6 +100,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
         </Link>
       </div>
     );
+  if (pending && !attempt) return <QuizSkeleton />;
   if (result)
     return (
       <div className="quiz-results">
@@ -94,7 +128,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
             </span>
             <span>+{result.xp} XP</span>
           </div>
-          <Button onClick={start} disabled={pending} className="secondary">
+          <Button onClick={start} pending={pending} className="secondary">
             <RotateCcw size={15} />
             Новая попытка
           </Button>
@@ -148,8 +182,8 @@ export function QuizPanel({ topicId }: { topicId: string }) {
             <span>Подсказки доступны</span>
             <span>+50 XP за первый зачёт</span>
           </div>
-          <Button disabled={pending} onClick={start}>
-            {pending ? "Готовим вопросы…" : "Начать тест"}
+          <Button pending={pending} onClick={start}>
+            Начать тест
             <ArrowRight size={16} />
           </Button>
         </div>
@@ -254,8 +288,9 @@ export function QuizPanel({ topicId }: { topicId: string }) {
                   pending
                 }
                 onClick={submit}
+                pending={pending}
               >
-                {pending ? "Проверяем…" : "Завершить тест"}
+                Завершить тест
                 <Check size={16} />
               </Button>
             )}

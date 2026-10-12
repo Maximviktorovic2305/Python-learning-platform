@@ -17,7 +17,7 @@ import {
   type RunOutput,
 } from "@/features/execute-code";
 import { useAuth } from "@/features/auth";
-import { Button, Tag } from "@/shared/ui";
+import { Button, Tag, SkeletonRegion, SkeletonCode } from "@/shared/ui";
 import { Highlight } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
@@ -217,12 +217,17 @@ export function CodeEditor({
             className="secondary"
             disabled={!user || running || verifying || !code.trim()}
             onClick={verify}
+            pending={verifying}
           >
             <ShieldCheck size={15} />
-            {verifying ? "Проверяем…" : "Проверить · +30 XP"}
+            Проверить · +30 XP
           </Button>
         </div>
-        <div className="editor-output" aria-live="polite">
+        <div
+          className="editor-output"
+          aria-live="polite"
+          aria-busy={running || verifying}
+        >
           <div className="output-heading">
             <span>
               <PythonLogo size={16} />
@@ -231,19 +236,32 @@ export function CodeEditor({
             <Tag
               tone={output?.status === "ok" ? "green" : output ? "yellow" : ""}
             >
-              {running ? "RUNNING" : (output?.status.toUpperCase() ?? "READY")}
+              {running
+                ? "RUNNING"
+                : verifying
+                  ? "CHECKING"
+                  : (output?.status.toUpperCase() ?? "READY")}
             </Tag>
           </div>
-          <pre>
-            {running
-              ? "Загружаем Python и выполняем код…"
-              : output?.stdout ||
-                (!output
-                  ? "Нажмите «Запустить локально», чтобы увидеть результат."
-                  : "Программа завершилась без вывода.")}
-          </pre>
-          {output?.stderr && (
-            <pre className="execution-error">{output.stderr}</pre>
+          {running || verifying ? (
+            <SkeletonRegion
+              label={running ? "Выполняем Python-код…" : "Проверяем решение…"}
+              className="skeleton-output"
+            >
+              <SkeletonCode count={3} />
+            </SkeletonRegion>
+          ) : (
+            <>
+              <pre>
+                {output?.stdout ||
+                  (!output
+                    ? "Нажмите «Запустить локально», чтобы увидеть результат."
+                    : "Программа завершилась без вывода.")}
+              </pre>
+              {output?.stderr && (
+                <pre className="execution-error">{output.stderr}</pre>
+              )}
+            </>
           )}
         </div>
       </div>

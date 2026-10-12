@@ -2,11 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { UserRound, ShieldCheck } from "lucide-react";
-import { AppShell } from "@/widgets/app-shell";
+import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { userQuery } from "@/entities/user";
 import { useAuth } from "@/features/auth";
 import { ProfileForm, PasswordForm } from "@/features/update-profile";
-import { PageHeading, Loading, ErrorState, Tag } from "@/shared/ui";
+import { PageHeading, ErrorState, Tag } from "@/shared/ui";
 import { errorMessage, setAccessToken } from "@/shared/api";
 export function ProfilePage() {
   const { user, logout, updateUser } = useAuth();
@@ -59,7 +59,7 @@ export function ProfilePage() {
           </section>
         </div>
       ) : (
-        <Loading />
+        <PageSkeleton variant="profile" />
       )}
     </AppShell>
   );

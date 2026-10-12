@@ -1,4 +1,4 @@
-import { Loading } from "@/shared/ui";
+import { RouteSkeleton } from "@/widgets/app-shell";
 export default function LoadingPage() {
-  return <Loading />;
+  return <RouteSkeleton />;
 }
