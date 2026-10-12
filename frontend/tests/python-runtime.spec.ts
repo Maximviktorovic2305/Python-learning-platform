@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("browser Python can print but cannot reach authenticated API routes", async ({
   page,

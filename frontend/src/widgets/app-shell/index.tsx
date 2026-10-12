@@ -44,7 +44,7 @@ function skeletonVariant(path: string): PageSkeletonVariant {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, loggingOut, logout } = useAuth();
   const router = useRouter();
   const path = usePathname();
   const protectedPage = [
@@ -56,8 +56,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
-    if (protectedPage && !loading && !user) router.replace("/login");
-  }, [protectedPage, loading, user, router]);
+    if (protectedPage && !loading && !loggingOut && !user)
+      router.replace("/login");
+  }, [protectedPage, loading, loggingOut, user, router]);
   return (
     <div className="app-shell">
       <aside className={`app-sidebar ${open ? "open" : ""}`}>

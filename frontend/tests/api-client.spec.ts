@@ -3,6 +3,8 @@ import {
   api,
   endSession,
   refreshSession,
+  revokeSession,
+  subscribeSessionEnd,
   setAccessToken,
   unwrap,
 } from "../src/shared/api/client";
@@ -77,6 +79,37 @@ test.describe("session request lifecycle", () => {
     const result = await api.GET("/api/users/me");
     expect(result.response.status).toBe(401);
     expect(calls).toBe(2);
+  });
+
+  test("logout keeps the session bearer for server revocation", async () => {
+    let authorization: string | null = null;
+    globalThis.fetch = async (input) => {
+      authorization = (input as Request).headers.get("Authorization");
+      return Response.json({ message: "logged out" });
+    };
+    await revokeSession(endSession());
+    expect(authorization).toBe("Bearer initial-token");
+    expect(await refreshSession()).toBeNull();
+  });
+
+  test("rejected refresh expires the session once and blocks further refresh", async () => {
+    let ended = 0;
+    let refreshes = 0;
+    const unsubscribe = subscribeSessionEnd(() => {
+      ended += 1;
+    });
+    globalThis.fetch = async (input) => {
+      if ((input as Request).url.endsWith("/auth/refresh")) refreshes += 1;
+      return Response.json({ detail: "expired" }, { status: 401 });
+    };
+    try {
+      expect(await refreshSession()).toBeNull();
+      expect(await refreshSession()).toBeNull();
+      expect(ended).toBe(1);
+      expect(refreshes).toBe(1);
+    } finally {
+      unsubscribe();
+    }
   });
 
   test("late query and mutation responses cannot repopulate the cleared cache", async () => {

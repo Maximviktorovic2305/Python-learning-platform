@@ -52,6 +52,16 @@ class AuthSession(Base):
     revoked: Mapped[bool] = mapped_column(default=False)
 
 
+class UsedRefreshToken(Base):
+    """Retain only digests so replay can revoke the original session."""
+
+    __tablename__ = "used_refresh_tokens"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    session_id: Mapped[UUID] = mapped_column(
+        ForeignKey("auth_sessions.id", ondelete="CASCADE"), index=True
+    )
+
+
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

@@ -2,6 +2,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -17,6 +18,8 @@ import {
   unwrap,
   setAccessToken,
   endSession,
+  revokeSession,
+  subscribeSessionEnd,
   errorMessage,
   type Schema,
 } from "@/shared/api";
@@ -36,6 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionRevision, setSessionRevision] = useState(0);
   const [loggingOut, setLoggingOut] = useState(false);
   const session = useQuery(sessionQuery(sessionRevision));
+  useEffect(
+    () =>
+      subscribeSessionEnd(() => {
+        void queryClient.cancelQueries();
+        queryClient.clear();
+        revision.current += 1;
+        queryClient.setQueryData(sessionQuery(revision.current).queryKey, null);
+        setSessionRevision(revision.current);
+      }),
+    [queryClient],
+  );
   const resetCache = (user: User | null) => {
     queryClient.clear();
     revision.current += 1;
@@ -56,12 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     // Block refresh and abort old reads/mutations before clearing their caches.
     setLoggingOut(true);
-    endSession();
+    const token = endSession();
     const cancellation = queryClient.cancelQueries();
     const loggedOutRevision = resetCache(null);
     try {
       await cancellation;
-      unwrap(await api.POST("/api/auth/logout"));
+      await revokeSession(token);
     } finally {
       if (revision.current === loggedOutRevision) resetCache(null);
       setLoggingOut(false);

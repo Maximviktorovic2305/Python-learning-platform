@@ -1,12 +1,15 @@
 import asyncio
 
 import httpx
+import jwt
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from app.core.config import get_settings
 from app.models.tables import Completion, Question, User
 from app.seed import seed
+from app.services import auth
 
 
 async def test_catalog_and_idempotent_seed(
@@ -42,8 +45,16 @@ async def test_auth_refresh_rotation_logout_and_revocation(
     assert response.status_code == 200
     token = response.json()["access_token"]
     assert client.cookies.get("refresh") != old_refresh
+    rotated_refresh = client.cookies.get("refresh")
     replay = await client.post("/api/auth/refresh", headers={"Cookie": f"refresh={old_refresh}"})
     assert replay.status_code == 401
+    # Revocation must be committed even though refresh returns an error.
+    assert (
+        await client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
+    ).status_code == 401
+    assert (
+        await client.post("/api/auth/refresh", headers={"Cookie": f"refresh={rotated_refresh}"})
+    ).status_code == 401
     assert (
         await client.post(
             "/api/auth/logout", headers={**student, "Cookie": f"refresh={old_refresh}"}
@@ -52,6 +63,67 @@ async def test_auth_refresh_rotation_logout_and_revocation(
     assert (
         await client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
     ).status_code == 401
+
+
+async def test_logout_consumed_cookie_revokes_only_its_session(
+    client: httpx.AsyncClient, student: dict[str, str]
+) -> None:
+    first_cookie = client.cookies.get("refresh")
+    first = await client.post("/api/auth/refresh")
+    assert first.status_code == 200
+    second = await client.post(
+        "/api/auth/login",
+        json={"email": "student@example.com", "password": "test-password-1234"},
+    )
+    second_token = second.json()["access_token"]
+    assert (
+        await client.post("/api/auth/logout", headers={"Cookie": f"refresh={first_cookie}"})
+    ).status_code == 200
+    assert (await client.get("/api/users/me", headers=student)).status_code == 401
+    assert (
+        await client.get(
+            "/api/users/me", headers={"Authorization": f"Bearer {first.json()['access_token']}"}
+        )
+    ).status_code == 401
+    assert (
+        await client.get("/api/users/me", headers={"Authorization": f"Bearer {second_token}"})
+    ).status_code == 200
+    assert (await client.post("/api/auth/logout")).status_code == 200
+    assert (await client.post("/api/auth/logout")).status_code == 200
+
+
+async def test_refresh_cookie_is_private_and_failure_clears_it(
+    client: httpx.AsyncClient, student: dict[str, str]
+) -> None:
+    refresh = await client.post("/api/auth/refresh")
+    cookie = refresh.headers["set-cookie"]
+    assert "HttpOnly" in cookie and "SameSite=strict" in cookie
+    assert "Path=/api/auth" in cookie and "Domain=" not in cookie
+    assert "refresh" not in refresh.json()
+    assert refresh.headers["cache-control"] == "no-store"
+    invalid = await client.post("/api/auth/refresh", headers={"Cookie": "refresh=invalid"})
+    assert invalid.status_code == 401
+    assert "Max-Age=0" in invalid.headers["set-cookie"]
+    assert client.cookies.get("refresh") is None
+
+
+async def test_concurrent_refresh_replay_revokes_family_on_postgres(
+    client: httpx.AsyncClient,
+    student: dict[str, str],
+    database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
+) -> None:
+    engine, factory = database
+    if engine.dialect.name != "postgresql":
+        pytest.skip("Requires PostgreSQL row locks")
+    token = client.cookies.get("refresh")
+    assert token is not None
+
+    async def rotate() -> bool:
+        async with factory.begin() as session:
+            return await auth.refresh(session, token) is not None
+
+    assert sorted(await asyncio.gather(rotate(), rotate())) == [False, True]
+    assert (await client.get("/api/users/me", headers=student)).status_code == 401
 
 
 async def test_wrong_credentials_and_origin_are_rejected(
@@ -75,6 +147,36 @@ async def test_wrong_credentials_and_origin_are_rejected(
         },
     )
     assert duplicate.status_code == 409
+
+
+async def test_access_tokens_reject_invalid_claims_algorithms_and_signatures(
+    client: httpx.AsyncClient, student: dict[str, str]
+) -> None:
+    secret = get_settings().jwt_secret
+    original = student["Authorization"].removeprefix("Bearer ")
+    claims = jwt.decode(original, secret, algorithms=["HS256"], audience="python-lab-web")
+    invalid_tokens = [
+        jwt.encode({**claims, key: value}, secret, algorithm="HS256")
+        for key, value in (
+            ("exp", 0),
+            ("iss", "another-service"),
+            ("aud", "another-client"),
+            ("type", "refresh"),
+            ("sid", "invalid-session-id"),
+        )
+    ]
+    invalid_tokens.extend(
+        [
+            jwt.encode({k: v for k, v in claims.items() if k != "exp"}, secret, algorithm="HS256"),
+            jwt.encode(claims, secret, algorithm="HS384"),
+            jwt.encode(claims, "untrusted-signing-key-with-enough-entropy", algorithm="HS256"),
+            jwt.encode(claims, "", algorithm="none"),
+        ]
+    )
+    for token in invalid_tokens:
+        result = await client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
+        assert result.status_code == 401
+        assert result.headers["www-authenticate"] == "Bearer"
 
 
 async def test_lesson_completion_is_idempotent(

@@ -6,18 +6,65 @@ let refreshPending: Promise<Schema<"AuthView"> | null> | null = null;
 let sessionVersion = 0;
 let sessionController = new AbortController();
 let refreshAllowed = true;
+let authenticatedSession = false;
+const sessionEndListeners = new Set<() => void>();
+let sessionChannel: BroadcastChannel | null = null;
+
+// Serialize cookie rotation across tabs; no credentials cross this channel.
+async function withSessionLock<T>(action: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== "undefined" && navigator.locks)
+    return navigator.locks.request("python-lab-session", action);
+  return action();
+}
+
+export function subscribeSessionEnd(listener: () => void): () => void {
+  sessionEndListeners.add(listener);
+  if (
+    typeof window !== "undefined" &&
+    typeof BroadcastChannel !== "undefined" &&
+    !sessionChannel
+  ) {
+    sessionChannel = new BroadcastChannel("python-lab-session");
+    sessionChannel.onmessage = (event: MessageEvent<unknown>) => {
+      if (event.data !== "ended") return;
+      endSession();
+      sessionEndListeners.forEach((notify) => notify());
+    };
+  }
+  return () => {
+    sessionEndListeners.delete(listener);
+    if (!sessionEndListeners.size) {
+      sessionChannel?.close();
+      sessionChannel = null;
+    }
+  };
+}
+
+function expireSession() {
+  if (!authenticatedSession) {
+    // An anonymous bootstrap response must not abort a queued login.
+    refreshAllowed = false;
+    return;
+  }
+  endSession();
+  sessionChannel?.postMessage("ended");
+  sessionEndListeners.forEach((notify) => notify());
+}
 
 export function setAccessToken(token: string | null) {
   sessionVersion += 1;
   accessToken = token;
+  authenticatedSession = token !== null;
   refreshAllowed = token !== null;
 }
 
 export function endSession() {
+  const previousToken = accessToken;
   setAccessToken(null);
   sessionController.abort();
   sessionController = new AbortController();
   refreshPending = null;
+  return previousToken;
 }
 export type Schema<K extends keyof components["schemas"]> =
   components["schemas"][K];
@@ -72,7 +119,12 @@ const apiFetch: typeof fetch = async (input, init) => {
   const request = original.clone();
   if (accessToken)
     request.headers.set("Authorization", `Bearer ${accessToken}`);
-  const response = await fetch(request);
+  const authentication = /\/api\/auth\/(login|register)$/.test(
+    new URL(request.url).pathname,
+  );
+  const response = authentication
+    ? await withSessionLock(() => fetch(request))
+    : await fetch(request);
   original.signal.throwIfAborted();
   if (version !== sessionVersion)
     throw new DOMException("Session changed", "AbortError");
@@ -89,6 +141,7 @@ const apiFetch: typeof fetch = async (input, init) => {
     original.signal.throwIfAborted();
     if (version !== sessionVersion)
       throw new DOMException("Session changed", "AbortError");
+    if (result.status === 401) expireSession();
     return result;
   }
   return response;
@@ -106,11 +159,21 @@ export function refreshSession(): Promise<Schema<"AuthView"> | null> {
   if (!refreshAllowed) return Promise.resolve(null);
   if (refreshPending) return refreshPending;
   const version = sessionVersion;
-  const pending = api
-    .POST("/api/auth/refresh")
+  const pending = withSessionLock(async () => {
+    // A queued refresh must not restart a session after logout.
+    if (version !== sessionVersion || !refreshAllowed) return null;
+    return api.POST("/api/auth/refresh");
+  })
     .then((result) => {
-      if (version !== sessionVersion || !refreshAllowed) return null;
-      accessToken = result.data?.access_token ?? null;
+      if (!result || version !== sessionVersion || !refreshAllowed) return null;
+      if (result.response.status === 401) {
+        expireSession();
+        return null;
+      }
+      if (result.data) {
+        accessToken = result.data.access_token;
+        authenticatedSession = true;
+      }
       return result.data ?? null;
     })
     .catch(() => {
@@ -122,4 +185,16 @@ export function refreshSession(): Promise<Schema<"AuthView"> | null> {
     });
   refreshPending = pending;
   return pending;
+}
+
+export async function revokeSession(token: string | null): Promise<void> {
+  sessionChannel?.postMessage("ended");
+  await withSessionLock(async () => {
+    // Preserve the old session ID for revocation if its cookie just rotated.
+    unwrap(
+      await api.POST("/api/auth/logout", {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      }),
+    );
+  });
 }

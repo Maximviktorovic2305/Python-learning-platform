@@ -3,13 +3,14 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Response
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from jwt import InvalidTokenError
 from sqlalchemy import select, text
 
 from app.api.dependencies import AdminUser, CurrentUser, Session, bearer, require_origin
 from app.core.config import get_settings
-from app.core.security import decode_access, hash_password, token_digest, verify_password
+from app.core.security import decode_access, hash_password, verify_password
 from app.models.tables import (
     Achievement,
     AuthSession,
@@ -93,6 +94,17 @@ def set_refresh(response: Response, token: str) -> None:
     response.headers["Cache-Control"] = "no-store"
 
 
+def clear_refresh(response: Response) -> None:
+    response.delete_cookie(
+        "refresh",
+        path="/api/auth",
+        secure=get_settings().cookie_secure,
+        httponly=True,
+        samesite="strict",
+    )
+    response.headers["Cache-Control"] = "no-store"
+
+
 @router.get("/health", response_model=Message, tags=["operations"])
 async def health(session: Session) -> Message:
     await session.execute(text("SELECT 1"))
@@ -128,10 +140,14 @@ async def refresh(
     session: Session,
     response: Response,
     token: Annotated[str | None, Cookie(alias="refresh")] = None,
-) -> AuthView:
-    if token is None:
-        raise HTTPException(401, "Сессия отсутствует")
-    result, rotated = await auth.refresh(session, token)
+) -> AuthView | JSONResponse:
+    refreshed = await auth.refresh(session, token) if token else None
+    if refreshed is None:
+        # A response, rather than an exception, preserves replay revocation.
+        failure = JSONResponse({"detail": "Сессия завершена"}, status_code=401)
+        clear_refresh(failure)
+        return failure
+    result, rotated = refreshed
     set_refresh(response, rotated)
     return result
 
@@ -155,21 +171,13 @@ async def logout(
         except InvalidTokenError, ValueError:
             pass
     if auth_session is None and token:
-        auth_session = await session.scalar(
-            select(AuthSession)
-            .where(AuthSession.token_hash == token_digest(token))
-            .with_for_update()
-        )
+        refresh_id = await auth.refresh_session_id(session, token)
+        if refresh_id is not None:
+            auth_session = await session.get(AuthSession, refresh_id, with_for_update=True)
     if auth_session:
         # Revoke the stable session even if refresh rotated after the logout request started.
         auth_session.revoked = True
-    response.delete_cookie(
-        "refresh",
-        path="/api/auth",
-        secure=get_settings().cookie_secure,
-        httponly=True,
-        samesite="strict",
-    )
+    clear_refresh(response)
     return Message(message="Вы вышли из аккаунта")
 
 
@@ -190,12 +198,15 @@ async def update_profile(payload: ProfileUpdate, user: CurrentUser, session: Ses
 
 
 @router.post("/users/me/password", response_model=Message, tags=["users"])
-async def change_password(payload: PasswordChange, user: CurrentUser, session: Session) -> Message:
+async def change_password(
+    payload: PasswordChange, user: CurrentUser, session: Session, response: Response
+) -> Message:
     await session.refresh(user, with_for_update=True)
     if not await to_thread(verify_password, payload.current_password, user.password_hash):
         raise HTTPException(400, "Текущий пароль неверен")
     user.password_hash = await to_thread(hash_password, payload.new_password)
     await auth.revoke_sessions(session, user)
+    clear_refresh(response)
     return Message(message="Пароль изменён. Войдите снова на всех устройствах.")
 
 

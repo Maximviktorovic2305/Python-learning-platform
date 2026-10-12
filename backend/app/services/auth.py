@@ -1,5 +1,6 @@
 from asyncio import to_thread
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import select, update
@@ -12,7 +13,7 @@ from app.core.security import (
     token_digest,
     verify_password,
 )
-from app.models.tables import AuthSession, User
+from app.models.tables import AuthSession, UsedRefreshToken, User
 from app.schemas.contracts import AuthView, Login, Register, UserView
 
 DUMMY_HASH = hash_password("timing-equalization-not-an-account-password")
@@ -55,9 +56,22 @@ async def login(session: AsyncSession, payload: Login) -> tuple[AuthView, str]:
     return await create_session(session, user)
 
 
-async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str]:
+async def refresh_session_id(session: AsyncSession, token: str) -> UUID | None:
+    digest = token_digest(token)
+    return await session.scalar(
+        select(AuthSession.id)
+        .where(AuthSession.token_hash == digest)
+        .union(select(UsedRefreshToken.session_id).where(UsedRefreshToken.token_hash == digest))
+    )
+
+
+async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str] | None:
+    session_id = await refresh_session_id(session, token)
+    if session_id is None:
+        return None
+    # Lock by the stable ID: concurrent rotation must still find the session.
     auth_session = await session.scalar(
-        select(AuthSession).where(AuthSession.token_hash == token_digest(token)).with_for_update()
+        select(AuthSession).where(AuthSession.id == session_id).with_for_update()
     )
     now = datetime.now(UTC)
     if (
@@ -65,11 +79,17 @@ async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str]:
         or auth_session.revoked
         or auth_session.expires_at.replace(tzinfo=UTC) <= now
     ):
-        raise HTTPException(401, "Сессия завершена")
+        return None
+    if auth_session.token_hash != token_digest(token):
+        # Return normally so the transaction commits this security revocation.
+        # Raising HTTPException here would roll it back in get_session().
+        auth_session.revoked = True
+        return None
     user = await session.get(User, auth_session.user_id)
     if user is None:
-        raise HTTPException(401, "Сессия завершена")
+        return None
     new_token = new_refresh_token()
+    session.add(UsedRefreshToken(token_hash=auth_session.token_hash, session_id=auth_session.id))
     auth_session.token_hash = token_digest(new_token)
     return AuthView(
         access_token=access_token(user.id, auth_session.id), user=UserView.model_validate(user)

@@ -3,6 +3,8 @@ export {
   unwrap,
   setAccessToken,
   endSession,
+  revokeSession,
+  subscribeSessionEnd,
   refreshSession,
   ApiError,
   errorMessage,

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./fixtures";
 
 async function register(page: Page, prefix: string) {
   const username = `${prefix}_${Date.now()}`;
@@ -16,6 +16,69 @@ async function register(page: Page, prefix: string) {
   ).toBeVisible();
   return username;
 }
+
+test("tabs serialize refresh and logout clears every tab without storing tokens", async ({
+  page,
+  context,
+}) => {
+  const username = await register(page, "tabs");
+  const other = await context.newPage();
+  await Promise.all([page.reload(), other.goto("/dashboard")]);
+  for (const tab of [page, other]) {
+    await expect(
+      tab.getByRole("heading", { name: `Привет, ${username}.` }),
+    ).toBeVisible();
+    const stored = await tab.evaluate(() => ({
+      local: Object.keys(localStorage),
+      session: Object.keys(sessionStorage),
+      cookie: document.cookie,
+    }));
+    expect(
+      [...stored.local, ...stored.session].filter((key) =>
+        /token|session|auth/i.test(key),
+      ),
+    ).toEqual([]);
+    expect(stored.cookie).not.toContain("refresh=");
+  }
+  const refreshCookie = (await context.cookies()).find(
+    (cookie) => cookie.name === "refresh",
+  );
+  expect(refreshCookie?.httpOnly).toBe(true);
+  expect(refreshCookie?.sameSite).toBe("Strict");
+  await page.getByRole("button", { name: "Выйти", exact: true }).click();
+  await expect(page).toHaveURL("/login");
+  await expect(other).toHaveURL("/login");
+  for (const tab of [page, other]) {
+    await tab.goto("/curriculum");
+    await expect(
+      tab.getByRole("link", { name: "Создать аккаунт", exact: true }),
+    ).toBeVisible();
+    await expect(tab.locator(".sidebar-user")).toHaveCount(0);
+  }
+});
+
+test("an expired session removes the private UI and cache", async ({
+  page,
+}) => {
+  await register(page, "expired");
+  await page.goto("/profile");
+  await expect(
+    page.getByRole("heading", { name: "Ваша точка отсчёта." }),
+  ).toBeVisible();
+  await page.route("**/api/users/me", async (route) => {
+    await route.fulfill({ status: 401, json: { detail: "expired" } });
+  });
+  await page.route("**/api/auth/refresh", async (route) => {
+    await route.fulfill({ status: 401, json: { detail: "expired" } });
+  });
+  await page.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page).toHaveURL("/login");
+  await expect(page.locator(".sidebar-user")).toHaveCount(0);
+  await page.goto("/curriculum");
+  await expect(
+    page.getByRole("link", { name: "Создать аккаунт", exact: true }),
+  ).toBeVisible();
+});
 
 test("cached navigation preserves the shell and never inserts skeletons or a second header", async ({
   page,
