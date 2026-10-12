@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   X,
@@ -51,44 +51,52 @@ function QuizSkeleton() {
 }
 
 export function QuizPanel({ topicId }: { topicId: string }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const client = useQueryClient();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [selections, setSelections] = useState<Record<string, number[]>>({});
   const [current, setCurrent] = useState(0);
   const [result, setResult] = useState<QuizResult | null>(null);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
   const [hint, setHint] = useState(false);
-  const start = async () => {
-    setPending(true);
-    setError("");
-    try {
-      setAttempt(await startQuiz(topicId));
+  const startMutation = useMutation({
+    mutationKey: ["start-quiz", topicId],
+    mutationFn: () => startQuiz(topicId),
+    onSuccess: (data) => {
+      setAttempt(data);
       setResult(null);
       setSelections({});
       setCurrent(0);
       setHint(false);
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setPending(false);
-    }
+    },
+  });
+  const submitMutation = useMutation({
+    mutationKey: ["submit-quiz", topicId],
+    mutationFn: ({
+      id,
+      answers,
+    }: {
+      id: string;
+      answers: Record<string, number[]>;
+    }) => submitQuiz(id, answers),
+    onSuccess: async (data) => {
+      setResult(data);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["progress"] }),
+        client.invalidateQueries({ queryKey: ["achievements"] }),
+        client.invalidateQueries({ queryKey: ["user"] }),
+      ]);
+    },
+  });
+  const pending = startMutation.isPending || submitMutation.isPending;
+  const error = startMutation.error || submitMutation.error;
+  const start = () => {
+    submitMutation.reset();
+    startMutation.mutate();
   };
-  const submit = async () => {
-    if (!attempt) return;
-    setPending(true);
-    setError("");
-    try {
-      setResult(await submitQuiz(attempt.id, selections));
-      await client.invalidateQueries({ queryKey: ["progress"] });
-      await client.invalidateQueries({ queryKey: ["achievements"] });
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setPending(false);
-    }
+  const submit = () => {
+    if (attempt) submitMutation.mutate({ id: attempt.id, answers: selections });
   };
+  if (loading) return <QuizSkeleton />;
   if (!user)
     return (
       <div className="quiz-intro">
@@ -299,7 +307,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
       )}
       {error && (
         <p className="form-error" role="alert">
-          {error}
+          {errorMessage(error)}
         </p>
       )}
     </div>

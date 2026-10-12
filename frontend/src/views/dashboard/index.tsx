@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell, PageSkeleton } from "@/widgets/app-shell";
+import { PageSkeleton } from "@/widgets/app-shell";
 import { DashboardOverview } from "@/widgets/dashboard-overview";
 import { courseQuery } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
@@ -10,10 +10,10 @@ import { errorMessage } from "@/shared/api";
 export function DashboardPage() {
   const { user } = useAuth();
   const course = useQuery(courseQuery);
-  const progress = useQuery({ ...progressQuery, enabled: !!user });
+  const progress = useQuery(progressQuery(user?.id));
   return (
-    <AppShell>
-      {course.error || progress.error ? (
+    <>
+      {(course.error && !course.data) || (progress.error && !progress.data) ? (
         <ErrorState
           message={errorMessage(course.error ?? progress.error)}
           retry={() => {
@@ -26,6 +26,6 @@ export function DashboardPage() {
       ) : (
         <PageSkeleton variant="dashboard" heading />
       )}
-    </AppShell>
+    </>
   );
 }

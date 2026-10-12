@@ -21,8 +21,11 @@ export function CompleteLesson({
         }),
       ),
     onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: ["progress"] });
-      await client.invalidateQueries({ queryKey: ["achievements"] });
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["progress"] }),
+        client.invalidateQueries({ queryKey: ["achievements"] }),
+        client.invalidateQueries({ queryKey: ["user"] }),
+      ]);
       onComplete();
     },
   });

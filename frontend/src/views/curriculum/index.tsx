@@ -10,7 +10,7 @@ import {
   LockKeyhole,
   Circle,
 } from "lucide-react";
-import { AppShell, PageSkeleton } from "@/widgets/app-shell";
+import { PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
@@ -25,9 +25,9 @@ import { errorMessage } from "@/shared/api";
 export function CurriculumPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const course = useQuery(courseQuery);
-  const progress = useQuery({ ...progressQuery, enabled: !!user });
+  const progress = useQuery(progressQuery(user?.id));
   const levels =
     course.data?.levels
       .filter(
@@ -50,7 +50,7 @@ export function CurriculumPage() {
       }))
       .filter((l) => l.modules.length) ?? [];
   return (
-    <AppShell protectedPage={false}>
+    <>
       <PageHeading
         eyebrow="LEARNING PATH / 00 → 11"
         title="Твой маршрут в Python."
@@ -112,9 +112,11 @@ export function CurriculumPage() {
           </button>
         </div>
       </div>
-      {course.isPending ? (
+      {loading ||
+      course.isPending ||
+      (user && progress.isPending && !course.error) ? (
         <PageSkeleton variant="curriculum" />
-      ) : course.error ? (
+      ) : course.error && !course.data ? (
         <ErrorState
           message={errorMessage(course.error)}
           retry={() => {
@@ -123,6 +125,13 @@ export function CurriculumPage() {
         />
       ) : !levels.length ? (
         <div className="state">Темы не найдены. Попробуйте другой запрос.</div>
+      ) : progress.error && !progress.data ? (
+        <ErrorState
+          message={errorMessage(progress.error)}
+          retry={() => {
+            void progress.refetch();
+          }}
+        />
       ) : (
         <div className="curriculum-levels">
           {levels.map((level) => (
@@ -201,6 +210,6 @@ export function CurriculumPage() {
           ))}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

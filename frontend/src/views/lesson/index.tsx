@@ -3,11 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Clock3, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import {
-  AppShell,
-  PageSkeleton,
-  LessonNavigationSkeleton,
-} from "@/widgets/app-shell";
+import { PageSkeleton, LessonNavigationSkeleton } from "@/widgets/app-shell";
 import { CodeEditor } from "@/widgets/code-editor";
 import { QuizPanel } from "@/widgets/quiz-panel";
 import { LessonNavigation } from "@/widgets/lesson-navigation";
@@ -31,11 +27,11 @@ export function LessonPage({
   const [tab, setTab] = useState(initialTab);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [navOpen, setNavOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const lesson = useQuery(lessonQuery(id));
   const course = useQuery(courseQuery);
   const exercises = useQuery(exerciseQuery(id));
-  const progress = useQuery({ ...progressQuery, enabled: !!user });
+  const progress = useQuery(progressQuery(user?.id));
   const completed = progress.data?.lesson_ids.includes(id) ?? false;
   const currentExercise = exercises.data?.[exerciseIndex];
   const topics = course.data
@@ -43,8 +39,17 @@ export function LessonPage({
     : [];
   const next = topics[topics.findIndex((t) => t.id === id) + 1];
   return (
-    <AppShell protectedPage={false}>
-      {lesson.error ? (
+    <>
+      {loading || (user && progress.isPending) ? (
+        <PageSkeleton variant="lesson" />
+      ) : progress.error && !progress.data ? (
+        <ErrorState
+          message={errorMessage(progress.error)}
+          retry={() => {
+            void progress.refetch();
+          }}
+        />
+      ) : lesson.error && !lesson.data ? (
         <ErrorState
           message={errorMessage(lesson.error)}
           retry={() => {
@@ -233,7 +238,7 @@ export function LessonPage({
                         ))}
                       </div>
                       <CodeEditor
-                        key={currentExercise.id}
+                        key={`${currentExercise.id}-${user?.id ?? "guest"}`}
                         exercise={currentExercise}
                         completed={
                           progress.data?.exercise_ids.includes(
@@ -257,7 +262,9 @@ export function LessonPage({
                   )}
                 </div>
               )}
-              {tab === "quiz" && <QuizPanel key={id} topicId={id} />}
+              {tab === "quiz" && (
+                <QuizPanel key={`${id}-${user?.id ?? "guest"}`} topicId={id} />
+              )}
               {tab === "review" && (
                 <div className="review-content">
                   <div className="eyebrow">TAKEAWAYS</div>
@@ -289,6 +296,6 @@ export function LessonPage({
       ) : (
         <PageSkeleton variant="lesson" />
       )}
-    </AppShell>
+    </>
   );
 }

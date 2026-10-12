@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Play,
   Square,
@@ -32,7 +32,6 @@ export function CodeEditor({
   const [code, setCode] = useState(exercise.starter_code);
   const [output, setOutput] = useState<RunOutput | null>(null);
   const [running, setRunning] = useState(false);
-  const [verifying, setVerifying] = useState(false);
   const [hint, setHint] = useState(0);
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
@@ -54,11 +53,13 @@ export function CodeEditor({
       setRunning(false);
     }
   };
-  const verify = async () => {
-    setVerifying(true);
-    setMessage("");
-    try {
-      const result = await verifyExercise(exercise.id, code);
+  const verification = useMutation({
+    mutationKey: ["verify-exercise", exercise.id],
+    mutationFn: (source: string) => verifyExercise(exercise.id, source),
+    onMutate: () => {
+      setMessage("");
+    },
+    onSuccess: async (result) => {
       setOutput({
         status: result.status === "passed" ? "ok" : "error",
         stdout: result.stdout,
@@ -69,12 +70,19 @@ export function CodeEditor({
           ? `Пройдено ${result.passed}/${result.total} проверок. +${result.xp} XP`
           : `Пройдено ${result.passed}/${result.total} проверок. Попробуйте ещё раз.`,
       );
-      await client.invalidateQueries({ queryKey: ["progress"] });
-    } catch (error) {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["progress"] }),
+        client.invalidateQueries({ queryKey: ["achievements"] }),
+        client.invalidateQueries({ queryKey: ["user"] }),
+      ]);
+    },
+    onError: (error) => {
       setMessage(errorMessage(error));
-    } finally {
-      setVerifying(false);
-    }
+    },
+  });
+  const verifying = verification.isPending;
+  const verify = () => {
+    verification.mutate(code);
   };
   return (
     <div className="exercise-workspace">

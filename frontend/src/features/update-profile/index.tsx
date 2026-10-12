@@ -1,8 +1,8 @@
 "use client";
-import { useState, type FormEvent } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import type { User } from "@/entities/user";
-import { api, unwrap, errorMessage } from "@/shared/api";
+import type { FormEvent } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { userQuery, type User } from "@/entities/user";
+import { api, unwrap, errorMessage, type Schema } from "@/shared/api";
 import { Button } from "@/shared/ui";
 export function ProfileForm({
   user,
@@ -12,32 +12,28 @@ export function ProfileForm({
   onSaved: (user: User) => void;
 }) {
   const client = useQueryClient();
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const mutation = useMutation({
+    mutationKey: ["update-profile", user.id],
+    mutationFn: async (body: Schema<"ProfileUpdate">) =>
+      unwrap(
+        await api.PATCH("/api/users/me", {
+          body,
+        }),
+      ),
+    onSuccess: async (updated) => {
+      onSaved(updated);
+      client.setQueryData(userQuery(user.id).queryKey, updated);
+      await client.invalidateQueries({ queryKey: ["progress"] });
+    },
+  });
+  const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setPending(true);
-    setMessage("");
-    try {
-      const updated = unwrap(
-        await api.PATCH("/api/users/me", {
-          body: {
-            username: String(data.get("username")),
-            daily_goal: Number(data.get("goal")),
-            timezone: String(data.get("timezone")),
-          },
-        }),
-      );
-      onSaved(updated);
-      await client.invalidateQueries({ queryKey: ["user"] });
-      await client.invalidateQueries({ queryKey: ["progress"] });
-      setMessage("Профиль сохранён.");
-    } catch (error) {
-      setMessage(errorMessage(error));
-    } finally {
-      setPending(false);
-    }
+    mutation.mutate({
+      username: String(data.get("username")),
+      daily_goal: Number(data.get("goal")),
+      timezone: String(data.get("timezone")),
+    });
   };
   return (
     <form onSubmit={submit} className="profile-form">
@@ -86,33 +82,26 @@ export function ProfileForm({
         </select>
         <small>Серия занятий и дневная цель учитывают ваш часовой пояс.</small>
       </label>
-      <Button pending={pending}>Сохранить изменения</Button>
-      {message && <p role="status">{message}</p>}
+      <Button pending={mutation.isPending}>Сохранить изменения</Button>
+      {mutation.error && <p role="alert">{errorMessage(mutation.error)}</p>}
+      {mutation.isSuccess && <p role="status">Профиль сохранён.</p>}
     </form>
   );
 }
 export function PasswordForm({ onChanged }: { onChanged: () => void }) {
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const mutation = useMutation({
+    mutationKey: ["change-password"],
+    mutationFn: async (body: Schema<"PasswordChange">) =>
+      unwrap(await api.POST("/api/users/me/password", { body })),
+    onSuccess: onChanged,
+  });
+  const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setPending(true);
-    try {
-      unwrap(
-        await api.POST("/api/users/me/password", {
-          body: {
-            current_password: String(data.get("current")),
-            new_password: String(data.get("next")),
-          },
-        }),
-      );
-      onChanged();
-    } catch (error) {
-      setMessage(errorMessage(error));
-    } finally {
-      setPending(false);
-    }
+    mutation.mutate({
+      current_password: String(data.get("current")),
+      new_password: String(data.get("next")),
+    });
   };
   return (
     <form onSubmit={submit} className="profile-form">
@@ -140,10 +129,10 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
           Не менее 12 символов. После смены пароля потребуется войти снова.
         </small>
       </label>
-      <Button className="secondary" pending={pending}>
+      <Button className="secondary" pending={mutation.isPending}>
         Изменить пароль
       </Button>
-      {message && <p role="alert">{message}</p>}
+      {mutation.error && <p role="alert">{errorMessage(mutation.error)}</p>}
     </form>
   );
 }

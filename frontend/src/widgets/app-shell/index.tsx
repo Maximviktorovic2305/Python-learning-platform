@@ -17,16 +17,9 @@ import {
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
 import { PythonLogo } from "@/shared/ui/python-logo";
-import {
-  AppShellSkeleton,
-  PublicSkeleton,
-  type PageSkeletonVariant,
-} from "./skeleton";
-export {
-  AppShellSkeleton,
-  PageSkeleton,
-  LessonNavigationSkeleton,
-} from "./skeleton";
+import { PageSkeleton, type PageSkeletonVariant } from "./skeleton";
+import { Skeleton, SkeletonRegion } from "@/shared/ui";
+export { PageSkeleton, LessonNavigationSkeleton } from "./skeleton";
 import { errorMessage } from "@/shared/api";
 
 const items = [
@@ -50,31 +43,21 @@ function skeletonVariant(path: string): PageSkeletonVariant {
   return variants[path] ?? "dashboard";
 }
 
-export function RouteSkeleton() {
-  const path = usePathname();
-  if (path === "/" || path === "/login" || path === "/register")
-    return (
-      <PublicSkeleton auth={path !== "/"} register={path === "/register"} />
-    );
-  return <AppShellSkeleton variant={skeletonVariant(path)} />;
-}
-export function AppShell({
-  children,
-  protectedPage = true,
-}: {
-  children: ReactNode;
-  protectedPage?: boolean;
-}) {
+export function AppShell({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const path = usePathname();
+  const protectedPage = [
+    "/dashboard",
+    "/practice",
+    "/achievements",
+    "/profile",
+  ].includes(path);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     if (protectedPage && !loading && !user) router.replace("/login");
   }, [protectedPage, loading, user, router]);
-  if (protectedPage && (loading || !user))
-    return <AppShellSkeleton variant={skeletonVariant(path)} />;
   return (
     <div className="app-shell">
       <aside className={`app-sidebar ${open ? "open" : ""}`}>
@@ -112,12 +95,23 @@ export function AppShell({
             Каждый день.
           </h3>
           <p>Маленькие шаги превращаются в большие проекты.</p>
-          <Link href={user ? "/practice" : "/register"}>
-            Начать практику <ArrowUpRight size={15} />
-          </Link>
+          {loading ? (
+            <Skeleton width={125} height={14} />
+          ) : (
+            <Link href={user ? "/practice" : "/register"}>
+              Начать практику <ArrowUpRight size={15} />
+            </Link>
+          )}
         </div>
         <div className="sidebar-bottom">
-          {user ? (
+          {loading ? (
+            <SkeletonRegion label="Восстанавливаем сессию…">
+              <div className="skeleton-row">
+                <Skeleton width={36} height={36} circle />
+                <Skeleton width={110} height={14} />
+              </div>
+            </SkeletonRegion>
+          ) : user ? (
             <>
               <div className="user-chip">
                 <span>{user.username.slice(0, 2).toUpperCase()}</span>
@@ -130,9 +124,10 @@ export function AppShell({
                 onClick={async () => {
                   try {
                     await logout();
-                    router.push("/login");
                   } catch (error) {
                     setError(errorMessage(error));
+                  } finally {
+                    router.replace("/login");
                   }
                 }}
               >
@@ -171,7 +166,11 @@ export function AppShell({
           </div>
         </header>
         <main id="main" className="app-content">
-          {children}
+          {protectedPage && (loading || !user) ? (
+            <PageSkeleton variant={skeletonVariant(path)} heading />
+          ) : (
+            children
+          )}
         </main>
       </div>
     </div>

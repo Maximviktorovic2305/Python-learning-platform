@@ -3,9 +3,21 @@ import type { paths, components } from "./schema";
 
 let accessToken: string | null = null;
 let refreshPending: Promise<Schema<"AuthView"> | null> | null = null;
+let sessionVersion = 0;
+let sessionController = new AbortController();
+let refreshAllowed = true;
 
 export function setAccessToken(token: string | null) {
+  sessionVersion += 1;
   accessToken = token;
+  refreshAllowed = token !== null;
+}
+
+export function endSession() {
+  setAccessToken(null);
+  sessionController.abort();
+  sessionController = new AbortController();
+  refreshPending = null;
 }
 export type Schema<K extends keyof components["schemas"]> =
   components["schemas"][K];
@@ -47,18 +59,37 @@ export function unwrap<T>(result: {
 }
 
 const apiFetch: typeof fetch = async (input, init) => {
-  const original = new Request(input, init);
+  const version = sessionVersion;
+  const source = input instanceof Request ? input.clone() : new Request(input);
+  const original = new Request(source, {
+    ...init,
+    cache: "no-store",
+    signal: AbortSignal.any([
+      init?.signal ?? source.signal,
+      sessionController.signal,
+    ]),
+  });
   const request = original.clone();
   if (accessToken)
     request.headers.set("Authorization", `Bearer ${accessToken}`);
   const response = await fetch(request);
+  original.signal.throwIfAborted();
+  if (version !== sessionVersion)
+    throw new DOMException("Session changed", "AbortError");
   if (response.status !== 401 || original.url.includes("/auth/"))
     return response;
-  if (await refreshSession()) {
+  if (refreshAllowed && (await refreshSession())) {
+    original.signal.throwIfAborted();
+    if (version !== sessionVersion)
+      throw new DOMException("Session changed", "AbortError");
     const retry = original.clone();
     if (accessToken)
       retry.headers.set("Authorization", `Bearer ${accessToken}`);
-    return fetch(retry);
+    const result = await fetch(retry);
+    original.signal.throwIfAborted();
+    if (version !== sessionVersion)
+      throw new DOMException("Session changed", "AbortError");
+    return result;
   }
   return response;
 };
@@ -72,18 +103,23 @@ export const api = createClient<paths>({
 });
 
 export function refreshSession(): Promise<Schema<"AuthView"> | null> {
-  refreshPending ??= api
+  if (!refreshAllowed) return Promise.resolve(null);
+  if (refreshPending) return refreshPending;
+  const version = sessionVersion;
+  const pending = api
     .POST("/api/auth/refresh")
     .then((result) => {
+      if (version !== sessionVersion || !refreshAllowed) return null;
       accessToken = result.data?.access_token ?? null;
       return result.data ?? null;
     })
     .catch(() => {
-      accessToken = null;
+      if (version === sessionVersion) accessToken = null;
       return null;
     })
     .finally(() => {
-      refreshPending = null;
+      if (refreshPending === pending) refreshPending = null;
     });
-  return refreshPending;
+  refreshPending = pending;
+  return pending;
 }

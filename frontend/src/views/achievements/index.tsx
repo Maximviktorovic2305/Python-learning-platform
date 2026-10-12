@@ -1,7 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { Award, Flame, Trophy, LockKeyhole, Check } from "lucide-react";
-import { AppShell, PageSkeleton } from "@/widgets/app-shell";
+import { PageSkeleton } from "@/widgets/app-shell";
 import { achievementsQuery } from "@/entities/achievement";
 import { useAuth } from "@/features/auth";
 import { PageHeading, Tag, ErrorState, Skeleton } from "@/shared/ui";
@@ -9,10 +9,10 @@ import { errorMessage } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 export function AchievementsPage() {
   const { user } = useAuth();
-  const query = useQuery({ ...achievementsQuery, enabled: !!user });
+  const query = useQuery(achievementsQuery(user?.id));
   const earned = query.data?.filter((a) => a.earned_at).length ?? 0;
   return (
-    <AppShell>
+    <>
       <PageHeading
         eyebrow="MILESTONES / SMALL WINS MATTER"
         title="Каждый шаг имеет значение."
@@ -29,7 +29,7 @@ export function AchievementsPage() {
           </Tag>
         }
       />
-      {query.error ? (
+      {query.error && !query.data ? (
         <ErrorState message={errorMessage(query.error)} />
       ) : query.isPending ? (
         <PageSkeleton variant="achievements" />
@@ -78,6 +78,6 @@ export function AchievementsPage() {
           })}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

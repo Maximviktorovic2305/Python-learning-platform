@@ -2,24 +2,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { UserRound, ShieldCheck } from "lucide-react";
-import { AppShell, PageSkeleton } from "@/widgets/app-shell";
+import { PageSkeleton } from "@/widgets/app-shell";
 import { userQuery } from "@/entities/user";
 import { useAuth } from "@/features/auth";
 import { ProfileForm, PasswordForm } from "@/features/update-profile";
 import { PageHeading, ErrorState, Tag } from "@/shared/ui";
-import { errorMessage, setAccessToken } from "@/shared/api";
+import { errorMessage } from "@/shared/api";
 export function ProfilePage() {
   const { user, logout, updateUser } = useAuth();
-  const data = useQuery({ ...userQuery, enabled: !!user });
+  const data = useQuery(userQuery(user?.id));
   const router = useRouter();
   return (
-    <AppShell>
+    <>
       <PageHeading
         eyebrow="ACCOUNT / PERSONAL SETTINGS"
         title="Ваша точка отсчёта."
         description="Настройте удобный ритм и защитите свой аккаунт."
       />
-      {data.error ? (
+      {data.error && !data.data ? (
         <ErrorState message={errorMessage(data.error)} />
       ) : data.data ? (
         <div className="profile-grid">
@@ -40,7 +40,7 @@ export function ProfilePage() {
               <UserRound size={18} />
             </div>
             <ProfileForm
-              key={data.data.username}
+              key={data.data.id}
               user={data.data}
               onSaved={updateUser}
             />
@@ -52,8 +52,9 @@ export function ProfilePage() {
             </div>
             <PasswordForm
               onChanged={() => {
-                setAccessToken(null);
-                void logout().finally(() => router.push("/login"));
+                void logout()
+                  .catch(() => {})
+                  .finally(() => router.replace("/login"));
               }}
             />
           </section>
@@ -61,6 +62,6 @@ export function ProfilePage() {
       ) : (
         <PageSkeleton variant="profile" />
       )}
-    </AppShell>
+    </>
   );
 }

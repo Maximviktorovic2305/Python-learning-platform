@@ -2,27 +2,36 @@
 import { useQuery } from "@tanstack/react-query";
 import { FolderCode, ArrowUpRight, Check, ClipboardList } from "lucide-react";
 import Link from "next/link";
-import { AppShell, PageSkeleton } from "@/widgets/app-shell";
+import { PageSkeleton } from "@/widgets/app-shell";
 import { projectsQuery, submissionsQuery } from "@/entities/project";
 import { useAuth } from "@/features/auth";
 import { ProjectForm } from "@/features/submit-project";
 import { PageHeading, Tag, ErrorState } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function ProjectsPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const projects = useQuery(projectsQuery);
-  const submissions = useQuery({ ...submissionsQuery, enabled: !!user });
+  const submissions = useQuery(submissionsQuery(user?.id));
   return (
-    <AppShell protectedPage={false}>
+    <>
       <PageHeading
         eyebrow="BUILD SOMETHING REAL / PORTFOLIO"
         title="От знаний к работающим вещам."
         description="Восемь проектов, чтобы связать отдельные темы в полноценное приложение."
       />
-      {projects.isPending ? (
+      {loading ||
+      projects.isPending ||
+      (user && submissions.isPending && !projects.error) ? (
         <PageSkeleton variant="projects" />
-      ) : projects.error ? (
+      ) : projects.error && !projects.data ? (
         <ErrorState message={errorMessage(projects.error)} />
+      ) : submissions.error && !submissions.data ? (
+        <ErrorState
+          message={errorMessage(submissions.error)}
+          retry={() => {
+            void submissions.refetch();
+          }}
+        />
       ) : (
         <div className="projects-list">
           {projects.data.map((project, i) => {
@@ -102,6 +111,6 @@ export function ProjectsPage() {
           })}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

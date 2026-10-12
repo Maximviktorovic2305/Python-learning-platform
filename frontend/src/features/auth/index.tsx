@@ -2,20 +2,21 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useRef,
   useState,
   type ReactNode,
   type FormEvent,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { User } from "@/entities/user";
+import { userQuery, type User } from "@/entities/user";
+import { sessionQuery } from "@/entities/session";
 import {
   api,
   unwrap,
   setAccessToken,
-  refreshSession,
+  endSession,
   errorMessage,
   type Schema,
 } from "@/shared/api";
@@ -23,41 +24,60 @@ import { Button } from "@/shared/ui";
 type AuthState = {
   user: User | null;
   loading: boolean;
+  loggingOut: boolean;
   accept: (data: Schema<"AuthView">) => void;
   updateUser: (user: User) => void;
   logout: () => Promise<void>;
 };
 const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
-  useEffect(() => {
-    let live = true;
-    refreshSession()
-      .then((data) => {
-        if (live && data) setUser(data.user);
-      })
-      .finally(() => {
-        if (live) setLoading(false);
-      });
-    return () => {
-      live = false;
-    };
-  }, []);
-  const accept = (data: Schema<"AuthView">) => {
+  const revision = useRef(0);
+  const [sessionRevision, setSessionRevision] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const session = useQuery(sessionQuery(sessionRevision));
+  const resetCache = (user: User | null) => {
     queryClient.clear();
+    revision.current += 1;
+    queryClient.setQueryData(sessionQuery(revision.current).queryKey, user);
+    setSessionRevision(revision.current);
+    return revision.current;
+  };
+  const updateUser = (user: User) => {
+    queryClient.setQueryData(sessionQuery(revision.current).queryKey, user);
+    queryClient.setQueryData(userQuery(user.id).queryKey, user);
+  };
+  const accept = (data: Schema<"AuthView">) => {
+    void queryClient.cancelQueries();
     setAccessToken(data.access_token);
-    setUser(data.user);
+    resetCache(data.user);
+    updateUser(data.user);
   };
   const logout = async () => {
-    unwrap(await api.POST("/api/auth/logout"));
-    setAccessToken(null);
-    setUser(null);
-    queryClient.clear();
+    // Block refresh and abort old reads/mutations before clearing their caches.
+    setLoggingOut(true);
+    endSession();
+    const cancellation = queryClient.cancelQueries();
+    const loggedOutRevision = resetCache(null);
+    try {
+      await cancellation;
+      unwrap(await api.POST("/api/auth/logout"));
+    } finally {
+      if (revision.current === loggedOutRevision) resetCache(null);
+      setLoggingOut(false);
+    }
   };
   return (
-    <AuthContext value={{ user, loading, accept, updateUser: setUser, logout }}>
+    <AuthContext
+      value={{
+        user: session.data ?? null,
+        loading: session.isPending,
+        loggingOut,
+        accept,
+        updateUser,
+        logout,
+      }}
+    >
       {children}
     </AuthContext>
   );
@@ -69,38 +89,34 @@ export function useAuth() {
 }
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
-  const { accept } = useAuth();
-  const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
-    setPending(true);
-    const form = new FormData(event.currentTarget);
-    const email = String(form.get("email"));
-    const password = String(form.get("password"));
-    try {
-      const data =
-        mode === "register"
-          ? unwrap(
-              await api.POST("/api/auth/register", {
-                body: {
-                  email,
-                  password,
-                  username: String(form.get("username")),
-                },
-              }),
-            )
-          : unwrap(
-              await api.POST("/api/auth/login", { body: { email, password } }),
-            );
+  const { accept, loggingOut } = useAuth();
+  const mutation = useMutation({
+    mutationKey: ["auth", mode],
+    mutationFn: async (body: {
+      email: string;
+      password: string;
+      username: string;
+    }) =>
+      mode === "register"
+        ? unwrap(await api.POST("/api/auth/register", { body }))
+        : unwrap(
+            await api.POST("/api/auth/login", {
+              body: { email: body.email, password: body.password },
+            }),
+          ),
+    onSuccess: (data) => {
       accept(data);
-      router.push("/dashboard");
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setPending(false);
-    }
+      router.replace("/dashboard");
+    },
+  });
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    mutation.mutate({
+      email: String(form.get("email")),
+      password: String(form.get("password")),
+      username: String(form.get("username") ?? ""),
+    });
   };
   return (
     <form className="auth-form" onSubmit={submit}>
@@ -145,12 +161,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           }
         />
       </label>
-      {error && (
+      {mutation.error && (
         <p className="form-error" role="alert">
-          {error}
+          {errorMessage(mutation.error)}
         </p>
       )}
-      <Button pending={pending}>
+      <Button pending={mutation.isPending || loggingOut}>
         {mode === "register" ? "Создать аккаунт" : "Войти в лабораторию"}
       </Button>
       <p className="form-foot">

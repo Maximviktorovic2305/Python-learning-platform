@@ -1,7 +1,7 @@
 "use client";
-import { useState, type FormEvent } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { api, unwrap, errorMessage } from "@/shared/api";
+import type { FormEvent } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api, unwrap, errorMessage, type Schema } from "@/shared/api";
 import { Button } from "@/shared/ui";
 export function ProjectForm({
   projectId,
@@ -12,30 +12,25 @@ export function ProjectForm({
   initialUrl?: string;
   initialNotes?: string;
 }) {
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
   const client = useQueryClient();
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    setPending(true);
-    try {
+  const mutation = useMutation({
+    mutationKey: ["submit-project", projectId],
+    mutationFn: async (body: Schema<"ProjectInput">) =>
       unwrap(
         await api.POST("/api/projects/{project_id}/submissions", {
           params: { path: { project_id: projectId } },
-          body: {
-            repository_url: String(data.get("url")),
-            notes: String(data.get("notes")),
-          },
+          body,
         }),
-      );
-      await client.invalidateQueries({ queryKey: ["submissions"] });
-      setMessage("Работа сохранена и ожидает проверки администратора.");
-    } catch (error) {
-      setMessage(errorMessage(error));
-    } finally {
-      setPending(false);
-    }
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["submissions"] }),
+  });
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    mutation.mutate({
+      repository_url: String(data.get("url")),
+      notes: String(data.get("notes")),
+    });
   };
   return (
     <form className="profile-form project-form" onSubmit={submit}>
@@ -60,8 +55,11 @@ export function ProjectForm({
           rows={4}
         />
       </label>
-      <Button pending={pending}>Сохранить работу</Button>
-      {message && <p role="status">{message}</p>}
+      <Button pending={mutation.isPending}>Сохранить работу</Button>
+      {mutation.error && <p role="alert">{errorMessage(mutation.error)}</p>}
+      {mutation.isSuccess && (
+        <p role="status">Работа сохранена и ожидает проверки администратора.</p>
+      )}
     </form>
   );
 }

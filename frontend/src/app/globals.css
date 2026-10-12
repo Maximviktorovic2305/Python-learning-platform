@@ -457,7 +457,7 @@ input:read-only {
 }
 .hero-copy > p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.8;
 }
 .hero-buttons {
@@ -745,40 +745,6 @@ input:read-only {
   padding: 18px;
   background: var(--surface);
 }
-.skeleton-sidebar-brand {
-  margin: 8px 0 42px;
-}
-.skeleton-sidebar-nav {
-  gap: 29px;
-  margin-bottom: 40px;
-}
-.shell-skeleton .app-sidebar > .skeleton-card {
-  padding: 18px;
-}
-.skeleton-public-header {
-  height: 82px;
-  border-bottom: 1px solid var(--border);
-}
-.skeleton-public-header > div {
-  height: 100%;
-  justify-content: space-between;
-}
-.skeleton-public-columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 80px;
-  align-items: center;
-}
-.skeleton-auth,
-.skeleton-landing {
-  padding: 70px 0;
-}
-.skeleton-auth {
-  min-height: calc(100vh - 82px);
-}
-.skeleton-landing .skeleton-card > .skeleton-circle {
-  align-self: center;
-}
 .button-pending {
   position: relative;
 }
@@ -811,17 +777,9 @@ input:read-only {
   }
 }
 @media (max-width: 850px) {
-  .skeleton-two-columns,
-  .skeleton-public-columns {
+  .skeleton-two-columns {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
-  }
-  .skeleton-auth,
-  .skeleton-landing {
-    padding: 40px 0;
-  }
-  .skeleton-auth .skeleton-public-columns > div:first-child {
-    display: none;
   }
 }
 @media (max-width: 600px) {
@@ -1085,7 +1043,7 @@ input:read-only {
 }
 .directions p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 7px;
 }
 .directions > div > svg:last-child {
@@ -1112,7 +1070,7 @@ input:read-only {
 .section-heading > p {
   max-width: 315px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 .method-grid {
   display: grid;
@@ -1146,7 +1104,7 @@ input:read-only {
   font-size: 20px;
 }
 .method-grid p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .roadmap {
@@ -1221,7 +1179,7 @@ input:read-only {
 .lab-grid p {
   color: var(--muted);
   margin-top: 20px;
-  font-size: 13px;
+  font-size: 15px;
 }
 .check-list {
   padding: 0;
@@ -1391,7 +1349,7 @@ input:read-only {
 }
 .faq-section > div > p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   margin-top: 20px;
   max-width: 320px;
 }
@@ -1416,7 +1374,7 @@ details[open] > summary > svg:last-child {
 }
 .faq-section details > p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   padding: 0 0 22px;
 }
 .final-cta {
@@ -1509,7 +1467,7 @@ details[open] > summary > svg:last-child {
   margin: 16px 0 10px;
 }
 .auth-card > p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .auth-form {
@@ -1754,7 +1712,7 @@ details[open] > summary > svg:last-child {
 }
 .page-heading p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   margin-top: 10px;
 }
 .page-heading > .tag {
@@ -1851,7 +1809,7 @@ details[open] > summary > svg:last-child {
   margin: 12px 0;
 }
 .continue-content p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   max-width: 410px;
 }
@@ -2135,7 +2093,7 @@ details[open] > summary > svg:last-child {
   margin: 20px 0 12px;
 }
 .curriculum-banner p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
 }
 .curriculum-banner > div:last-child {
@@ -2261,7 +2219,7 @@ details[open] > summary > svg:last-child {
 }
 .level-heading p {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 .curriculum-module {
   margin-top: 20px;
@@ -2464,7 +2422,7 @@ details[open] > summary > svg:last-child {
 }
 .theory-content p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.9;
 }
 .theory-content .code-block {
@@ -2489,7 +2447,7 @@ details[open] > summary > svg:last-child {
   display: none;
 }
 .examples-content > p {
-  font-size: 11px;
+  font-size: 14px;
   margin-bottom: 30px;
 }
 .examples-content section {
@@ -2655,7 +2613,7 @@ details[open] > summary > svg:last-child {
 }
 .exercise-text {
   white-space: pre-wrap;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.85;
   margin: 20px 0 15px;
@@ -3032,7 +2990,7 @@ details[open] > summary > svg:last-child {
   font-size: 18px;
 }
 .practice-card p {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .practice-card > div:nth-last-child(2) {
@@ -3140,7 +3098,7 @@ details[open] > summary > svg:last-child {
   margin: 18px 0 10px;
 }
 .achievement-card p {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .achievement-card > small {
@@ -3181,7 +3139,7 @@ details[open] > summary > svg:last-child {
   margin-bottom: 12px;
 }
 .project-detail > div > p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .project-requirements {
@@ -3533,7 +3491,7 @@ details[open] > summary > svg:last-child {
     font-size: 54px;
   }
   .hero-copy > p {
-    font-size: 12px;
+    font-size: 14px;
   }
   .hero-copy .eyebrow {
     font-size: 8px;
@@ -3729,7 +3687,7 @@ details[open] > summary > svg:last-child {
     font-size: 28px;
   }
   .page-heading p {
-    font-size: 11px;
+    font-size: 13px;
   }
   .dashboard-metrics {
     margin-top: 20px;
@@ -3808,7 +3766,7 @@ details[open] > summary > svg:last-child {
     font-size: 21px;
   }
   .theory-content p {
-    font-size: 12px;
+    font-size: 14px;
   }
   .code-block pre {
     font-size: 10px;

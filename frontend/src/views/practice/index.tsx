@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { AppShell, PageSkeleton } from "@/widgets/app-shell";
+import { PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery, allTopics } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
@@ -14,7 +14,7 @@ export function PracticePage() {
   const { user } = useAuth();
   const [filter, setFilter] = useState("all");
   const course = useQuery(courseQuery);
-  const progress = useQuery({ ...progressQuery, enabled: !!user });
+  const progress = useQuery(progressQuery(user?.id));
   const weak = new Set(progress.data?.weak_topics.map((t) => t.id));
   const topics = course.data
     ? allTopics(course.data).filter(
@@ -22,7 +22,7 @@ export function PracticePage() {
       )
     : [];
   return (
-    <AppShell>
+    <>
       <PageHeading
         eyebrow="PRACTICE / EXPERIMENT / REPEAT"
         title="Территория практики."
@@ -54,11 +54,17 @@ export function PracticePage() {
           </button>
         </div>
       </div>
-      {course.isPending ||
-      (!course.error && filter === "weak" && user && progress.isPending) ? (
+      {course.isPending || (!course.error && user && progress.isPending) ? (
         <PageSkeleton variant="practice" />
-      ) : course.error ? (
+      ) : course.error && !course.data ? (
         <ErrorState message={errorMessage(course.error)} />
+      ) : progress.error && !progress.data ? (
+        <ErrorState
+          message={errorMessage(progress.error)}
+          retry={() => {
+            void progress.refetch();
+          }}
+        />
       ) : !topics.length ? (
         <div className="state">
           <p>
@@ -98,6 +104,6 @@ export function PracticePage() {
           ))}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

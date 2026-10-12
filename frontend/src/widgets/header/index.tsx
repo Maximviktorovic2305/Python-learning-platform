@@ -6,6 +6,7 @@ import { Menu, X, ArrowUpRight } from "lucide-react";
 import { PythonLogo } from "@/shared/ui/python-logo";
 import { ThemeToggle } from "@/features/change-theme";
 import { useAuth } from "@/features/auth";
+import { Skeleton } from "@/shared/ui";
 
 export function Brand() {
   return (
@@ -22,7 +23,7 @@ export function Brand() {
 }
 export function Header() {
   const path = usePathname();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
   return (
     <header className="site-header">
@@ -48,16 +49,27 @@ export function Header() {
         </nav>
         <div className="header-actions">
           <ThemeToggle />
-          <Link href={user ? "/dashboard" : "/login"} className="header-login">
-            {user ? "Мой кабинет" : "Войти"}
-          </Link>
-          <Link
-            href={user ? "/dashboard" : "/register"}
-            className="button compact"
-          >
-            {user ? "Продолжить" : "Начать учиться"}
-            <ArrowUpRight size={16} />
-          </Link>
+          {loading ? (
+            <Skeleton width={70} height={16} className="header-login" />
+          ) : (
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className="header-login"
+            >
+              {user ? "Мой кабинет" : "Войти"}
+            </Link>
+          )}
+          {loading ? (
+            <Skeleton width={145} height={37} />
+          ) : (
+            <Link
+              href={user ? "/dashboard" : "/register"}
+              className="button compact"
+            >
+              {user ? "Продолжить" : "Начать учиться"}
+              <ArrowUpRight size={16} />
+            </Link>
+          )}
           <button
             className="icon-button mobile-menu"
             aria-expanded={open}

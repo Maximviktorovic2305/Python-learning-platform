@@ -1,9 +1,15 @@
 import { api, unwrap } from "@/shared/api";
-export const projectsQuery = {
+import { queryOptions } from "@tanstack/react-query";
+export const projectsQuery = queryOptions({
   queryKey: ["projects"],
-  queryFn: async () => unwrap(await api.GET("/api/projects")),
-};
-export const submissionsQuery = {
-  queryKey: ["submissions"],
-  queryFn: async () => unwrap(await api.GET("/api/projects/submissions")),
-};
+  staleTime: 15 * 60_000,
+  queryFn: async ({ signal }) =>
+    unwrap(await api.GET("/api/projects", { signal })),
+});
+export const submissionsQuery = (userId?: string) =>
+  queryOptions({
+    queryKey: ["submissions", userId ?? null],
+    enabled: !!userId,
+    queryFn: async ({ signal }) =>
+      unwrap(await api.GET("/api/projects/submissions", { signal })),
+  });
