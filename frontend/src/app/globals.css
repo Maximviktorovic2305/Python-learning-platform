@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  --text-description: 14px;
+  --text-item-title: 14px;
+  --text-caption: 11px;
   --bg: #0c1015;
   --surface: #13191f;
   --surface-raised: #19212a;
@@ -1151,12 +1154,12 @@ input:read-only {
 }
 .roadmap small {
   font-family: var(--font-mono), monospace;
-  font-size: 7px;
+  font-size: 10px;
   color: var(--subtle);
   letter-spacing: 0.08em;
 }
 .roadmap strong {
-  font-size: 12px;
+  font-size: var(--text-item-title);
   font-weight: 500;
 }
 .roadmap svg {
@@ -1185,7 +1188,7 @@ input:read-only {
   padding: 0;
   margin: 22px 0 28px;
   list-style: none;
-  font-size: 11px;
+  font-size: var(--text-description);
 }
 .check-list li {
   display: flex;
@@ -1281,7 +1284,7 @@ input:read-only {
 }
 .project-preview-grid > a > span:last-of-type {
   font-family: var(--font-mono), monospace;
-  font-size: 8px;
+  font-size: 10px;
   color: var(--muted);
 }
 .project-preview-grid > a > svg:last-of-type {
@@ -1422,6 +1425,45 @@ details[open] > summary > svg:last-child {
   font-size: 8px;
   color: var(--subtle);
 }
+.author-support {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--muted);
+  max-width: 255px;
+  line-height: 1.5;
+}
+.author-support > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.author-support > svg:first-child {
+  color: var(--python-yellow);
+}
+.author-support > span {
+  min-width: 0;
+}
+.author-support strong,
+.author-support small {
+  display: block;
+}
+.author-support strong {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+.author-support small {
+  margin-top: 4px;
+  font-size: var(--text-caption);
+}
+.author-support:hover strong {
+  color: var(--python-blue);
+}
+.sidebar-bottom > .author-support {
+  padding: 0 10px 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
 .auth-layout {
   min-height: calc(100vh - 82px);
   display: grid;
@@ -1481,13 +1523,13 @@ details[open] > summary > svg:last-child {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 .auth-form small,
 .profile-form small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-caption);
   font-weight: 400;
 }
 .form-error {
@@ -1497,7 +1539,7 @@ details[open] > summary > svg:last-child {
 .form-foot {
   color: var(--muted);
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
 }
 .form-foot a {
   color: var(--python-blue);
@@ -1593,7 +1635,7 @@ details[open] > summary > svg:last-child {
   margin: 13px 0 10px;
 }
 .sidebar-course p {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .sidebar-course a {
@@ -1774,7 +1816,7 @@ details[open] > summary > svg:last-child {
   letter-spacing: -0.05em;
 }
 .dashboard-metrics span {
-  font-size: 10px;
+  font-size: var(--text-caption);
   color: var(--muted);
   margin-top: 7px;
 }
@@ -1809,7 +1851,7 @@ details[open] > summary > svg:last-child {
   margin: 12px 0;
 }
 .continue-content p {
-  font-size: 13px;
+  font-size: var(--text-description);
   color: var(--muted);
   max-width: 410px;
 }
@@ -1820,7 +1862,7 @@ details[open] > summary > svg:last-child {
   align-items: center;
   margin-top: 15px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-caption);
 }
 .meta-row > span {
   display: inline-flex;
@@ -1855,7 +1897,7 @@ details[open] > summary > svg:last-child {
 }
 .continue-footer > span {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-caption);
 }
 .continue-panel > .progress-track {
   position: absolute;
@@ -1903,7 +1945,7 @@ details[open] > summary > svg:last-child {
   color: var(--muted);
 }
 .daily-panel > p {
-  font-size: 10px;
+  font-size: var(--text-description);
   color: var(--muted);
   max-width: 220px;
   margin: 15px auto;
@@ -1958,11 +2000,11 @@ details[open] > summary > svg:last-child {
   color: var(--muted);
 }
 .week-chart small {
-  font-size: 8px;
+  font-size: var(--text-caption);
   color: var(--subtle);
 }
 .weekly-panel > p {
-  font-size: 9px;
+  font-size: var(--text-description);
 }
 .empty-note {
   display: flex;
@@ -1976,11 +2018,11 @@ details[open] > summary > svg:last-child {
 }
 .empty-note strong {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-item-title);
 }
 .empty-note p {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-description);
   max-width: 270px;
 }
 .weak-row {
@@ -1991,7 +2033,7 @@ details[open] > summary > svg:last-child {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 13px;
   margin-bottom: 8px;
 }
 .weak-row strong {
@@ -2031,14 +2073,14 @@ details[open] > summary > svg:last-child {
   min-width: 0;
 }
 .route-progress strong {
-  font-size: 10px;
+  font-size: var(--text-item-title);
   font-weight: 500;
   display: block;
   margin-bottom: 8px;
 }
 .route-progress small {
   font-family: var(--font-mono), monospace;
-  font-size: 9px;
+  font-size: var(--text-caption);
   color: var(--muted);
 }
 .activity-row {
@@ -2063,17 +2105,17 @@ details[open] > summary > svg:last-child {
 }
 .activity-row strong {
   display: block;
-  font-size: 10px;
+  font-size: var(--text-item-title);
   font-weight: 500;
 }
 .activity-row small {
   display: block;
-  font-size: 8px;
+  font-size: var(--text-caption);
   color: var(--subtle);
 }
 .activity-row b {
   font-family: var(--font-mono), monospace;
-  font-size: 9px;
+  font-size: var(--text-caption);
   color: var(--python-yellow);
   margin-left: auto;
   white-space: nowrap;
@@ -2093,7 +2135,7 @@ details[open] > summary > svg:last-child {
   margin: 20px 0 12px;
 }
 .curriculum-banner p {
-  font-size: 13px;
+  font-size: var(--text-description);
   color: var(--muted);
 }
 .curriculum-banner > div:last-child {
@@ -2110,7 +2152,7 @@ details[open] > summary > svg:last-child {
   color: var(--python-blue);
 }
 .curriculum-banner span:not(.tag) {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .curriculum-toolbar {
@@ -2141,7 +2183,7 @@ details[open] > summary > svg:last-child {
   border: 0;
   background: transparent;
   padding: 12px 0;
-  font-size: 11px;
+  font-size: 13px;
 }
 .filter-tabs {
   display: flex;
@@ -2153,7 +2195,7 @@ details[open] > summary > svg:last-child {
   background: var(--surface);
 }
 .filter-tabs button {
-  font-size: 10px;
+  font-size: 13px;
   background: transparent;
   padding: 7px 10px;
   border: 0;
@@ -2219,13 +2261,13 @@ details[open] > summary > svg:last-child {
 }
 .level-heading p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-description);
 }
 .curriculum-module {
   margin-top: 20px;
 }
 .curriculum-module > h3 {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   display: flex;
   justify-content: space-between;
@@ -2236,7 +2278,7 @@ details[open] > summary > svg:last-child {
 }
 .curriculum-module > h3 > span {
   font-family: var(--font-mono), monospace;
-  font-size: 9px;
+  font-size: var(--text-caption);
   color: var(--subtle);
   font-weight: 400;
 }
@@ -2259,24 +2301,28 @@ details[open] > summary > svg:last-child {
 }
 .topic-row > div {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .topic-row strong {
-  font-size: 11px;
+  font-size: var(--text-item-title);
   font-weight: 500;
   display: block;
+  line-height: 1.5;
 }
 .topic-row small {
   color: var(--subtle);
-  font-size: 8px;
+  font-size: var(--text-caption);
   display: block;
-  margin-top: 3px;
+  margin-top: 5px;
+  line-height: 1.5;
 }
 .topic-meta {
   display: flex;
   align-items: center;
   gap: 5px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-caption);
   white-space: nowrap;
 }
 .topic-row > svg:last-child {
@@ -2298,10 +2344,13 @@ details[open] > summary > svg:last-child {
   margin: -10px -10px 0;
   align-items: start;
 }
+.lesson-main {
+  min-width: 0;
+}
 .lesson-sidebar {
   position: sticky;
   top: 20px;
-  font-size: 10px;
+  font-size: 13px;
 }
 .lesson-sidebar > a {
   display: flex;
@@ -2317,7 +2366,7 @@ details[open] > summary > svg:last-child {
   margin-bottom: 12px;
 }
 .lesson-sidebar summary {
-  font-size: 9px;
+  font-size: 12px;
   padding: 10px 0;
   justify-content: flex-start;
   align-items: flex-start;
@@ -2340,7 +2389,7 @@ details[open] > summary > svg:last-child {
 .lesson-sidebar h4 {
   color: var(--subtle);
   font-family: var(--font-mono), monospace;
-  font-size: 8px;
+  font-size: var(--text-caption);
   padding: 10px 10px 6px;
   font-weight: 400;
 }
@@ -2348,7 +2397,7 @@ details[open] > summary > svg:last-child {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 9px;
+  font-size: 12px;
   color: var(--muted);
   padding: 9px 10px;
   border-radius: 4px;
@@ -2390,7 +2439,7 @@ details[open] > summary > svg:last-child {
 }
 .lesson-tabs button {
   padding: 14px 17px;
-  font-size: 11px;
+  font-size: 13px;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -2440,7 +2489,7 @@ details[open] > summary > svg:last-child {
 }
 .lesson-bottom > p,
 .lesson-bottom > span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .lesson-nav-toggle {
@@ -2468,7 +2517,7 @@ details[open] > summary > svg:last-child {
   font-size: 10px;
 }
 .examples-content section > p {
-  font-size: 11px;
+  font-size: var(--text-description);
   color: var(--muted);
   margin-top: 15px;
 }
@@ -2629,7 +2678,7 @@ details[open] > summary > svg:last-child {
   font-size: 10px;
 }
 .hint-box {
-  font-size: 11px;
+  font-size: var(--text-description);
   padding: 15px;
   border: 1px solid var(--border);
   background: var(--yellow-surface);
@@ -2784,14 +2833,14 @@ details[open] > summary > svg:last-child {
 .quiz-intro > p {
   max-width: 470px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-description);
 }
 .quiz-rules {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
   justify-content: center;
-  font-size: 9px;
+  font-size: var(--text-caption);
   color: var(--subtle);
   margin-bottom: 10px;
 }
@@ -2811,7 +2860,7 @@ details[open] > summary > svg:last-child {
   margin: 30px 0 20px;
 }
 .quiz-active > .muted {
-  font-size: 11px;
+  font-size: 13px;
   margin: 20px 0;
 }
 .quiz-options {
@@ -2858,7 +2907,7 @@ details[open] > summary > svg:last-child {
 }
 .quiz-navigation > span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-caption);
 }
 .result-summary {
   text-align: center;
@@ -2906,7 +2955,7 @@ details[open] > summary > svg:last-child {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: var(--text-item-title);
   margin-bottom: 18px;
 }
 .review-question h4 > span {
@@ -2924,7 +2973,7 @@ details[open] > summary > svg:last-child {
   color: var(--subtle);
 }
 .review-question p {
-  font-size: 11px;
+  font-size: var(--text-description);
   white-space: pre-wrap;
   margin: 7px 0 15px;
 }
@@ -2944,7 +2993,7 @@ details[open] > summary > svg:last-child {
 .review-content li {
   display: flex;
   gap: 12px;
-  font-size: 12px;
+  font-size: var(--text-description);
   padding: 15px 0;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
@@ -2954,7 +3003,7 @@ details[open] > summary > svg:last-child {
   margin-top: 3px;
 }
 .review-content > p {
-  font-size: 12px;
+  font-size: var(--text-description);
   color: var(--muted);
   margin: 25px 0;
 }
@@ -2990,7 +3039,7 @@ details[open] > summary > svg:last-child {
   font-size: 18px;
 }
 .practice-card p {
-  font-size: 12px;
+  font-size: var(--text-description);
   color: var(--muted);
 }
 .practice-card > div:nth-last-child(2) {
@@ -3005,7 +3054,7 @@ details[open] > summary > svg:last-child {
   align-items: center;
   border-top: 1px solid var(--border);
   padding-top: 15px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .profile-grid {
@@ -3040,7 +3089,7 @@ details[open] > summary > svg:last-child {
 }
 .profile-identity small {
   display: block;
-  font-size: 10px;
+  font-size: var(--text-caption);
   margin-top: 8px;
   color: var(--muted);
 }
@@ -3054,7 +3103,7 @@ details[open] > summary > svg:last-child {
   margin-top: 5px;
 }
 .profile-form > p {
-  font-size: 11px;
+  font-size: var(--text-description);
   color: var(--python-blue);
 }
 .achievements-grid {
@@ -3098,12 +3147,12 @@ details[open] > summary > svg:last-child {
   margin: 18px 0 10px;
 }
 .achievement-card p {
-  font-size: 12px;
+  font-size: var(--text-description);
   color: var(--muted);
 }
 .achievement-card > small {
   color: var(--subtle);
-  font-size: 9px;
+  font-size: var(--text-caption);
   margin-top: 18px;
 }
 .projects-list {
@@ -3149,7 +3198,7 @@ details[open] > summary > svg:last-child {
   margin: 25px 0;
 }
 .project-requirements h3 {
-  font-size: 12px;
+  font-size: var(--text-item-title);
   letter-spacing: 0;
   margin-bottom: 12px;
 }
@@ -3161,7 +3210,7 @@ details[open] > summary > svg:last-child {
 .project-requirements li {
   display: flex;
   gap: 8px;
-  font-size: 10px;
+  font-size: var(--text-description);
   color: var(--muted);
   margin-top: 10px;
 }
@@ -3346,7 +3395,7 @@ details[open] > summary > svg:last-child {
     font-size: 16px;
   }
   .roadmap strong {
-    font-size: 10px;
+    font-size: var(--text-item-title);
   }
   .roadmap > a {
     gap: 12px;
@@ -3414,7 +3463,7 @@ details[open] > summary > svg:last-child {
     display: none;
   }
   .lesson-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     margin: 0;
   }
   .lesson-nav-mobile {
@@ -3588,7 +3637,7 @@ details[open] > summary > svg:last-child {
     grid-template-columns: 1fr;
   }
   .roadmap strong {
-    font-size: 12px;
+    font-size: var(--text-item-title);
   }
   .roadmap-index {
     width: 36px;
@@ -3740,7 +3789,7 @@ details[open] > summary > svg:last-child {
     display: none;
   }
   .topic-row strong {
-    font-size: 11px;
+    font-size: var(--text-item-title);
   }
   .level-heading h2 {
     font-size: 21px;
@@ -3756,7 +3805,7 @@ details[open] > summary > svg:last-child {
   }
   .lesson-tabs button {
     padding: 12px;
-    font-size: 10px;
+    font-size: 13px;
     white-space: nowrap;
   }
   .theory-content > section {
@@ -3830,7 +3879,7 @@ details[open] > summary > svg:last-child {
     font-size: 15px;
   }
   .achievement-card p {
-    font-size: 9px;
+    font-size: var(--text-description);
   }
   .project-detail {
     padding: 22px;

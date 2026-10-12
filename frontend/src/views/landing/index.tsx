@@ -13,6 +13,7 @@ import {
 import { Header } from "@/widgets/header";
 import { HeroPythonGif, LandingSnake } from "@/widgets/landing-snake";
 import { PythonLogo } from "@/shared/ui/python-logo";
+import { AuthorSupport } from "@/shared/ui/author-support";
 import { ActionLink, Tag } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 
@@ -459,6 +460,7 @@ export function LandingPage() {
           <Link href="/#method">Методика</Link>
         </div>
         <small>© {new Date().getFullYear()} Python Lab</small>
+        <AuthorSupport />
       </footer>
     </LandingSnake>
   );
