@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   Route,
-  Code2,
   FolderCode,
   Award,
   UserRound,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
+import { PythonLogo } from "@/shared/ui/python-logo";
 import {
   AppShellSkeleton,
   PublicSkeleton,
@@ -32,7 +32,7 @@ import { errorMessage } from "@/shared/api";
 const items = [
   { href: "/dashboard", title: "Мой прогресс", icon: LayoutDashboard },
   { href: "/curriculum", title: "Программа курса", icon: Route },
-  { href: "/practice", title: "Практика", icon: Code2 },
+  { href: "/practice", title: "Практика", icon: PythonLogo },
   { href: "/projects", title: "Проекты", icon: FolderCode },
   { href: "/achievements", title: "Достижения", icon: Award },
   { href: "/profile", title: "Профиль", icon: UserRound },
@@ -80,7 +80,7 @@ export function AppShell({
       <aside className={`app-sidebar ${open ? "open" : ""}`}>
         <Link className="sidebar-brand" href="/">
           <span className="brand-icon">
-            <Code2 size={23} />
+            <PythonLogo size={23} />
           </span>
           python<span>/lab</span>
         </Link>

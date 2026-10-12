@@ -1,11 +1,12 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { Award, Flame, Code2, Trophy, LockKeyhole, Check } from "lucide-react";
+import { Award, Flame, Trophy, LockKeyhole, Check } from "lucide-react";
 import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { achievementsQuery } from "@/entities/achievement";
 import { useAuth } from "@/features/auth";
 import { PageHeading, Tag, ErrorState, Skeleton } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
+import { PythonLogo } from "@/shared/ui/python-logo";
 export function AchievementsPage() {
   const { user } = useAuth();
   const query = useQuery({ ...achievementsQuery, enabled: !!user });
@@ -37,18 +38,20 @@ export function AchievementsPage() {
           {query.data.map((a) => {
             const Icon = a.id.includes("streak")
               ? Flame
-              : a.id.includes("exercise")
-                ? Code2
-                : a.id.includes("perfect") || a.id === "master"
-                  ? Trophy
-                  : Award;
+              : a.id.includes("perfect") || a.id === "master"
+                ? Trophy
+                : Award;
             return (
               <article
                 key={a.id}
                 className={`achievement-card ${a.earned_at ? "earned" : "locked"}`}
               >
                 <div className="achievement-medal">
-                  <Icon size={34} strokeWidth={1.4} />
+                  {a.id.includes("exercise") && !a.id.includes("streak") ? (
+                    <PythonLogo size={34} />
+                  ) : (
+                    <Icon size={34} strokeWidth={1.4} />
+                  )}
                 </div>
                 <Tag tone={a.earned_at ? "yellow" : ""}>
                   {a.earned_at ? (

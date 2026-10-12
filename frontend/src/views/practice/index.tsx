@@ -2,13 +2,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Code2, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { AppShell, PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery, allTopics } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { PageHeading, Tag, Skeleton, ErrorState } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
+import { PythonLogo } from "@/shared/ui/python-logo";
 export function PracticePage() {
   const { user } = useAuth();
   const [filter, setFilter] = useState("all");
@@ -75,7 +76,7 @@ export function PracticePage() {
             >
               <div>
                 <span>{String(i + 1).padStart(2, "0")}</span>
-                <Code2 size={21} />
+                <PythonLogo size={21} />
               </div>
               <h2>{topic.title}</h2>
               <p>{topic.summary}</p>

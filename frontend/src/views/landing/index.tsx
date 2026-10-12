@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   Braces,
-  Code2,
   Database,
   Layers3,
   Server,
@@ -199,7 +198,7 @@ export function LandingPage() {
                   tag: "THEORY",
                 },
                 {
-                  icon: Code2,
+                  icon: PythonLogo,
                   title: "Напиши решение",
                   desc: "8 задач на тему: от первого уверенного шага до разбора сложных случаев.",
                   tag: "PRACTICE",
@@ -380,7 +379,7 @@ export function LandingPage() {
               <b>+20 XP</b>
             </div>
             <div>
-              <Code2 size={18} />
+              <PythonLogo size={18} />
               <strong>Задача решена</strong>
               <b>+30 XP</b>
             </div>

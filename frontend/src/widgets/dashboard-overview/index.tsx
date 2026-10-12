@@ -6,7 +6,6 @@ import {
   BookOpen,
   Target,
   Clock3,
-  Code2,
   ArrowRight,
   Sparkles,
   Check,
@@ -15,6 +14,7 @@ import type { Progress } from "@/entities/progress";
 import type { Course } from "@/entities/course";
 import { allTopics } from "@/entities/course";
 import { ActionLink, PageHeading, ProgressBar, Tag } from "@/shared/ui";
+import { PythonLogo } from "@/shared/ui/python-logo";
 
 export function DashboardOverview({
   progress,
@@ -93,7 +93,7 @@ export function DashboardOverview({
                   {next?.minutes ?? 20} мин
                 </span>
                 <span>
-                  <Code2 size={14} />8 заданий
+                  <PythonLogo size={14} />8 заданий
                 </span>
                 <span>
                   <Sparkles size={14} />
@@ -102,7 +102,7 @@ export function DashboardOverview({
               </div>
             </div>
             <div className="continue-glyph">
-              <Code2 size={68} strokeWidth={1} />
+              <PythonLogo size={68} />
               <span>PY</span>
             </div>
           </div>
