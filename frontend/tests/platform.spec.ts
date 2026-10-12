@@ -134,4 +134,26 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   await expect(
     page.getByRole("heading", { name: `Привет, updated_${id}.` }),
   ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const route of [
+    "/dashboard",
+    "/learn/first-program",
+    "/practice",
+    "/profile",
+  ]) {
+    await page.goto(route);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+      route,
+    ).toBe(true);
+  }
+  await page.goto("/learn/first-program");
+  await page.getByRole("tab", { name: "Практика", exact: true }).click();
+  await page.screenshot({
+    path: "../.local/lesson-mobile.png",
+    fullPage: true,
+  });
 });

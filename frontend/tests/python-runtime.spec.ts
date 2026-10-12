@@ -11,6 +11,13 @@ test("browser Python can print but cannot reach authenticated API routes", async
   await page.goto("/learn/first-program");
   await page.getByRole("tab", { name: "Практика", exact: true }).click();
   const editor = page.getByLabel("Редактор Python");
+  await editor.fill("# keyboard");
+  await editor.press("Tab");
+  await expect(editor).toHaveValue("# keyboard    ");
+  await editor.press("Shift+Tab");
+  await expect(
+    page.getByRole("button", { name: "Копировать решение" }),
+  ).toBeFocused();
   await editor.fill("print('local Python works')");
   await page.getByRole("button", { name: "Запустить локально" }).click();
   await expect(page.locator(".editor-output pre").first()).toHaveText(
