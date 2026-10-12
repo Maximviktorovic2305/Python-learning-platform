@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, ArrowUpRight, Terminal } from "lucide-react";
+import { Menu, X, ArrowUpRight } from "lucide-react";
+import { PythonLogo } from "@/shared/ui/python-logo";
 import { ThemeToggle } from "@/features/change-theme";
 import { useAuth } from "@/features/auth";
 
@@ -10,7 +11,7 @@ export function Brand() {
   return (
     <Link href="/" className="brand" aria-label="Python Lab — главная">
       <span className="brand-icon">
-        <Terminal size={21} />
+        <PythonLogo size={28} />
       </span>
       <span>
         python<span className="brand-light">/lab</span>

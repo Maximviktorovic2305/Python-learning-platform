@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   Lightbulb,
-  Terminal,
   ShieldCheck,
 } from "lucide-react";
 import type { Exercise } from "@/entities/exercise";
@@ -21,6 +20,7 @@ import { useAuth } from "@/features/auth";
 import { Button, Tag } from "@/shared/ui";
 import { Highlight } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
+import { PythonLogo } from "@/shared/ui/python-logo";
 
 export function CodeEditor({
   exercise,
@@ -225,7 +225,7 @@ export function CodeEditor({
         <div className="editor-output" aria-live="polite">
           <div className="output-heading">
             <span>
-              <Terminal size={14} />
+              <PythonLogo size={16} />
               OUTPUT
             </span>
             <Tag

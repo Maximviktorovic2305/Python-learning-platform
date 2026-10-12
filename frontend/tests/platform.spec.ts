@@ -6,7 +6,12 @@ test("landing, responsive navigation, both themes and public curriculum", async 
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Думай как/ })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Курс по Python абсолютно бесплатно!",
+      exact: true,
+    }),
+  ).toBeVisible();
   await page.screenshot({ path: "../.local/landing-dark.png", fullPage: true });
   await page.getByRole("button", { name: "Переключить тему" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");

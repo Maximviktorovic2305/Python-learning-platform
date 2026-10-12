@@ -359,9 +359,6 @@ input:read-only {
   justify-content: center;
   height: 37px;
   width: 37px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 6px;
   color: var(--python-yellow);
 }
 .brand-light {
@@ -451,6 +448,100 @@ input:read-only {
 .hero-visual {
   position: relative;
   padding-top: 5px;
+}
+.landing-page {
+  position: relative;
+  isolation: isolate;
+  background: var(--bg);
+}
+.landing-page > main {
+  position: relative;
+}
+.landing-page .hero-copy,
+.landing-page .hero-terminal > div,
+.landing-page .hero-terminal > code,
+.landing-page .hero-terminal > p,
+.landing-page .metrics-inner > div {
+  position: relative;
+  z-index: 2;
+}
+.landing-page .site-header {
+  background: transparent;
+}
+.landing-snake {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.hero-python-gif {
+  position: relative;
+  height: 335px;
+  overflow: hidden;
+}
+.gif-filter-defs {
+  position: absolute;
+  pointer-events: none;
+}
+.hero-gif-frame {
+  position: absolute;
+  width: 440px;
+  max-width: 100%;
+  height: 330px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.hero-python-gif img,
+.hero-python-gif canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.hero-python-gif canvas {
+  visibility: hidden;
+}
+.landing-page[data-animation-paused="true"] .hero-python-gif img {
+  visibility: hidden;
+}
+.landing-page[data-animation-paused="true"] .hero-python-gif canvas {
+  visibility: visible;
+}
+.snake-motion-toggle {
+  position: absolute;
+  right: 18px;
+  top: 94px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
+}
+.snake-motion-toggle:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .snake-motion-toggle {
+    display: none;
+  }
+  .hero-python-gif img {
+    visibility: hidden;
+  }
+  .hero-python-gif canvas {
+    visibility: visible;
+  }
 }
 .python-mark {
   width: 40px;
@@ -3150,6 +3241,13 @@ details[open] > summary > svg:last-child {
   }
   .hero-mark {
     height: 290px;
+  }
+  .hero-python-gif {
+    height: 290px;
+  }
+  .hero-gif-frame {
+    width: 380px;
+    height: 285px;
   }
   .hero-mark .python-svg {
     width: 190px;

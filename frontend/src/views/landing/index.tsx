@@ -7,13 +7,13 @@ import {
   Database,
   Layers3,
   Server,
-  Terminal,
   Workflow,
   Check,
   ChevronDown,
 } from "lucide-react";
 import { Header } from "@/widgets/header";
-import { PythonMark } from "@/widgets/python-mark";
+import { HeroPythonGif, LandingSnake } from "@/widgets/landing-snake";
+import { PythonLogo } from "@/shared/ui/python-logo";
 import { ActionLink, Tag } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 
@@ -33,24 +33,22 @@ const stages = [
 ];
 export function LandingPage() {
   return (
-    <>
+    <LandingSnake>
       <Header />
       <main id="main">
-        <section className="landing-hero container">
+        <section className="landing-hero container" id="landing-hero">
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="status-dot" />
               ОТ ПЕРВОЙ СТРОКИ ДО PRODUCTION
             </div>
             <h1>
-              Не просто
-              <br />
-              изучай Python.
+              {"Курс по Python "}
               <br />
               <span>
-                Думай как
+                {"абсолютно "}
                 <br />
-                разработчик.
+                бесплатно!
               </span>
             </h1>
             <p>
@@ -78,7 +76,7 @@ export function LandingPage() {
             </div>
           </div>
           <div className="hero-visual">
-            <PythonMark animated />
+            <HeroPythonGif />
             <div className="hero-terminal">
               <div>
                 <span className="terminal-dots">
@@ -107,7 +105,7 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-        <section className="metrics-strip">
+        <section className="metrics-strip" id="landing-metrics">
           <div className="container metrics-inner">
             <div>
               <strong>12</strong>
@@ -333,7 +331,7 @@ export function LandingPage() {
           <div className="project-preview-grid">
             {[
               {
-                icon: Terminal,
+                icon: PythonLogo,
                 name: "CLI Task Manager",
                 tag: "FUNCTIONS / FILES",
                 number: "01",
@@ -463,6 +461,6 @@ export function LandingPage() {
         </div>
         <small>© {new Date().getFullYear()} Python Lab</small>
       </footer>
-    </>
+    </LandingSnake>
   );
 }
