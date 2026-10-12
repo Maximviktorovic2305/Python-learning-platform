@@ -18,6 +18,9 @@
   --blue-surface: #182a3b;
   --yellow-surface: #29271d;
   --green-surface: #172820;
+  --scroll-track: #10161d;
+  --scroll-thumb: #607a91;
+  --scroll-thumb-hover: #63b8fb;
   color-scheme: dark;
 }
 [data-theme="light"] {
@@ -38,10 +41,48 @@
   --blue-surface: #e7f2fa;
   --yellow-surface: #fff5d4;
   --green-surface: #e6f4ec;
+  --scroll-track: #edf1f5;
+  --scroll-thumb: #6e8395;
+  --scroll-thumb-hover: #3776ab;
   color-scheme: light;
 }
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 2px solid var(--scroll-track);
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+*::-webkit-scrollbar-thumb:active {
+  background: var(--python-blue);
+}
+*::-webkit-scrollbar-corner {
+  background: var(--scroll-track);
+}
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+@media (forced-colors: active) {
+  * {
+    scrollbar-color: auto;
+  }
 }
 html {
   scroll-behavior: smooth;
@@ -416,7 +457,11 @@ input:read-only {
   margin: 25px 0;
 }
 .hero-copy h1 > span {
+  display: inline-block;
   color: var(--muted);
+  font-size: clamp(34px, 3.5vw, 48px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
 }
 .hero-copy > p {
   color: var(--muted);
