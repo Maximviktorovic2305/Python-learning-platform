@@ -56,8 +56,15 @@ router = APIRouter(prefix="/api")
 
 
 def set_refresh(response: Response, token: str) -> None:
-    response.set_cookie("refresh", token, httponly=True, secure=get_settings().cookie_secure,
-                        samesite="strict", max_age=30 * 86400, path="/api/auth")
+    response.set_cookie(
+        "refresh",
+        token,
+        httponly=True,
+        secure=get_settings().cookie_secure,
+        samesite="strict",
+        max_age=30 * 86400,
+        path="/api/auth",
+    )
     response.headers["Cache-Control"] = "no-store"
 
 
@@ -67,22 +74,36 @@ async def health(session: Session) -> Message:
     return Message(message="ok")
 
 
-@router.post("/auth/register", response_model=AuthView, status_code=201, tags=["auth"], dependencies=[Depends(require_origin)])
+@router.post(
+    "/auth/register",
+    response_model=AuthView,
+    status_code=201,
+    tags=["auth"],
+    dependencies=[Depends(require_origin)],
+)
 async def register(payload: Register, session: Session, response: Response) -> AuthView:
     result, token = await auth.register(session, payload)
     set_refresh(response, token)
     return result
 
 
-@router.post("/auth/login", response_model=AuthView, tags=["auth"], dependencies=[Depends(require_origin)])
+@router.post(
+    "/auth/login", response_model=AuthView, tags=["auth"], dependencies=[Depends(require_origin)]
+)
 async def login(payload: Login, session: Session, response: Response) -> AuthView:
     result, token = await auth.login(session, payload)
     set_refresh(response, token)
     return result
 
 
-@router.post("/auth/refresh", response_model=AuthView, tags=["auth"], dependencies=[Depends(require_origin)])
-async def refresh(session: Session, response: Response, token: Annotated[str | None, Cookie(alias="refresh")] = None) -> AuthView:
+@router.post(
+    "/auth/refresh", response_model=AuthView, tags=["auth"], dependencies=[Depends(require_origin)]
+)
+async def refresh(
+    session: Session,
+    response: Response,
+    token: Annotated[str | None, Cookie(alias="refresh")] = None,
+) -> AuthView:
     if token is None:
         raise HTTPException(401, "Сессия отсутствует")
     result, rotated = await auth.refresh(session, token)
@@ -90,13 +111,29 @@ async def refresh(session: Session, response: Response, token: Annotated[str | N
     return result
 
 
-@router.post("/auth/logout", response_model=Message, tags=["auth"], dependencies=[Depends(require_origin)])
-async def logout(session: Session, response: Response, token: Annotated[str | None, Cookie(alias="refresh")] = None) -> Message:
+@router.post(
+    "/auth/logout", response_model=Message, tags=["auth"], dependencies=[Depends(require_origin)]
+)
+async def logout(
+    session: Session,
+    response: Response,
+    token: Annotated[str | None, Cookie(alias="refresh")] = None,
+) -> Message:
     if token:
-        auth_session = await session.scalar(select(AuthSession).where(AuthSession.token_hash == token_digest(token)).with_for_update())
+        auth_session = await session.scalar(
+            select(AuthSession)
+            .where(AuthSession.token_hash == token_digest(token))
+            .with_for_update()
+        )
         if auth_session:
             auth_session.revoked = True
-    response.delete_cookie("refresh", path="/api/auth", secure=get_settings().cookie_secure, httponly=True, samesite="strict")
+    response.delete_cookie(
+        "refresh",
+        path="/api/auth",
+        secure=get_settings().cookie_secure,
+        httponly=True,
+        samesite="strict",
+    )
     return Message(message="Вы вышли из аккаунта")
 
 
@@ -107,7 +144,11 @@ async def me(user: CurrentUser) -> UserView:
 
 @router.patch("/users/me", response_model=UserView, tags=["users"])
 async def update_profile(payload: ProfileUpdate, user: CurrentUser, session: Session) -> UserView:
-    user.username, user.daily_goal, user.timezone = payload.username, payload.daily_goal, payload.timezone
+    user.username, user.daily_goal, user.timezone = (
+        payload.username,
+        payload.daily_goal,
+        payload.timezone,
+    )
     await session.flush()
     return UserView.model_validate(user)
 
@@ -138,7 +179,7 @@ async def course(course_id: str, session: Session) -> CourseView:
 @router.get("/levels/{level_id}", response_model=LevelView, tags=["catalog"])
 async def level(level_id: str, session: Session) -> LevelView:
     catalog = await course(session=session, course_id="python")
-    result = next((l for l in catalog.levels if l.id == level_id), None)
+    result = next((item for item in catalog.levels if item.id == level_id), None)
     if result is None:
         raise HTTPException(404, "Уровень не найден")
     return result
@@ -147,7 +188,7 @@ async def level(level_id: str, session: Session) -> LevelView:
 @router.get("/modules/{module_id}", response_model=ModuleView, tags=["catalog"])
 async def module(module_id: str, session: Session) -> ModuleView:
     catalog = await course(session=session, course_id="python")
-    result = next((m for l in catalog.levels for m in l.modules if m.id == module_id), None)
+    result = next((m for item in catalog.levels for m in item.modules if m.id == module_id), None)
     if result is None:
         raise HTTPException(404, "Модуль не найден")
     return result
@@ -167,8 +208,13 @@ async def lesson(topic_id: str, session: Session) -> LessonView:
     result = await session.get(Lesson, topic_id)
     if not t.published or result is None:
         raise HTTPException(404, "Урок ещё не опубликован")
-    return LessonView(id=result.id, topic=t, theory=[TheorySection.model_validate(s) for s in result.theory],
-                      examples=[CodeExample.model_validate(e) for e in result.examples], review=result.review)
+    return LessonView(
+        id=result.id,
+        topic=t,
+        theory=[TheorySection.model_validate(s) for s in result.theory],
+        examples=[CodeExample.model_validate(e) for e in result.examples],
+        review=result.review,
+    )
 
 
 @router.post("/lessons/{topic_id}/complete", response_model=Message, tags=["learning"])
@@ -180,18 +226,38 @@ async def complete_lesson(topic_id: str, user: CurrentUser, session: Session) ->
 
 @router.get("/exercises", response_model=list[ExerciseView], tags=["learning"])
 async def exercises(topic_id: str, session: Session) -> list[ExerciseView]:
-    return [ExerciseView.model_validate(e) for e in await session.scalars(select(Exercise).where(Exercise.topic_id == topic_id).order_by(Exercise.id))]
+    return [
+        ExerciseView.model_validate(e)
+        for e in await session.scalars(
+            select(Exercise).where(Exercise.topic_id == topic_id).order_by(Exercise.id)
+        )
+    ]
 
 
 @router.post("/exercises/{exercise_id}/submit", response_model=ExecutionResult, tags=["learning"])
-async def submit_exercise(exercise_id: str, payload: CodeSubmission, user: CurrentUser, session: Session,
-                          runner: Annotated[ExecutionRunner, Depends(get_runner)]) -> ExecutionResult:
+async def submit_exercise(
+    exercise_id: str,
+    payload: CodeSubmission,
+    user: CurrentUser,
+    session: Session,
+    runner: Annotated[ExecutionRunner, Depends(get_runner)],
+) -> ExecutionResult:
     exercise = await session.get(Exercise, exercise_id)
     if exercise is None:
         raise HTTPException(404, "Задание не найдено")
-    tests = [TestCase(stdin=t.stdin, expected_stdout=t.expected_stdout) for t in await session.scalars(select(ExerciseTest).where(ExerciseTest.exercise_id == exercise_id))]
+    tests = [
+        TestCase(stdin=t.stdin, expected_stdout=t.expected_stdout)
+        for t in await session.scalars(
+            select(ExerciseTest).where(ExerciseTest.exercise_id == exercise_id)
+        )
+    ]
     result = await runner.execute(ExecutionRequest(code=payload.code, tests=tests))
-    if result.status == "passed" and result.total == len(tests) and result.passed == len(tests) and tests:
+    if (
+        result.status == "passed"
+        and result.total == len(tests)
+        and result.passed == len(tests)
+        and tests
+    ):
         result.xp = await award(session, user, "exercise", exercise.id, exercise.topic_id, 30)
     return result
 
@@ -202,7 +268,9 @@ async def start_quiz(topic_id: str, user: CurrentUser, session: Session) -> Atte
 
 
 @router.post("/attempts/{attempt_id}/submit", response_model=AttemptResult, tags=["assessment"])
-async def finish_quiz(attempt_id: UUID, payload: AttemptSubmission, user: CurrentUser, session: Session) -> AttemptResult:
+async def finish_quiz(
+    attempt_id: UUID, payload: AttemptSubmission, user: CurrentUser, session: Session
+) -> AttemptResult:
     return await submit_attempt(session, user, attempt_id, payload)
 
 
@@ -221,29 +289,63 @@ async def progress(user: CurrentUser, session: Session) -> ProgressView:
 
 @router.get("/achievements", response_model=list[AchievementView], tags=["progress"])
 async def achievements(user: CurrentUser, session: Session) -> list[AchievementView]:
-    earned = {a.achievement_id: a.earned_at for a in await session.scalars(select(UserAchievement).where(UserAchievement.user_id == user.id))}
-    return [AchievementView(id=a.id, title=a.title, description=a.description, threshold=a.threshold, earned_at=earned.get(a.id))
-            for a in await session.scalars(select(Achievement).order_by(Achievement.threshold))]
+    earned = {
+        a.achievement_id: a.earned_at
+        for a in await session.scalars(
+            select(UserAchievement).where(UserAchievement.user_id == user.id)
+        )
+    }
+    return [
+        AchievementView(
+            id=a.id,
+            title=a.title,
+            description=a.description,
+            threshold=a.threshold,
+            earned_at=earned.get(a.id),
+        )
+        for a in await session.scalars(select(Achievement).order_by(Achievement.threshold))
+    ]
 
 
 @router.get("/projects", response_model=list[ProjectView], tags=["projects"])
 async def projects(session: Session) -> list[ProjectView]:
-    return [ProjectView.model_validate(p) for p in await session.scalars(select(Project).order_by(Project.id))]
+    return [
+        ProjectView.model_validate(p)
+        for p in await session.scalars(select(Project).order_by(Project.id))
+    ]
 
 
 @router.get("/projects/submissions", response_model=list[ProjectSubmissionView], tags=["projects"])
 async def project_submissions(user: CurrentUser, session: Session) -> list[ProjectSubmissionView]:
-    return [ProjectSubmissionView.model_validate(p) for p in await session.scalars(select(ProjectSubmission).where(ProjectSubmission.user_id == user.id))]
+    return [
+        ProjectSubmissionView.model_validate(p)
+        for p in await session.scalars(
+            select(ProjectSubmission).where(ProjectSubmission.user_id == user.id)
+        )
+    ]
 
 
-@router.post("/projects/{project_id}/submissions", response_model=ProjectSubmissionView, tags=["projects"])
-async def submit_project(project_id: str, payload: ProjectInput, user: CurrentUser, session: Session) -> ProjectSubmissionView:
+@router.post(
+    "/projects/{project_id}/submissions", response_model=ProjectSubmissionView, tags=["projects"]
+)
+async def submit_project(
+    project_id: str, payload: ProjectInput, user: CurrentUser, session: Session
+) -> ProjectSubmissionView:
     if await session.get(Project, project_id) is None:
         raise HTTPException(404, "Проект не найден")
     await session.refresh(user, with_for_update=True)
-    submission = await session.scalar(select(ProjectSubmission).where(ProjectSubmission.user_id == user.id, ProjectSubmission.project_id == project_id))
+    submission = await session.scalar(
+        select(ProjectSubmission).where(
+            ProjectSubmission.user_id == user.id, ProjectSubmission.project_id == project_id
+        )
+    )
     if submission is None:
-        submission = ProjectSubmission(user_id=user.id, project_id=project_id, repository_url=str(payload.repository_url), notes=payload.notes)
+        submission = ProjectSubmission(
+            user_id=user.id,
+            project_id=project_id,
+            repository_url=str(payload.repository_url),
+            notes=payload.notes,
+        )
         session.add(submission)
     else:
         if submission.status == "approved":
@@ -254,9 +356,12 @@ async def submit_project(project_id: str, payload: ProjectInput, user: CurrentUs
     return ProjectSubmissionView.model_validate(submission)
 
 
-@router.post("/projects/submissions/{submission_id}/approve", response_model=Message, tags=["admin"])
+@router.post(
+    "/projects/submissions/{submission_id}/approve", response_model=Message, tags=["admin"]
+)
 async def approve_project(submission_id: UUID, admin: AdminUser, session: Session) -> Message:
     from app.models.tables import User
+
     submission = await session.get(ProjectSubmission, submission_id)
     if submission is None:
         raise HTTPException(404, "Работа не найдена")

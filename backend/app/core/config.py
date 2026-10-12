@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     runner_token: str = ""
 
     @model_validator(mode="after")
-    def production_configuration(self) -> "Settings":
+    def production_configuration(self) -> Settings:
         if self.environment == "production":
             if not self.cookie_secure or not self.allowed_origin.startswith("https://"):
                 raise ValueError("Production requires secure cookies and an HTTPS origin")

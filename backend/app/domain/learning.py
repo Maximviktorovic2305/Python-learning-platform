@@ -1,7 +1,7 @@
 import random
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 
 class QuestionIdentity(Protocol):
@@ -11,10 +11,9 @@ class QuestionIdentity(Protocol):
     def difficulty(self) -> str: ...
 
 
-Q = TypeVar("Q", bound=QuestionIdentity)
-
-
-def select_questions(pool: list[Q], distribution: dict[str, int], rng: random.Random | None = None) -> list[Q]:
+def select_questions[Q: QuestionIdentity](
+    pool: list[Q], distribution: dict[str, int], rng: random.Random | None = None
+) -> list[Q]:
     randomizer = rng or random.SystemRandom()
     groups: dict[str, list[Q]] = defaultdict(list)
     for question in pool:

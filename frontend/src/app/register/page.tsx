@@ -1,2 +1,4 @@
 import { AuthPage } from "@/views/auth";
-export default function Page() { return <AuthPage mode="register" />; }
+export default function Page() {
+  return <AuthPage mode="register" />;
+}

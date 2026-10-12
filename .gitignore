@@ -14,3 +14,4 @@
 *.log
 **/*.egg-info/
 **/.mypy_cache/
+frontend/public/python-runtime/

@@ -19,16 +19,24 @@ DUMMY_HASH = hash_password("timing-equalization-not-an-account-password")
 
 async def create_session(session: AsyncSession, user: User) -> tuple[AuthView, str]:
     token = new_refresh_token()
-    auth_session = AuthSession(user_id=user.id, token_hash=token_digest(token),
-                               expires_at=datetime.now(UTC) + timedelta(days=30))
+    auth_session = AuthSession(
+        user_id=user.id,
+        token_hash=token_digest(token),
+        expires_at=datetime.now(UTC) + timedelta(days=30),
+    )
     session.add(auth_session)
     await session.flush()
-    return AuthView(access_token=access_token(user.id, auth_session.id), user=UserView.model_validate(user)), token
+    return AuthView(
+        access_token=access_token(user.id, auth_session.id), user=UserView.model_validate(user)
+    ), token
 
 
 async def register(session: AsyncSession, payload: Register) -> tuple[AuthView, str]:
-    user = User(email=str(payload.email).lower(), username=payload.username,
-                password_hash=hash_password(payload.password))
+    user = User(
+        email=str(payload.email).lower(),
+        username=payload.username,
+        password_hash=hash_password(payload.password),
+    )
     session.add(user)
     await session.flush()
     return await create_session(session, user)
@@ -43,17 +51,27 @@ async def login(session: AsyncSession, payload: Login) -> tuple[AuthView, str]:
 
 
 async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str]:
-    auth_session = await session.scalar(select(AuthSession).where(AuthSession.token_hash == token_digest(token)).with_for_update())
+    auth_session = await session.scalar(
+        select(AuthSession).where(AuthSession.token_hash == token_digest(token)).with_for_update()
+    )
     now = datetime.now(UTC)
-    if auth_session is None or auth_session.revoked or auth_session.expires_at.replace(tzinfo=UTC) <= now:
+    if (
+        auth_session is None
+        or auth_session.revoked
+        or auth_session.expires_at.replace(tzinfo=UTC) <= now
+    ):
         raise HTTPException(401, "Сессия завершена")
     user = await session.get(User, auth_session.user_id)
     if user is None:
         raise HTTPException(401, "Сессия завершена")
     new_token = new_refresh_token()
     auth_session.token_hash = token_digest(new_token)
-    return AuthView(access_token=access_token(user.id, auth_session.id), user=UserView.model_validate(user)), new_token
+    return AuthView(
+        access_token=access_token(user.id, auth_session.id), user=UserView.model_validate(user)
+    ), new_token
 
 
 async def revoke_sessions(session: AsyncSession, user: User) -> None:
-    await session.execute(update(AuthSession).where(AuthSession.user_id == user.id).values(revoked=True))
+    await session.execute(
+        update(AuthSession).where(AuthSession.user_id == user.id).values(revoked=True)
+    )

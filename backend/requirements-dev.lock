@@ -1,0 +1,15 @@
+-r requirements.lock
+aiosqlite==0.22.1
+colorama==0.4.6
+iniconfig==2.3.1
+librt==0.16.0
+mypy==1.20.2
+mypy-extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+pluggy==1.6.0
+pygments==2.21.0
+pytest==9.1.1
+pytest-asyncio==1.4.0
+ruff==0.17.0
+types-pyyaml==6.0.12.20260906

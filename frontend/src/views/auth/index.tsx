@@ -1,4 +1,37 @@
 import { Header } from "@/widgets/header";
 import { PythonMark } from "@/widgets/python-mark";
 import { AuthForm } from "@/features/auth";
-export function AuthPage({ mode }: { mode: "login" | "register" }) { return <><Header /><main id="main" className="auth-layout container"><div className="auth-aside"><div className="eyebrow">YOUR NEXT CHAPTER</div><h1>Будущее начинается<br />с первой строки.</h1><p>Понимание вместо зубрёжки.<br />Практика вместо бесконечных видео.</p><PythonMark animated /></div><section className="auth-card"><span className="eyebrow">PYTHON / LAB</span><h2>{mode === "register" ? "Начнём знакомство." : "С возвращением."}</h2><p>{mode === "register" ? "Создайте аккаунт — и ваш путь сохранится." : "Ваша лаборатория ждёт следующую идею."}</p><AuthForm mode={mode} /></section></main></>; }
+export function AuthPage({ mode }: { mode: "login" | "register" }) {
+  return (
+    <>
+      <Header />
+      <main id="main" className="auth-layout container">
+        <div className="auth-aside">
+          <div className="eyebrow">YOUR NEXT CHAPTER</div>
+          <h1>
+            Будущее начинается
+            <br />с первой строки.
+          </h1>
+          <p>
+            Понимание вместо зубрёжки.
+            <br />
+            Практика вместо бесконечных видео.
+          </p>
+          <PythonMark animated />
+        </div>
+        <section className="auth-card">
+          <span className="eyebrow">PYTHON / LAB</span>
+          <h2>
+            {mode === "register" ? "Начнём знакомство." : "С возвращением."}
+          </h2>
+          <p>
+            {mode === "register"
+              ? "Создайте аккаунт — и ваш путь сохранится."
+              : "Ваша лаборатория ждёт следующую идею."}
+          </p>
+          <AuthForm mode={mode} />
+        </section>
+      </main>
+    </>
+  );
+}

@@ -1,11 +1,12 @@
 [project]
 name = "python-lab-api"
 version = "1.0.0"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
-  "fastapi[standard]==0.143.0", "pydantic==2.14.1", "pydantic-settings>=2.10,<3",
+  "fastapi==0.143.0", "pydantic[email]==2.14.1", "pydantic-settings==2.15.0",
   "sqlalchemy[asyncio]==2.1.4", "asyncpg==0.32.0", "alembic==1.20.0",
   "pwdlib[argon2]==0.3.1", "PyJWT==2.15.1", "uvicorn==0.54.0",
+  "httpx==0.28.1", "tzdata==2026.5",
 ]
 
 [dependency-groups]
@@ -21,6 +22,7 @@ include = ["app*"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
+plugins = ["pydantic.mypy"]
 files = ["app", "migrations/env.py"]
 
 [tool.pytest.ini_options]

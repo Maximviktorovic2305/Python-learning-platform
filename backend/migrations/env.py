@@ -22,7 +22,9 @@ async def online() -> None:
 
 
 if context.is_offline_mode():
-    context.configure(url=get_settings().database_url, target_metadata=Base.metadata, literal_binds=True)
+    context.configure(
+        url=get_settings().database_url, target_metadata=Base.metadata, literal_binds=True
+    )
     with context.begin_transaction():
         context.run_migrations()
 else:

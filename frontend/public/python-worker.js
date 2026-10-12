@@ -1,5 +1,5 @@
 /* Python runs on the visitor's device, in a disposable worker, never in the API. */
-importScripts("https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js");
+import { loadPyodide } from "/python-runtime/v314.0.7/pyodide.mjs";
 self.onmessage = async ({ data }) => {
   let stdout = "";
   let stderr = "";
@@ -8,7 +8,7 @@ self.onmessage = async ({ data }) => {
     if (target === "stdout") stdout += text + "\n"; else stderr += text + "\n";
   };
   try {
-    const python = await loadPyodide({ stdout: text => append(text, "stdout"), stderr: text => append(text, "stderr") });
+    const python = await loadPyodide({ indexURL: new URL("/python-runtime/v314.0.7/", self.location.href).href, stdout: text => append(text, "stdout"), stderr: text => append(text, "stderr") });
     self.postMessage({ type: "ready" });
     python.setStdin({ stdin: () => undefined });
     await python.runPythonAsync(data.code);

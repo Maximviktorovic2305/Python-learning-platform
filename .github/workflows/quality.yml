@@ -1,0 +1,103 @@
+name: Quality and learning flows
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_USER: python
+          POSTGRES_PASSWORD: ci-test-password
+          POSTGRES_DB: python_lab_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U python -d python_lab_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-123456789
+      RUNNER_TOKEN: ci-only-runner-token-not-for-production-123456789
+      DATABASE_URL: postgresql+asyncpg://python:ci-test-password@localhost:5432/python_lab
+      TEST_DATABASE_URL: postgresql+asyncpg://python:ci-test-password@localhost:5432/python_lab_test
+      ALLOWED_ORIGIN: http://localhost:3010
+      EXECUTION_RUNNER: remote
+      RUNNER_URL: http://127.0.0.1:8090
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install Python dependencies
+        run: pip install -r backend/requirements-dev.lock -e backend
+      - name: Python lint and typing
+        run: |
+          ruff check backend runner
+          ruff format --check backend runner
+          cd backend
+          mypy
+          mypy --strict ../runner/main.py
+      - name: PostgreSQL integration tests
+        working-directory: backend
+        run: pytest -q
+      - name: Sandbox isolation tests
+        env:
+          RUN_DOCKER_TESTS: '1'
+        run: |
+          docker pull python:3.14-slim
+          pytest runner/test_sandbox.py -q
+      - name: Install frontend dependencies and browser
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: API contract consistency
+        working-directory: backend
+        run: |
+          python -m app.export_openapi
+          cd ../frontend
+          npm run api:generate
+          npx prettier --write src/shared/api/schema.ts
+          git diff --exit-code -- ../backend/openapi.json src/shared/api/schema.ts
+      - name: Frontend quality and production build
+        working-directory: frontend
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run lint:fsd
+          npm run format:check
+          npm audit --omit=dev --audit-level=low
+          npm run build
+      - name: Start real learning services
+        run: |
+          PGPASSWORD=ci-test-password psql -h localhost -U python -d python_lab_test -c 'CREATE DATABASE python_lab;'
+          cd backend
+          alembic upgrade head
+          alembic check
+          python -m app.seed
+          uvicorn app.main:app --host 127.0.0.1 --port 8010 > /tmp/python-api.log 2>&1 &
+          cd ../runner
+          uvicorn main:app --host 127.0.0.1 --port 8090 > /tmp/python-runner.log 2>&1 &
+          cd ../frontend
+          npm run start -- --port 3010 > /tmp/python-web.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:3010/api/health; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/python-api.log /tmp/python-runner.log /tmp/python-web.log
+          exit 1
+      - name: Browser flows and accessibility
+        working-directory: frontend
+        run: npm test

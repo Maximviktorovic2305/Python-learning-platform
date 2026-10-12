@@ -20,7 +20,9 @@ class Base(DeclarativeBase):
 
 class Timestamped:
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class User(Timestamped, Base):
@@ -122,7 +124,9 @@ class Exercise(Base):
 class ExerciseTest(Base):
     __tablename__ = "exercise_tests"
     id: Mapped[str] = mapped_column(String(120), primary_key=True)
-    exercise_id: Mapped[str] = mapped_column(ForeignKey("exercises.id", ondelete="CASCADE"), index=True)
+    exercise_id: Mapped[str] = mapped_column(
+        ForeignKey("exercises.id", ondelete="CASCADE"), index=True
+    )
     stdin: Mapped[str]
     expected_stdout: Mapped[str]
 
@@ -167,7 +171,9 @@ class Answer(Base):
     __tablename__ = "answers"
     __table_args__ = (UniqueConstraint("attempt_id", "question_id"),)
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    attempt_id: Mapped[UUID] = mapped_column(ForeignKey("quiz_attempts.id", ondelete="CASCADE"), index=True)
+    attempt_id: Mapped[UUID] = mapped_column(
+        ForeignKey("quiz_attempts.id", ondelete="CASCADE"), index=True
+    )
     question_id: Mapped[str] = mapped_column(ForeignKey("questions.id"))
     selected: Mapped[list[int]] = mapped_column(JSON)
     correct: Mapped[bool]
@@ -175,12 +181,18 @@ class Answer(Base):
 
 class Completion(Base):
     """Append-only XP ledger and idempotent completion, shared across learning activities."""
+
     __tablename__ = "completions"
-    __table_args__ = (UniqueConstraint("user_id", "kind", "resource_id"), CheckConstraint("xp >= 0"),
-                      Index("ix_completions_user_day", "user_id", "activity_date"))
+    __table_args__ = (
+        UniqueConstraint("user_id", "kind", "resource_id"),
+        CheckConstraint("xp >= 0"),
+        Index("ix_completions_user_day", "user_id", "activity_date"),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    topic_id: Mapped[str | None] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), index=True)
+    topic_id: Mapped[str | None] = mapped_column(
+        ForeignKey("topics.id", ondelete="CASCADE"), index=True
+    )
     kind: Mapped[str] = mapped_column(String(20))
     resource_id: Mapped[str] = mapped_column(String(100))
     xp: Mapped[int]
@@ -190,8 +202,12 @@ class Completion(Base):
 
 class QuestionMemory(Base):
     __tablename__ = "question_memory"
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    question_id: Mapped[str] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    question_id: Mapped[str] = mapped_column(
+        ForeignKey("questions.id", ondelete="CASCADE"), primary_key=True
+    )
     correct_count: Mapped[int] = mapped_column(default=0)
     wrong_count: Mapped[int] = mapped_column(default=0)
     confidence: Mapped[float] = mapped_column(default=0)
@@ -231,6 +247,8 @@ class Achievement(Base):
 
 class UserAchievement(Base):
     __tablename__ = "user_achievements"
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
     achievement_id: Mapped[str] = mapped_column(ForeignKey("achievements.id"), primary_key=True)
     earned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

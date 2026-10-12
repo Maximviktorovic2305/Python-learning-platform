@@ -27,15 +27,24 @@ async def start_attempt(session: AsyncSession, user: User, topic_id: str) -> Att
     attempt = QuizAttempt(user_id=user.id, quiz_id=quiz.id, question_ids=[q.id for q in selected])
     session.add(attempt)
     await session.flush()
-    return AttemptView(id=attempt.id, quiz_id=quiz.id, created_at=attempt.created_at,
-                       questions=[QuestionView.model_validate(q) for q in selected])
+    return AttemptView(
+        id=attempt.id,
+        quiz_id=quiz.id,
+        created_at=attempt.created_at,
+        questions=[QuestionView.model_validate(q) for q in selected],
+    )
 
 
-async def submit_attempt(session: AsyncSession, user: User, attempt_id: UUID, payload: AttemptSubmission) -> AttemptResult:
+async def submit_attempt(
+    session: AsyncSession, user: User, attempt_id: UUID, payload: AttemptSubmission
+) -> AttemptResult:
     # Lock ordering is user -> attempt throughout all activity writers.
     await session.refresh(user, with_for_update=True)
-    attempt = await session.scalar(select(QuizAttempt).where(QuizAttempt.id == attempt_id,
-                                   QuizAttempt.user_id == user.id).with_for_update())
+    attempt = await session.scalar(
+        select(QuizAttempt)
+        .where(QuizAttempt.id == attempt_id, QuizAttempt.user_id == user.id)
+        .with_for_update()
+    )
     if attempt is None:
         raise HTTPException(404, "Попытка не найдена")
     if attempt.finished_at is not None:
@@ -45,22 +54,36 @@ async def submit_attempt(session: AsyncSession, user: User, attempt_id: UUID, pa
         raise HTTPException(422, "Ответьте на все вопросы этой попытки ровно один раз")
     if datetime.now(UTC) - attempt.created_at.replace(tzinfo=UTC) > timedelta(hours=2):
         raise HTTPException(409, "Время попытки истекло; начните новый тест")
-    questions = {q.id: q for q in await session.scalars(select(Question).where(Question.id.in_(ids)))}
+    questions = {
+        q.id: q for q in await session.scalars(select(Question).where(Question.id.in_(ids)))
+    }
     correct_count = 0
     now = datetime.now(UTC)
     for submitted in payload.answers:
         question = questions[submitted.question_id]
         selected = submitted.selected
-        if len(selected) != len(set(selected)) or any(i < 0 or i >= len(question.options) for i in selected):
+        if len(selected) != len(set(selected)) or any(
+            i < 0 or i >= len(question.options) for i in selected
+        ):
             raise HTTPException(422, "Некорректный вариант ответа")
         if question.kind != "multiple_select" and len(selected) != 1:
             raise HTTPException(422, "Выберите один вариант")
         correct = set(selected) == set(question.correct_answer)
         correct_count += correct
-        session.add(Answer(attempt_id=attempt.id, question_id=question.id, selected=selected, correct=correct))
+        session.add(
+            Answer(
+                attempt_id=attempt.id, question_id=question.id, selected=selected, correct=correct
+            )
+        )
         memory = await session.get(QuestionMemory, (user.id, question.id))
         if memory is None:
-            memory = QuestionMemory(user_id=user.id, question_id=question.id, correct_count=0, wrong_count=0, confidence=0)
+            memory = QuestionMemory(
+                user_id=user.id,
+                question_id=question.id,
+                correct_count=0,
+                wrong_count=0,
+                confidence=0,
+            )
             session.add(memory)
         memory.correct_count += int(correct)
         memory.wrong_count += int(not correct)
@@ -81,11 +104,39 @@ async def submit_attempt(session: AsyncSession, user: User, attempt_id: UUID, pa
 async def attempt_result(session: AsyncSession, attempt: QuizAttempt) -> AttemptResult:
     if attempt.finished_at is None or attempt.score is None:
         raise HTTPException(409, "Тест ещё не завершён")
-    questions = {q.id: q for q in await session.scalars(select(Question).where(Question.id.in_(attempt.question_ids)))}
-    answers = {a.question_id: a for a in await session.scalars(select(Answer).where(Answer.attempt_id == attempt.id))}
-    review = [AnswerReview(question=QuestionView.model_validate(questions[qid]),
-              selected=answers[qid].selected, correct_answer=questions[qid].correct_answer,
-              correct=answers[qid].correct, explanation=questions[qid].explanation) for qid in attempt.question_ids]
-    return AttemptResult(id=attempt.id, score=attempt.score, correct_count=sum(a.correct for a in answers.values()),
-        total=len(answers), seconds=max(0, int((attempt.finished_at.replace(tzinfo=UTC) - attempt.created_at.replace(tzinfo=UTC)).total_seconds())),
-        xp=attempt.xp_awarded, review=review)
+    questions = {
+        q.id: q
+        for q in await session.scalars(
+            select(Question).where(Question.id.in_(attempt.question_ids))
+        )
+    }
+    answers = {
+        a.question_id: a
+        for a in await session.scalars(select(Answer).where(Answer.attempt_id == attempt.id))
+    }
+    review = [
+        AnswerReview(
+            question=QuestionView.model_validate(questions[qid]),
+            selected=answers[qid].selected,
+            correct_answer=questions[qid].correct_answer,
+            correct=answers[qid].correct,
+            explanation=questions[qid].explanation,
+        )
+        for qid in attempt.question_ids
+    ]
+    return AttemptResult(
+        id=attempt.id,
+        score=attempt.score,
+        correct_count=sum(a.correct for a in answers.values()),
+        total=len(answers),
+        seconds=max(
+            0,
+            int(
+                (
+                    attempt.finished_at.replace(tzinfo=UTC) - attempt.created_at.replace(tzinfo=UTC)
+                ).total_seconds()
+            ),
+        ),
+        xp=attempt.xp_awarded,
+        review=review,
+    )

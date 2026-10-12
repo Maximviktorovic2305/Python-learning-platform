@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/prepare-python.mjs",
+    "predev": "node scripts/prepare-python.mjs",
+    "prebuild": "node scripts/prepare-python.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint:fsd": "node scripts/check-fsd.mjs",
+    "test": "playwright test",
+    "format": "prettier --write src tests scripts *.ts *.mjs *.json",
+    "format:check": "prettier --check src tests scripts *.ts *.mjs *.json",
+    "api:generate": "openapi-typescript ../backend/openapi.json -o src/shared/api/schema.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.2",
@@ -15,21 +24,27 @@
     "next": "16.4.0",
     "next-themes": "^0.4.6",
     "openapi-fetch": "^0.17.0",
+    "pyodide": "314.0.7",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.64.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
+    "eslint": "^9.39.5",
     "eslint-config-next": "16.4.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.10",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
-  }
+  },
+  "engines": {
+    "node": ">=24 <27"
+  },
+  "packageManager": "npm@11.16.0"
 }

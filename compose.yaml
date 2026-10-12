@@ -1,0 +1,83 @@
+name: python-lab
+services:
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: python
+      POSTGRES_DB: python_lab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U python -d python_lab]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+  migrate:
+    build: ./backend
+    command: [sh, -c, "alembic upgrade head && python -m app.seed"]
+    environment: &api-environment
+      DATABASE_URL: postgresql+asyncpg://python:${POSTGRES_PASSWORD}@postgres:5432/python_lab
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3010}
+      EXECUTION_RUNNER: ${EXECUTION_RUNNER:-disabled}
+      RUNNER_URL: http://runner:8090
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [data]
+  backend:
+    build: ./backend
+    environment: *api-environment
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    networks: [data, application, execution]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8010/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        WEB_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3010}
+    ports: ["127.0.0.1:${FRONTEND_PORT:-3010}:3010"]
+    depends_on:
+      backend: {condition: service_healthy}
+    networks: [application]
+  sandbox-daemon:
+    image: docker:28-dind
+    profiles: [sandbox]
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command: [dockerd, --host=tcp://0.0.0.0:2375, --tls=false]
+    networks: [sandbox-control]
+    volumes: [sandbox-images:/var/lib/docker]
+    healthcheck:
+      test: [CMD, docker, -H, tcp://localhost:2375, info]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  runner:
+    build: ./runner
+    restart: on-failure:5
+    profiles: [sandbox]
+    environment:
+      DOCKER_HOST: tcp://sandbox-daemon:2375
+      RUNNER_TOKEN: ${RUNNER_TOKEN:?Set RUNNER_TOKEN in .env}
+    depends_on:
+      sandbox-daemon: {condition: service_healthy}
+    networks: [execution, sandbox-control]
+networks:
+  data: {internal: true}
+  application: {}
+  execution: {internal: true}
+  sandbox-control: {}
+volumes:
+  postgres-data: {}
+  sandbox-images: {}
