@@ -1,0 +1,30 @@
+"use client";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, Clock3, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { AppShell } from "@/widgets/app-shell";
+import { CodeEditor } from "@/widgets/code-editor";
+import { QuizPanel } from "@/widgets/quiz-panel";
+import { LessonNavigation } from "@/widgets/lesson-navigation";
+import { lessonQuery } from "@/entities/lesson";
+import { courseQuery, allTopics } from "@/entities/course";
+import { exerciseQuery } from "@/entities/exercise";
+import { progressQuery } from "@/entities/progress";
+import { useAuth } from "@/features/auth";
+import { CompleteLesson } from "@/features/complete-lesson";
+import { Button, Tag, Loading, ErrorState } from "@/shared/ui";
+import { CodeBlock } from "@/shared/ui/code";
+import { errorMessage } from "@/shared/api";
+
+export function LessonPage({ id, initialTab = "theory" }: { id: string; initialTab?: string }) {
+  const [tab, setTab] = useState(initialTab); const [exerciseIndex, setExerciseIndex] = useState(0); const [navOpen, setNavOpen] = useState(false); const { user } = useAuth(); const lesson = useQuery(lessonQuery(id)); const course = useQuery(courseQuery); const exercises = useQuery(exerciseQuery(id)); const progress = useQuery({ ...progressQuery, enabled: !!user });
+  const completed = progress.data?.lesson_ids.includes(id) ?? false; const currentExercise = exercises.data?.[exerciseIndex]; const topics = course.data ? allTopics(course.data).filter(t => t.published) : []; const next = topics[topics.findIndex(t => t.id === id) + 1];
+  return <AppShell protectedPage={false}>{lesson.error ? <ErrorState message={errorMessage(lesson.error)} retry={() => { void lesson.refetch(); }} /> : lesson.data ? <div className="lesson-layout"><button className="button secondary lesson-nav-toggle" onClick={() => setNavOpen(!navOpen)} aria-expanded={navOpen}>Навигация по урокам</button>{course.data && <div className={navOpen ? "lesson-nav-mobile open" : "lesson-nav-mobile"}><LessonNavigation course={course.data} currentId={id} completed={progress.data?.lesson_ids ?? []} /></div>}<article className="lesson-main"><div className="lesson-heading"><div className="eyebrow">PYTHON / {lesson.data.topic.tags[0]?.toUpperCase()}</div><h1>{lesson.data.topic.title}</h1><div className="meta-row"><span><Clock3 size={14} />{lesson.data.topic.minutes} мин</span><Tag>8 ЗАДАНИЙ</Tag><Tag>32 ВОПРОСА В БАНКЕ</Tag>{completed && <Tag tone="green"><Check size={12} />Теория изучена</Tag>}</div></div><div className="lesson-tabs" role="tablist" aria-label="Этапы урока">{[{ id: "theory", name: "Теория" }, { id: "examples", name: "Примеры" }, { id: "practice", name: "Практика" }, { id: "quiz", name: "Тест" }, { id: "review", name: "Закрепление" }].map(t => <button role="tab" aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} id={`tab-${t.id}`} tabIndex={tab === t.id ? 0 : -1} key={t.id} onClick={() => setTab(t.id)} onKeyDown={e => { if (e.key === "ArrowRight" || e.key === "ArrowLeft") { const tabs = ["theory", "examples", "practice", "quiz", "review"]; const index = tabs.indexOf(t.id); const target = tabs[(index + (e.key === "ArrowRight" ? 1 : 4)) % 5]; if (target) { setTab(target); document.getElementById(`tab-${target}`)?.focus(); } } }} className={tab === t.id ? "active" : ""}>{t.name}</button>)}</div><div className="lesson-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+    {tab === "theory" && <div className="theory-content">{lesson.data.theory.map((section, i) => <section key={section.title}><span className="section-count">0{i + 1}</span><h2>{section.title}</h2><p>{section.body}</p>{i === 1 && lesson.data.examples[0] && <CodeBlock code={lesson.data.examples[0].code} />}</section>)}<div className="lesson-bottom"><p>Понятна идея? Теперь проверим её в действии.</p>{user ? <CompleteLesson id={id} completed={completed} onComplete={() => setTab("practice")} /> : <Link href="/register" className="button">Создать аккаунт и сохранить прогресс <ArrowRight size={16} /></Link>}</div></div>}
+    {tab === "examples" && <div className="examples-content"><p className="muted">Разберите каждый пример: сначала предскажите вывод, затем сравните с результатом.</p>{lesson.data.examples.map((example, i) => <section key={i}><h2><small>{String(i + 1).padStart(2, "0")}</small>{example.title}</h2><CodeBlock code={example.code} /><div className="example-output"><span>OUTPUT</span><pre>{example.output}</pre></div><p>{example.explanation}</p></section>)}</div>}
+    {tab === "practice" && <div>{exercises.error ? <ErrorState message={errorMessage(exercises.error)} /> : currentExercise ? <><div className="exercise-selector" aria-label="Выбор задания">{exercises.data?.map((exercise, i) => <button key={exercise.id} className={i === exerciseIndex ? "active" : ""} aria-label={`Задание ${i + 1}, ${exercise.difficulty}`} aria-pressed={i === exerciseIndex} onClick={() => setExerciseIndex(i)}>{progress.data?.exercise_ids.includes(exercise.id) ? <Check size={13} /> : i + 1}<i className={`difficulty-${exercise.difficulty}`} /></button>)}</div><CodeEditor key={currentExercise.id} exercise={currentExercise} completed={progress.data?.exercise_ids.includes(currentExercise.id) ?? false} /><div className="lesson-bottom"><span>После практики — проверка понимания.</span><Button className="secondary" onClick={() => setTab("quiz")}>Перейти к тесту<ArrowRight size={15} /></Button></div></> : <Loading />}</div>}
+    {tab === "quiz" && <QuizPanel key={id} topicId={id} />}
+    {tab === "review" && <div className="review-content"><div className="eyebrow">TAKEAWAYS</div><h2>Что важно сохранить в памяти.</h2><ul>{lesson.data.review.map(point => <li key={point}><Check size={17} />{point}</li>)}</ul><p>Вернитесь к примерам, объясните их своими словами и пройдите ещё одну попытку теста. Повторение помогает заметить границы, которые легко пропустить при первом чтении.</p>{next && <Link className="button" href={`/learn/${next.id}`}>Следующая тема: {next.title}<ArrowRight size={16} /></Link>}</div>}
+    </div></article></div> : <Loading />}</AppShell>;
+}
