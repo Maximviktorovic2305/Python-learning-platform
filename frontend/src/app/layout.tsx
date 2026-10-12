@@ -20,7 +20,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <body className={`${geist.variable} ${mono.variable}`}>
+      {/* Browser extensions may add body attributes before React hydrates. */}
+      <body
+        className={`${geist.variable} ${mono.variable}`}
+        suppressHydrationWarning
+      >
         <a href="#main" className="skip-link">
           Перейти к содержимому
         </a>
