@@ -1,7 +1,6 @@
-type Point = Readonly<{ x: number; y: number }>;
-type PathPoint = Point & Readonly<{ distance: number }>;
-type BodyPoint = Point &
-  Readonly<{ angle: number; radius: number; sourceX: number }>;
+import { BODY_SEGMENTS, createSnakeMotion, type SnakePose } from "./motion";
+
+type BodyPoint = SnakePose & Readonly<{ radius: number; sourceX: number }>;
 type SourceColumn = Readonly<{ center: number; radius: number }>;
 type SnakeSprite = Readonly<{
   image: HTMLImageElement;
@@ -11,48 +10,6 @@ type SnakeSprite = Readonly<{
   headTop: number;
   headBottom: number;
 }>;
-
-const TAU = Math.PI * 2;
-const PATH_SAMPLES = 1600;
-const BODY_SEGMENTS = 88;
-
-function makePath(width: number, height: number): PathPoint[] {
-  const path: PathPoint[] = [];
-  let distance = 0;
-  for (let index = 0; index <= PATH_SAMPLES; index++) {
-    const phase = (index / PATH_SAMPLES) * TAU;
-    const point = {
-      x: width * (0.5 + 0.42 * Math.cos(phase - 0.3)),
-      y: height * (0.5 + 0.455 * Math.sin((phase - 0.3) * 2)),
-    };
-    const previous = path.at(-1);
-    if (previous)
-      distance += Math.hypot(point.x - previous.x, point.y - previous.y);
-    path.push({ ...point, distance });
-  }
-  return path;
-}
-
-function pointAt(path: readonly PathPoint[], distance: number): Point {
-  const length = path.at(-1)?.distance ?? 1;
-  const offset = ((distance % length) + length) % length;
-  let low = 0;
-  let high = path.length - 1;
-  while (low < high) {
-    const middle = Math.floor((low + high) / 2);
-    if ((path[middle]?.distance ?? 0) < offset) low = middle + 1;
-    else high = middle;
-  }
-  const after = path[low];
-  const before = path[Math.max(0, low - 1)];
-  if (!after || !before) return { x: 0, y: 0 };
-  const fraction =
-    (offset - before.distance) / (after.distance - before.distance || 1);
-  return {
-    x: before.x + (after.x - before.x) * fraction,
-    y: before.y + (after.y - before.y) * fraction,
-  };
-}
 
 function readSprite(image: HTMLImageElement): SnakeSprite | null {
   const buffer = document.createElement("canvas");
@@ -197,44 +154,20 @@ function drawHead(
 
 function drawSnake(
   context: CanvasRenderingContext2D,
-  path: readonly PathPoint[],
-  distance: number,
-  time: number,
-  scale: number,
+  motion: ReturnType<typeof createSnakeMotion>,
   light: boolean,
   sprite: SnakeSprite,
 ) {
-  const spacing = 5.5 * scale;
+  const { spacing, scale, time } = motion;
   const pixelScale =
     (spacing * (BODY_SEGMENTS - 1)) / (sprite.bodyEnd - sprite.bodyStart);
-  const centers = Array.from({ length: BODY_SEGMENTS }, (_, index) => {
-    const offset = distance - index * spacing;
-    const point = pointAt(path, offset);
-    const ahead = pointAt(path, offset + 2);
-    const angle = Math.atan2(ahead.y - point.y, ahead.x - point.x);
-    const wave =
-      Math.sin(index * 0.18 - time * 2.3) *
-      7 *
-      scale *
-      Math.sin((index / BODY_SEGMENTS) * Math.PI);
-    return {
-      x: point.x - Math.sin(angle) * wave,
-      y: point.y + Math.cos(angle) * wave,
-    };
-  });
-  const points: BodyPoint[] = centers.map((point, index) => {
-    const ahead = centers[Math.max(0, index - 1)];
-    const behind = centers[Math.min(centers.length - 1, index + 1)];
+  const points: BodyPoint[] = motion.poses().map((point, index) => {
     const sourceX =
       sprite.bodyEnd -
       (index / (BODY_SEGMENTS - 1)) * (sprite.bodyEnd - sprite.bodyStart);
     return {
       ...point,
       sourceX,
-      angle:
-        ahead && behind
-          ? Math.atan2(ahead.y - behind.y, ahead.x - behind.x)
-          : 0,
       radius: Math.max(
         0.6 * scale,
         (sprite.columns[Math.round(sourceX)]?.radius ?? 0) * pixelScale,
@@ -260,10 +193,8 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let width = 0;
   let height = 0;
-  let scale = 1;
-  let path: PathPoint[] = [];
-  let distance = 0;
-  let time = 0;
+  let motion: ReturnType<typeof createSnakeMotion> | null = null;
+  let pixelRatio = 0;
   let lastFrame = 0;
   let frame: number | null = null;
   let paused = false;
@@ -274,15 +205,12 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
   function draw() {
     if (!context) return;
     context.clearRect(0, 0, width, height);
-    if (sprite) drawSnake(context, path, distance, time, scale, light, sprite);
+    if (sprite && motion) drawSnake(context, motion, light, sprite);
   }
   function tick(timestamp: number) {
-    const delta = lastFrame
-      ? Math.min((timestamp - lastFrame) / 1000, 0.05)
-      : 0;
+    const delta = lastFrame ? (timestamp - lastFrame) / 1000 : 0;
     lastFrame = timestamp;
-    time += delta;
-    distance += delta * (width < 600 ? 42 : 68);
+    motion?.advance(delta);
     draw();
     frame = window.requestAnimationFrame(tick);
   }
@@ -302,22 +230,25 @@ export function startSnakeAnimation(canvas: HTMLCanvasElement): {
   }
   function resize() {
     if (!container || !boundary) return;
-    const oldLength = path.at(-1)?.distance ?? 0;
-    const progress = oldLength ? distance / oldLength : 0;
-    width = container.clientWidth;
-    height = Math.max(
+    const nextWidth = container.clientWidth;
+    const nextHeight = Math.max(
       1,
       boundary.getBoundingClientRect().bottom -
         container.getBoundingClientRect().top,
     );
-    canvas.style.height = `${height}px`;
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    if (nextWidth === width && nextHeight === height && ratio === pixelRatio)
+      return;
+    const geometryChanged = nextWidth !== width || nextHeight !== height;
+    width = nextWidth;
+    height = nextHeight;
+    pixelRatio = ratio;
+    canvas.style.height = `${height}px`;
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
     context?.setTransform(ratio, 0, 0, ratio, 0, 0);
-    scale = Math.max(0.55, Math.min(1.1, width / 1250));
-    path = makePath(width, height);
-    distance = progress * (path.at(-1)?.distance ?? 0);
+    if (geometryChanged)
+      motion = createSnakeMotion(width, height, motion?.progress, motion?.time);
     synchronize();
   }
   const image = new Image();
