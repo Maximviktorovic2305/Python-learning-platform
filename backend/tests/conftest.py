@@ -63,6 +63,9 @@ async def student(client: httpx.AsyncClient) -> dict[str, str]:
             "email": "student@example.com",
             "username": "student",
             "password": "test-password-1234",
+            "accept_terms": True,
+            "accept_data_processing": True,
+            "legal_version": "2026-10-13",
         },
     )
     assert response.status_code == 201, response.text

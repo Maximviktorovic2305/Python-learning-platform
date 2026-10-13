@@ -3917,3 +3917,11 @@ details[open] > summary > svg:last-child {
     transform: none;
   }
 }
+
+:root {
+  --legal-bg: var(--surface);
+  --legal-text: var(--text);
+  --legal-border: var(--border);
+  --legal-accent: var(--accent);
+  --legal-ink: var(--accent-ink);
+}

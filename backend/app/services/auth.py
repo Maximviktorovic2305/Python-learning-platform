@@ -36,6 +36,9 @@ async def create_session(session: AsyncSession, user: User) -> tuple[AuthView, s
 async def register(session: AsyncSession, payload: Register) -> tuple[AuthView, str]:
     user = User(
         email=str(payload.email).lower(),
+        terms_version=payload.legal_version,
+        data_consent_version=payload.legal_version,
+        legal_accepted_at=datetime.now(UTC),
         username=payload.username,
         password_hash=await to_thread(hash_password, payload.password),
     )

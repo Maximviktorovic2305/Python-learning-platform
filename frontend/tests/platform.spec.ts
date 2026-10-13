@@ -59,6 +59,8 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   await page
     .getByLabel("Пароль", { exact: true })
     .fill("testing-password-1234");
+  await page.getByRole("checkbox").nth(0).check();
+  await page.getByRole("checkbox").nth(1).check();
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
   await expect(
     page.getByRole("heading", { name: `Привет, learner_${id}.` }),

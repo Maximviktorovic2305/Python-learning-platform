@@ -10,6 +10,8 @@ async function register(page: Page, prefix: string) {
   await page
     .getByLabel("Пароль", { exact: true })
     .fill("query-test-password-1234");
+  await page.getByRole("checkbox").nth(0).check();
+  await page.getByRole("checkbox").nth(1).check();
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
   await expect(
     page.getByRole("heading", { name: `Привет, ${username}.` }),
@@ -247,6 +249,8 @@ test("logout clears cached account data even when the server fails and an old sa
   await page
     .getByLabel("Пароль", { exact: true })
     .fill("query-test-password-1234");
+  await page.getByRole("checkbox").nth(0).check();
+  await page.getByRole("checkbox").nth(1).check();
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
   await expect(
     page.getByRole("heading", { name: `Привет, ${newUser}.` }),

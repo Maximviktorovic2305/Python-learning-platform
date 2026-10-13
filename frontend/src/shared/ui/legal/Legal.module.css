@@ -1,0 +1,216 @@
+.legalPage,
+.supportFloating,
+.privacyNotice,
+.legalLinks,
+.consentChecks {
+  color: var(--legal-text);
+  font-family: inherit;
+}
+.legalPage {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  min-height: 100vh;
+  background: var(--legal-bg);
+}
+.legalPage h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1.15;
+  margin: 1.5rem 0;
+}
+.legalPage h2 {
+  font-size: 1.25rem;
+  margin: 2rem 0 0.75rem;
+}
+.legalPage p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin: 0.75rem 0;
+}
+.legalPage a,
+.legalLinks a,
+.consentChecks a,
+.privacyNotice a {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  padding: 0.75rem 0;
+}
+.consentChecks {
+  display: grid;
+  gap: 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.consentChecks label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  cursor: pointer;
+}
+.consentChecks input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  min-width: 1rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--legal-accent);
+}
+.supportFloating {
+  position: fixed;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.supportButton,
+.donate,
+.privacyChoice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 1px solid var(--legal-border);
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  background: var(--legal-accent);
+  color: var(--legal-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+.supportButton {
+  box-shadow: 0 0.4rem 1.5rem
+    color-mix(in srgb, var(--legal-text) 16%, transparent);
+}
+.supportButton svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.supportPanel {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  right: 0;
+  width: min(21rem, calc(100vw - 2.5rem));
+  padding: 1.25rem;
+  border: 1px solid var(--legal-border);
+  border-radius: 1.25rem;
+  background: var(--legal-bg);
+  box-shadow: 0 0.75rem 3rem
+    color-mix(in srgb, var(--legal-text) 18%, transparent);
+  animation: appear 0.22s ease-out;
+}
+.supportPanel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.8rem;
+  height: 0.8rem;
+}
+.supportPanel h2 {
+  font-size: 1.05rem;
+  line-height: 1.4;
+  margin: 0 1.2rem 0.6rem 0;
+}
+.supportPanel p,
+.privacyNotice p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0.5rem 0 1rem;
+}
+.closeSupport {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.6rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.privacySettings {
+  border: 0;
+  padding: 0.15rem 0.5rem;
+  background: var(--legal-bg);
+  color: inherit;
+  font: inherit;
+  font-size: 0.7rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+.privacyNotice {
+  position: fixed;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  left: max(1.25rem, env(safe-area-inset-left));
+  z-index: 2147483001;
+  width: min(26rem, calc(100vw - 2.5rem));
+  max-height: 75vh;
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--legal-border);
+  border-radius: 1.25rem;
+  background: var(--legal-bg);
+  box-shadow: 0 0.75rem 3rem
+    color-mix(in srgb, var(--legal-text) 18%, transparent);
+  animation: appear 0.22s ease-out;
+}
+.privacyNotice h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+.privacyChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.secondaryChoice {
+  background: var(--legal-bg);
+  color: var(--legal-text);
+}
+.supportButton:focus-visible,
+.donate:focus-visible,
+.privacyChoice:focus-visible,
+.privacySettings:focus-visible,
+.closeSupport:focus-visible {
+  outline: 3px solid var(--legal-accent);
+  outline-offset: 3px;
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 40rem) {
+  .privacyNotice {
+    bottom: 6.5rem;
+  }
+  .supportButton {
+    padding: 0.65rem 0.85rem;
+  }
+  .legalPage {
+    padding: 2rem 1.25rem 6rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .supportPanel,
+  .privacyNotice {
+    animation: none;
+  }
+}

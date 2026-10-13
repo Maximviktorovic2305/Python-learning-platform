@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
 import { PythonLogo } from "@/shared/ui/python-logo";
-import { AuthorSupport } from "@/shared/ui/author-support";
+import { LegalLinks } from "@/shared/ui/legal";
 import { PageSkeleton, type PageSkeletonVariant } from "./skeleton";
 import { Skeleton, SkeletonRegion } from "@/shared/ui";
 export { PageSkeleton, LessonNavigationSkeleton } from "./skeleton";
@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         </div>
         <div className="sidebar-bottom">
-          <AuthorSupport />
+          <LegalLinks />
           {loading ? (
             <SkeletonRegion label="Восстанавливаем сессию…">
               <div className="skeleton-row">

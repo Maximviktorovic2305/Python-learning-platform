@@ -11,6 +11,17 @@ class Contract(BaseModel):
 
 
 class Register(Contract):
+    accept_terms: bool = Field(strict=True)
+    accept_data_processing: bool = Field(strict=True)
+    legal_version: Literal["2026-10-13"]
+
+    @field_validator("accept_terms", "accept_data_processing")
+    @classmethod
+    def require_consent(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Для регистрации необходимо отдельное подтверждение")
+        return value
+
     email: EmailStr
     username: str = Field(min_length=3, max_length=40, pattern=r"^[a-zA-Z0-9_]+$")
     password: str = Field(min_length=12, max_length=128)

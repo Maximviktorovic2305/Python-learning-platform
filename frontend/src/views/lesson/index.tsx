@@ -7,29 +7,33 @@ import { PageSkeleton, LessonNavigationSkeleton } from "@/widgets/app-shell";
 import { CodeEditor } from "@/widgets/code-editor";
 import { QuizPanel } from "@/widgets/quiz-panel";
 import { LessonNavigation } from "@/widgets/lesson-navigation";
-import { lessonQuery } from "@/entities/lesson";
-import { courseQuery, allTopics } from "@/entities/course";
+import { lessonQuery, type Lesson } from "@/entities/lesson";
+import { courseQuery, allTopics, type Course } from "@/entities/course";
 import { exerciseQuery } from "@/entities/exercise";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { CompleteLesson } from "@/features/complete-lesson";
-import { Button, Tag, ErrorState } from "@/shared/ui";
+import { Button, Tag, ErrorState, Skeleton } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
 
 export function LessonPage({
   id,
   initialTab = "theory",
+  initialLesson,
+  initialCourse,
 }: {
   id: string;
   initialTab?: string;
+  initialLesson?: Lesson;
+  initialCourse?: Course;
 }) {
   const [tab, setTab] = useState(initialTab);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [navOpen, setNavOpen] = useState(false);
   const { user, loading } = useAuth();
-  const lesson = useQuery(lessonQuery(id));
-  const course = useQuery(courseQuery);
+  const lesson = useQuery({ ...lessonQuery(id), initialData: initialLesson });
+  const course = useQuery({ ...courseQuery, initialData: initialCourse });
   const exercises = useQuery(exerciseQuery(id));
   const progress = useQuery(progressQuery(user?.id));
   const completed = progress.data?.lesson_ids.includes(id) ?? false;
@@ -40,9 +44,7 @@ export function LessonPage({
   const next = topics[topics.findIndex((t) => t.id === id) + 1];
   return (
     <>
-      {loading || (user && progress.isPending) ? (
-        <PageSkeleton variant="lesson" />
-      ) : progress.error && !progress.data ? (
+      {progress.error && !progress.data ? (
         <ErrorState
           message={errorMessage(progress.error)}
           retry={() => {
@@ -169,7 +171,9 @@ export function LessonPage({
                   ))}
                   <div className="lesson-bottom">
                     <p>Понятна идея? Теперь проверим её в действии.</p>
-                    {user ? (
+                    {loading ? (
+                      <Skeleton className="skeleton-button" />
+                    ) : user ? (
                       <CompleteLesson
                         id={id}
                         completed={completed}
@@ -208,7 +212,9 @@ export function LessonPage({
               )}
               {tab === "practice" && (
                 <div>
-                  {exercises.error ? (
+                  {loading ? (
+                    <PageSkeleton variant="exercise" />
+                  ) : exercises.error ? (
                     <ErrorState message={errorMessage(exercises.error)} />
                   ) : currentExercise ? (
                     <>

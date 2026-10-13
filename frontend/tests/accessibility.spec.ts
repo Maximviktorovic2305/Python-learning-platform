@@ -14,6 +14,10 @@ test("public pages meet automated WCAG checks in both themes", async ({
       "/learn/first-program",
       "/login",
       "/projects",
+      "/private-policy",
+      "/cookie-policy",
+      "/data-consent",
+      "/user-agreement",
     ]) {
       await page.goto(route);
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);

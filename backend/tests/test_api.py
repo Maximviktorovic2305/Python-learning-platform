@@ -143,6 +143,9 @@ async def test_wrong_credentials_and_origin_are_rejected(
         json={
             "email": "student@example.com",
             "username": "different",
+            "accept_terms": True,
+            "accept_data_processing": True,
+            "legal_version": "2026-10-13",
             "password": "test-password-1234",
         },
     )
@@ -226,7 +229,14 @@ async def test_quiz_hides_answers_and_grades_server_side(
     assert (await client.get("/api/progress", headers=student)).json()["user"]["total_xp"] == 50
     other = await client.post(
         "/api/auth/register",
-        json={"email": "other@example.com", "username": "other", "password": "test-password-5678"},
+        json={
+            "email": "other@example.com",
+            "username": "other",
+            "accept_terms": True,
+            "accept_data_processing": True,
+            "legal_version": "2026-10-13",
+            "password": "test-password-5678",
+        },
     )
     assert (
         await client.get(
@@ -299,14 +309,22 @@ async def test_profile_validation_password_revokes_sessions(
     invalid = await client.patch(
         "/api/users/me",
         headers=student,
-        json={"username": "student", "daily_goal": 0, "timezone": "Invalid/Zone"},
+        json={
+            "username": "student",
+            "daily_goal": 0,
+            "timezone": "Invalid/Zone",
+        },
     )
     assert invalid.status_code == 422
     assert (
         await client.patch(
             "/api/users/me",
             headers=student,
-            json={"username": "renamed", "daily_goal": 120, "timezone": "UTC"},
+            json={
+                "username": "renamed",
+                "daily_goal": 120,
+                "timezone": "UTC",
+            },
         )
     ).status_code == 200
     assert (

@@ -11,7 +11,7 @@ import {
   Circle,
 } from "lucide-react";
 import { PageSkeleton } from "@/widgets/app-shell";
-import { courseQuery } from "@/entities/course";
+import { courseQuery, type Course } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import {
@@ -22,11 +22,13 @@ import {
   ProgressBar,
 } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
-export function CurriculumPage() {
+export function CurriculumPage({
+  initialCourse,
+}: { initialCourse?: Course } = {}) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const { user, loading } = useAuth();
-  const course = useQuery(courseQuery);
+  const { user } = useAuth();
+  const course = useQuery({ ...courseQuery, initialData: initialCourse });
   const progress = useQuery(progressQuery(user?.id));
   const levels =
     course.data?.levels
@@ -112,9 +114,7 @@ export function CurriculumPage() {
           </button>
         </div>
       </div>
-      {loading ||
-      course.isPending ||
-      (user && progress.isPending && !course.error) ? (
+      {course.isPending ? (
         <PageSkeleton variant="curriculum" />
       ) : course.error && !course.data ? (
         <ErrorState

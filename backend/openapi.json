@@ -2080,6 +2080,19 @@
       },
       "Register": {
         "properties": {
+          "accept_terms": {
+            "type": "boolean",
+            "title": "Accept Terms"
+          },
+          "accept_data_processing": {
+            "type": "boolean",
+            "title": "Accept Data Processing"
+          },
+          "legal_version": {
+            "type": "string",
+            "const": "2026-10-13",
+            "title": "Legal Version"
+          },
           "email": {
             "type": "string",
             "format": "email",
@@ -2102,6 +2115,9 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "accept_terms",
+          "accept_data_processing",
+          "legal_version",
           "email",
           "username",
           "password"

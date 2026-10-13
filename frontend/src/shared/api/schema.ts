@@ -783,6 +783,15 @@ export interface components {
     };
     /** Register */
     Register: {
+      /** Accept Terms */
+      accept_terms: boolean;
+      /** Accept Data Processing */
+      accept_data_processing: boolean;
+      /**
+       * Legal Version
+       * @constant
+       */
+      legal_version: "2026-10-13";
       /**
        * Email
        * Format: email

@@ -1,4 +1,6 @@
 "use client";
+import { LEGAL_VERSION } from "@/shared/config";
+import { ConsentFields, LegalLinks } from "@/shared/ui/legal";
 import {
   createContext,
   useContext,
@@ -112,7 +114,16 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       username: string;
     }) =>
       mode === "register"
-        ? unwrap(await api.POST("/api/auth/register", { body }))
+        ? unwrap(
+            await api.POST("/api/auth/register", {
+              body: {
+                ...body,
+                accept_terms: true,
+                accept_data_processing: true,
+                legal_version: LEGAL_VERSION,
+              },
+            }),
+          )
         : unwrap(
             await api.POST("/api/auth/login", {
               body: { email: body.email, password: body.password },
@@ -126,6 +137,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    if (
+      mode === "register" &&
+      (form.get("acceptTerms") !== "on" ||
+        form.get("acceptDataProcessing") !== "on")
+    )
+      return;
     mutation.mutate({
       email: String(form.get("email")),
       password: String(form.get("password")),
@@ -175,6 +192,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           }
         />
       </label>
+      {mode === "register" && <ConsentFields />}
+      <LegalLinks />
       {mutation.error && (
         <p className="form-error" role="alert">
           {errorMessage(mutation.error)}
