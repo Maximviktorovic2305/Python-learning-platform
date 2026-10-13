@@ -55,8 +55,9 @@ for attempt in $(seq 1 30); do
   if [ "$attempt" = 30 ]; then echo 'API health check failed' >&2; false; fi
   sleep 2
 done
-curl --fail --silent --show-error --max-time 20 http://127.0.0.1:3010/ >/dev/null
-compose exec -T sandbox-daemon docker run --rm --network none python:3.14-slim \
+curl --fail --silent --show-error --retry 15 --retry-all-errors --retry-delay 2 \
+  --max-time 20 http://127.0.0.1:3010/ >/dev/null
+compose exec -T sandbox-daemon docker -H tcp://localhost:2375 run --rm --network none python:3.14-slim \
   python -I -c 'print("sandbox ready")'
 ln -sfn "$RELEASE" "$APP_DIR/current"
 trap - ERR
