@@ -19,10 +19,19 @@ test("registration requires two separate unchecked consents and login remains av
   ).toBeVisible();
 });
 
-test("cookie preference persists and donation information supports mouse and keyboard", async ({
+test("cookie notice persists and donation information supports mouse and keyboard", async ({
   page,
 }) => {
   await page.goto("/");
+  await expect(
+    page.getByRole("complementary", { name: "Информация о cookie" }),
+  ).toHaveCSS("position", "fixed");
+  await expect(
+    page.getByRole("heading", { name: "Мы используем cookie" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Только необходимые" }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Понятно", exact: true }).click();
   await page.reload();
   await expect(
@@ -32,6 +41,7 @@ test("cookie preference persists and donation information supports mouse and key
     name: "Поддержать автора",
     exact: true,
   });
+  await expect(support.locator("..")).toHaveCSS("position", "fixed");
   await support.hover();
   await expect(
     page.getByRole("link", { name: "Поддержать донатом" }),
@@ -39,9 +49,11 @@ test("cookie preference persists and donation information supports mouse and key
   await page.keyboard.press("Escape");
   await expect(support).toHaveAttribute("aria-expanded", "false");
   await page.mouse.move(0, 0);
-  await page.getByRole("button", { name: "Cookie", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Понятно", exact: true }),
-  ).toBeVisible();
-  await expect(support).toHaveAttribute("aria-expanded", "false");
+    page.getByRole("button", { name: "Cookie", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator("footer .author-support")).toHaveAttribute(
+    "href",
+    "https://tips.yandex.ru/guest/payment/9462891",
+  );
 });

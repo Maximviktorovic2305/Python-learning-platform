@@ -52,6 +52,7 @@ test("register, reload session, complete lesson, quiz review, persisted progress
 }) => {
   const id = Date.now().toString();
   await page.goto("/register");
+  await page.getByRole("button", { name: "Понятно", exact: true }).click();
   await page.getByLabel("Имя пользователя").fill(`learner_${id}`);
   await page
     .getByLabel("Email", { exact: true })

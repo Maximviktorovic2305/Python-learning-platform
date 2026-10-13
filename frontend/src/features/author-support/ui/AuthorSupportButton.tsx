@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import { openPrivacySettings } from "@/shared/lib/privacy-choice";
 import styles from "@/shared/ui/legal/Legal.module.css";
 export function AuthorSupportButton() {
   const [pinned, setPinned] = useState(false);
@@ -47,27 +46,13 @@ export function AuthorSupportButton() {
       ref={root}
       className={styles.supportFloating}
       onPointerEnter={(event) => {
-        if (
-          event.pointerType === "mouse" &&
-          event.target instanceof Element &&
-          !event.target.closest("[data-privacy-settings]")
-        ) {
+        if (event.pointerType === "mouse") {
           setHovered(true);
           setDismissed(false);
         }
       }}
       onPointerLeave={() => setHovered(false)}
-      onFocus={(event) => {
-        if (
-          event.target instanceof Element &&
-          event.target.closest("[data-privacy-settings]")
-        ) {
-          setFocused(false);
-          setHovered(false);
-          setPinned(false);
-          setDismissed(true);
-        } else setFocused(true);
-      }}
+      onFocus={() => setFocused(true)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setFocused(false);
@@ -128,14 +113,6 @@ export function AuthorSupportButton() {
           <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
         </svg>
         Поддержать автора
-      </button>
-      <button
-        type="button"
-        data-privacy-settings
-        className={styles.privacySettings}
-        onClick={openPrivacySettings}
-      >
-        Cookie
       </button>
     </div>
   );

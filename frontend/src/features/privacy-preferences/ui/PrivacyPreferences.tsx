@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { HAS_ANALYTICS, LEGAL_ROUTES } from "@/shared/config";
 import {
   OPEN_PRIVACY_EVENT,
@@ -8,54 +8,63 @@ import {
   type PrivacyChoice,
 } from "@/shared/lib/privacy-choice";
 import styles from "@/shared/ui/legal/Legal.module.css";
+
 export function PrivacyPreferences() {
   const choice = usePrivacyChoice();
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [analyticsAllowed, setAnalyticsAllowed] = useState(false);
+  const id = useId();
   useEffect(() => {
     const frame = requestAnimationFrame(() => setReady(true));
-    const open = () => setEditing(true);
+    const open = () => {
+      setAnalyticsAllowed(choice === "analytics");
+      setEditing(true);
+    };
     window.addEventListener(OPEN_PRIVACY_EVENT, open);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener(OPEN_PRIVACY_EVENT, open);
     };
-  }, []);
+  }, [choice]);
   if (!ready || (choice !== null && !editing)) return null;
-  const choose = (next: PrivacyChoice) => {
+  const acknowledge = () => {
+    const next: PrivacyChoice =
+      HAS_ANALYTICS && analyticsAllowed ? "analytics" : "essential";
     const revoke = choice === "analytics" && next === "essential";
     savePrivacyChoice(next);
     setEditing(false);
     if (revoke) window.location.reload();
   };
   return (
-    <aside className={styles.privacyNotice} aria-label="Настройки cookie">
-      <h2>Ваши данные — ваш выбор</h2>
+    <aside className={styles.privacyNotice} aria-label="Информация о cookie">
+      <h2>Мы используем cookie</h2>
       <p>
-        Используем техническое хранение для работы сайта и сохранения настроек.
-        {HAS_ANALYTICS
-          ? " Аналитика Яндекс Метрики включается только с вашего разрешения."
-          : " Рекламных и аналитических cookie нет."}{" "}
+        Технические cookie и локальное хранилище помогают сайту работать
+        безопасно и сохранять ваши настройки.{" "}
         <a href={LEGAL_ROUTES.cookies}>Подробнее о cookie</a>.
       </p>
-      <div className={styles.privacyChoices}>
-        <button
-          type="button"
-          className={`${styles.privacyChoice} ${styles.secondaryChoice}`}
-          onClick={() => choose("essential")}
-        >
-          {HAS_ANALYTICS ? "Только необходимые" : "Понятно"}
-        </button>
-        {HAS_ANALYTICS && (
-          <button
-            type="button"
-            className={styles.privacyChoice}
-            onClick={() => choose("analytics")}
-          >
-            Разрешить аналитику
-          </button>
-        )}
-      </div>
+      {HAS_ANALYTICS && (
+        <label className={styles.analyticsConsent} htmlFor={id}>
+          <input
+            id={id}
+            type="checkbox"
+            checked={analyticsAllowed}
+            onChange={(event) => setAnalyticsAllowed(event.target.checked)}
+          />
+          <span>
+            Разрешаю аналитику Яндекс Метрики{" "}
+            <small>Необязательно. Помогает улучшать сайт.</small>
+          </span>
+        </label>
+      )}
+      <button
+        type="button"
+        className={styles.privacyChoice}
+        onClick={acknowledge}
+      >
+        Понятно
+      </button>
     </aside>
   );
 }

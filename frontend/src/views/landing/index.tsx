@@ -1,3 +1,4 @@
+import { AuthorSupport } from "@/shared/ui/author-support";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -460,6 +461,7 @@ export function LandingPage() {
           <Link href="/#method">Методика</Link>
         </div>
         <small>© {new Date().getFullYear()} Python Lab</small>
+        <AuthorSupport />
         <LegalLinks />
       </footer>
     </LandingSnake>

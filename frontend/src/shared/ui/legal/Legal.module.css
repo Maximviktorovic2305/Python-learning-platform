@@ -90,8 +90,7 @@
   text-decoration: none;
 }
 .supportButton {
-  box-shadow: 0 0.4rem 1.5rem
-    color-mix(in srgb, var(--legal-text) 16%, transparent);
+  box-shadow: none;
 }
 .supportButton svg {
   width: 1.15rem;
@@ -106,8 +105,7 @@
   border: 1px solid var(--legal-border);
   border-radius: 1.25rem;
   background: var(--legal-bg);
-  box-shadow: 0 0.75rem 3rem
-    color-mix(in srgb, var(--legal-text) 18%, transparent);
+  box-shadow: none;
   animation: appear 0.22s ease-out;
 }
 .supportPanel::after {
@@ -140,16 +138,7 @@
   font-size: 1.4rem;
   cursor: pointer;
 }
-.privacySettings {
-  border: 0;
-  padding: 0.15rem 0.5rem;
-  background: var(--legal-bg);
-  color: inherit;
-  font: inherit;
-  font-size: 0.7rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-}
+
 .privacyNotice {
   position: fixed;
   bottom: max(1.25rem, env(safe-area-inset-bottom));
@@ -162,27 +151,17 @@
   border: 1px solid var(--legal-border);
   border-radius: 1.25rem;
   background: var(--legal-bg);
-  box-shadow: 0 0.75rem 3rem
-    color-mix(in srgb, var(--legal-text) 18%, transparent);
+  box-shadow: none;
   animation: appear 0.22s ease-out;
 }
 .privacyNotice h2 {
   font-size: 1.05rem;
   margin: 0;
 }
-.privacyChoices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.secondaryChoice {
-  background: var(--legal-bg);
-  color: var(--legal-text);
-}
+
 .supportButton:focus-visible,
 .donate:focus-visible,
 .privacyChoice:focus-visible,
-.privacySettings:focus-visible,
 .closeSupport:focus-visible {
   outline: 3px solid var(--legal-accent);
   outline-offset: 3px;
@@ -213,4 +192,26 @@
   .privacyNotice {
     animation: none;
   }
+}
+
+.analyticsConsent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.analyticsConsent input {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  accent-color: var(--legal-accent);
+}
+.analyticsConsent small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
 }

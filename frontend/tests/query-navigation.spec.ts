@@ -3,6 +3,7 @@ import { test, expect, type Page } from "./fixtures";
 async function register(page: Page, prefix: string) {
   const username = `${prefix}_${Date.now()}`;
   await page.goto("/register");
+  await page.getByRole("button", { name: "Понятно", exact: true }).click();
   await page.getByLabel("Имя пользователя").fill(username);
   await page
     .getByLabel("Email", { exact: true })
