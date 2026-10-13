@@ -12,13 +12,16 @@ test("landing, responsive navigation, both themes and public curriculum", async 
       exact: true,
     }),
   ).toBeVisible();
-  await page.screenshot({ path: "../.local/landing-dark.png", fullPage: true });
-  await page.getByRole("button", { name: "Переключить тему" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.screenshot({
     path: "../.local/landing-light.png",
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Переключить тему" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.screenshot({ path: "../.local/landing-dark.png", fullPage: true });
+  await page.getByRole("button", { name: "Переключить тему" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Открыть меню" }).click();
   await page
