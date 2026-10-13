@@ -2,6 +2,7 @@ name: Quality and learning flows
 on:
   push:
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -101,3 +102,33 @@ jobs:
       - name: Browser flows and accessibility
         working-directory: frontend
         run: npm test
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: Production
+    timeout-minutes: 40
+    concurrency:
+      group: python-lab-production
+      cancel-in-progress: false
+    steps:
+      - name: Deploy verified commit
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
+          command_timeout: 35m
+          envs: DEPLOY_SHA
+          script: |
+            set -Eeuo pipefail
+            [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
+            script_file="$(mktemp)"
+            trap 'rm -f "$script_file"' EXIT
+            curl --fail --silent --show-error --max-time 30 \
+              "https://raw.githubusercontent.com/Maximviktorovic2305/Python-learning-platform/${DEPLOY_SHA}/deploy/deploy.sh" \
+              -o "$script_file"
+            bash "$script_file"

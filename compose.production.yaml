@@ -1,0 +1,31 @@
+services:
+  postgres:
+    restart: unless-stopped
+    mem_limit: 512m
+  migrate:
+    image: python-lab-backend:${RELEASE_ID:?Set RELEASE_ID}
+  backend:
+    image: python-lab-backend:${RELEASE_ID:?Set RELEASE_ID}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    mem_limit: 384m
+  frontend:
+    image: python-lab-frontend:${RELEASE_ID:?Set RELEASE_ID}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:size=16m,mode=1777", "/app/.next/cache:size=32m,uid=1000,gid=1000"]
+    mem_limit: 512m
+  sandbox-daemon:
+    restart: unless-stopped
+    mem_limit: 1g
+  runner:
+    image: python-lab-runner:${RELEASE_ID:?Set RELEASE_ID}
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m

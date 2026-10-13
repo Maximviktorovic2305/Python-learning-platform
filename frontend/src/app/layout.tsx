@@ -19,7 +19,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="ru"
+      data-theme="light"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       {/* Browser extensions may add body attributes before React hydrates. */}
       <body
         className={`${geist.variable} ${mono.variable}`}

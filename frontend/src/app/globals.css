@@ -4,6 +4,8 @@
   --text-description: 14px;
   --text-item-title: 14px;
   --text-caption: 11px;
+}
+[data-theme="dark"] {
   --bg: #0c1015;
   --surface: #13191f;
   --surface-raised: #19212a;
@@ -26,6 +28,7 @@
   --scroll-thumb-hover: #63b8fb;
   color-scheme: dark;
 }
+:root:not([data-theme]),
 [data-theme="light"] {
   --bg: #f7f8fa;
   --surface: #fff;
@@ -88,6 +91,8 @@
   }
 }
 html {
+  background: var(--bg);
+  color: var(--text);
   scroll-behavior: smooth;
   scroll-padding-top: 100px;
 }
