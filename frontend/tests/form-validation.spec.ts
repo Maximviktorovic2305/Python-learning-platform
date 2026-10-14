@@ -199,6 +199,9 @@ test("login uses a loader while pending, prevents duplicate submits, and shows a
   const submit = page.getByRole("button", { name: "Войти в лабораторию" });
   await submit.click();
   await expect(submit).toHaveAttribute("aria-busy", "true");
+  await expect(submit).toBeDisabled();
+  await expect(submit).toHaveCSS("opacity", "0.5");
+  await expect(submit).toHaveCSS("cursor", "not-allowed");
   await expect(submit.locator(".button-loader")).toBeVisible();
   await expect(submit.locator(".skeleton")).toHaveCount(0);
   await page.getByLabel("Пароль", { exact: true }).fill("changed-password");
@@ -291,10 +294,16 @@ test("project submission validates URL and notes; sidebar exposes legal document
   await expect(submit).toBeEnabled();
   const sidebar = page.locator(".app-sidebar");
   await expect(sidebar.locator(".sidebar-course")).toHaveCount(0);
-  const legal = sidebar.getByRole("region", { name: "Правовые документы" });
+  await expect(
+    sidebar.getByRole("link", { name: "Конфиденциальность" }),
+  ).toHaveCount(0);
+  await sidebar
+    .getByRole("link", { name: "Правовые документы", exact: true })
+    .click();
+  const legal = page.getByRole("navigation", { name: "Документы платформы" });
   await expect(legal.getByRole("link")).toHaveCount(4);
   await expect(
-    legal.getByRole("link", { name: "Конфиденциальность" }),
+    legal.getByRole("link", { name: /^Конфиденциальность/ }),
   ).toHaveAttribute("href", "/private-policy");
   await sidebar.getByRole("link", { name: "Стек", exact: true }).click();
   await expect(page).toHaveURL("/stack");

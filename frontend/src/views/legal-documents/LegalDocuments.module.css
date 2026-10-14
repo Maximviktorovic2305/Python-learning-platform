@@ -1,0 +1,40 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 24px;
+  background: var(--surface);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.card:hover {
+  border-color: var(--python-blue);
+  background: var(--blue-surface);
+}
+.icon {
+  color: var(--python-blue);
+}
+.card h2 {
+  font-size: 18px;
+}
+.card p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+.card > svg:last-child {
+  margin-left: auto;
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery, allTopics } from "@/entities/course";
-import { progressQuery } from "@/entities/progress";
+import {
+  progressQuery,
+  getTopicStatus,
+  TopicStatusBadge,
+  TopicStatusLegend,
+} from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { PageHeading, Tag, Skeleton, ErrorState } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
@@ -54,6 +59,7 @@ export function PracticePage() {
           </button>
         </div>
       </div>
+      {progress.data && <TopicStatusLegend />}
       {course.isPending || (!course.error && user && progress.isPending) ? (
         <PageSkeleton variant="practice" />
       ) : course.error && !course.data ? (
@@ -79,12 +85,18 @@ export function PracticePage() {
               key={topic.id}
               href={`/learn/${topic.id}?tab=practice`}
               className="practice-card"
+              data-topic-status={getTopicStatus(topic.id, progress.data)}
             >
               <div>
                 <span>{String(i + 1).padStart(2, "0")}</span>
                 <PythonLogo size={21} />
               </div>
               <h2>{topic.title}</h2>
+              {user && (
+                <TopicStatusBadge
+                  status={getTopicStatus(topic.id, progress.data)}
+                />
+              )}
               <p>{topic.summary}</p>
               <div>
                 <Tag>3 EASY</Tag>

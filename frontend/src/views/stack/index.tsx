@@ -1,7 +1,15 @@
 import { PageHeading } from "@/shared/ui";
+import { ArrowUpRight } from "lucide-react";
+import { TechnologyIcon } from "@/shared/ui/technology-icon";
+import { documentation } from "./documentation";
 import styles from "./Stack.module.css";
 
-const groups = [
+type StackGroup = {
+  title: string;
+  description: string;
+  technologies: [string, string][];
+};
+const groups: StackGroup[] = [
   {
     title: "Интерфейс",
     description: "Страницы курса, личный кабинет и интерактивные задания.",
@@ -154,7 +162,33 @@ export function StackPage() {
             <dl>
               {group.technologies.map(([name, description]) => (
                 <div key={name}>
-                  <dt>{name}</dt>
+                  <dt className={styles.technologies}>
+                    {name.split(" · ").map((technology) => {
+                      const docs = documentation[technology];
+                      if (!docs)
+                        throw new Error(
+                          `Missing documentation for ${technology}`,
+                        );
+                      return (
+                        <a
+                          className={styles.technology}
+                          href={docs.href}
+                          key={technology}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Официальная документация ${technology} (откроется в новой вкладке)`}
+                        >
+                          <TechnologyIcon name={docs.icon} />
+                          <span>{technology}</span>
+                          <ArrowUpRight
+                            className={styles.external}
+                            size={13}
+                            aria-hidden="true"
+                          />
+                        </a>
+                      );
+                    })}
+                  </dt>
                   <dd>{description}</dd>
                 </div>
               ))}

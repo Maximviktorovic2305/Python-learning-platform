@@ -1,14 +1,19 @@
 import Link from "next/link";
-import { Check, ChevronRight, BookOpen } from "lucide-react";
+import { Check, ChevronRight, BookOpen, Clock3, Circle } from "lucide-react";
 import type { Course } from "@/entities/course";
+import {
+  getTopicStatus,
+  TopicStatusBadge,
+  type Progress,
+} from "@/entities/progress";
 export function LessonNavigation({
   course,
   currentId,
-  completed,
+  progress,
 }: {
   course: Course;
   currentId: string;
-  completed: string[];
+  progress?: Progress;
 }) {
   return (
     <aside className="lesson-sidebar">
@@ -37,15 +42,36 @@ export function LessonNavigation({
                     href={`/learn/${topic.id}`}
                     key={topic.id}
                     className={currentId === topic.id ? "current" : ""}
+                    aria-current={currentId === topic.id ? "page" : undefined}
+                    data-topic-status={getTopicStatus(
+                      topic.id,
+                      progress,
+                      currentId,
+                    )}
                   >
-                    <span>
-                      {completed.includes(topic.id) ? (
+                    <span className="topic-state-icon" aria-hidden="true">
+                      {getTopicStatus(topic.id, progress, currentId) ===
+                      "completed" ? (
                         <Check size={14} />
+                      ) : getTopicStatus(topic.id, progress, currentId) ===
+                        "in-progress" ? (
+                        <Clock3 size={14} />
                       ) : (
-                        <i />
+                        <Circle size={12} />
                       )}
                     </span>
-                    {topic.title}
+                    <div className="lesson-topic-content">
+                      <span>{topic.title}</span>
+                      <TopicStatusBadge
+                        status={getTopicStatus(topic.id, progress, currentId)}
+                        icon={false}
+                      />
+                      {currentId === topic.id && (
+                        <small className="topic-current-label">
+                          Вы сейчас здесь
+                        </small>
+                      )}
+                    </div>
                   </Link>
                 ))}
               </div>

@@ -9,6 +9,7 @@ import {
   FolderCode,
   Award,
   Layers3,
+  FileText,
   UserRound,
   LogOut,
   PanelLeftClose,
@@ -17,7 +18,6 @@ import {
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
 import { PythonLogo } from "@/shared/ui/python-logo";
-import { LegalLinks } from "@/shared/ui/legal";
 import { PageSkeleton, type PageSkeletonVariant } from "./skeleton";
 import { Skeleton, SkeletonRegion } from "@/shared/ui";
 export { PageSkeleton, LessonNavigationSkeleton } from "./skeleton";
@@ -31,6 +31,7 @@ const items = [
   { href: "/achievements", title: "Достижения", icon: Award },
   { href: "/profile", title: "Профиль", icon: UserRound },
   { href: "/stack", title: "Стек", icon: Layers3 },
+  { href: "/legal-documents", title: "Правовые документы", icon: FileText },
 ];
 function skeletonVariant(path: string): PageSkeletonVariant {
   if (path.startsWith("/learn/")) return "lesson";
@@ -90,13 +91,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <section
-          className="sidebar-legal"
-          aria-labelledby="sidebar-legal-title"
-        >
-          <h2 id="sidebar-legal-title">Правовые документы</h2>
-          <LegalLinks />
-        </section>
         <div className="sidebar-bottom">
           {loading ? (
             <SkeletonRegion label="Восстанавливаем сессию…">

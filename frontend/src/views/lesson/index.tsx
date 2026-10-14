@@ -10,7 +10,11 @@ import { LessonNavigation } from "@/widgets/lesson-navigation";
 import { lessonQuery, type Lesson } from "@/entities/lesson";
 import { courseQuery, allTopics, type Course } from "@/entities/course";
 import { exerciseQuery } from "@/entities/exercise";
-import { progressQuery } from "@/entities/progress";
+import {
+  progressQuery,
+  getTopicStatus,
+  TopicStatusBadge,
+} from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { CompleteLesson } from "@/features/complete-lesson";
 import { Button, Tag, ErrorState, Skeleton } from "@/shared/ui";
@@ -76,7 +80,7 @@ export function LessonPage({
               <LessonNavigation
                 course={course.data}
                 currentId={id}
-                completed={progress.data?.lesson_ids ?? []}
+                progress={progress.data}
               />
             </div>
           ) : course.error ? (
@@ -99,6 +103,9 @@ export function LessonPage({
                 </span>
                 <Tag>8 ЗАДАНИЙ</Tag>
                 <Tag>32 ВОПРОСА В БАНКЕ</Tag>
+                <TopicStatusBadge
+                  status={getTopicStatus(id, progress.data, id)}
+                />
                 {completed && (
                   <Tag tone="green">
                     <Check size={12} />
@@ -225,7 +232,7 @@ export function LessonPage({
                         {exercises.data?.map((exercise, i) => (
                           <button
                             key={exercise.id}
-                            className={i === exerciseIndex ? "active" : ""}
+                            className={`${i === exerciseIndex ? "active" : ""} ${progress.data?.exercise_ids.includes(exercise.id) ? "completed" : ""}`}
                             aria-label={`Задание ${i + 1}, ${exercise.difficulty}`}
                             aria-pressed={i === exerciseIndex}
                             onClick={() => setExerciseIndex(i)}

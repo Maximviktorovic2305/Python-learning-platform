@@ -1,6 +1,8 @@
-import { api, unwrap, type Schema } from "@/shared/api";
+import { api, unwrap } from "@/shared/api";
 import { queryOptions } from "@tanstack/react-query";
-export type Progress = Schema<"ProgressView">;
+export { getTopicStatus } from "./model";
+export type { Progress, TopicStatus } from "./model";
+export { TopicStatusBadge, TopicStatusLegend } from "./ui";
 export const progressQuery = (userId?: string) =>
   queryOptions({
     queryKey: ["progress", userId ?? null],

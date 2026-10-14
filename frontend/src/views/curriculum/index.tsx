@@ -12,7 +12,12 @@ import {
 } from "lucide-react";
 import { PageSkeleton } from "@/widgets/app-shell";
 import { courseQuery, type Course } from "@/entities/course";
-import { progressQuery } from "@/entities/progress";
+import {
+  progressQuery,
+  getTopicStatus,
+  TopicStatusBadge,
+  TopicStatusLegend,
+} from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import {
   PageHeading,
@@ -114,7 +119,8 @@ export function CurriculumPage({
           </button>
         </div>
       </div>
-      {course.isPending ? (
+      {user && progress.data && <TopicStatusLegend />}
+      {course.isPending || (user && progress.isPending) ? (
         <PageSkeleton variant="curriculum" />
       ) : course.error && !course.data ? (
         <ErrorState
@@ -167,18 +173,20 @@ export function CurriculumPage({
                       topic.published ? (
                         <Link
                           className="topic-row"
+                          data-topic-status={getTopicStatus(
+                            topic.id,
+                            progress.data,
+                          )}
                           href={`/learn/${topic.id}`}
                           key={topic.id}
                         >
-                          <span
-                            className={
-                              progress.data?.lesson_ids.includes(topic.id)
-                                ? "topic-done"
-                                : ""
-                            }
-                          >
-                            {progress.data?.lesson_ids.includes(topic.id) ? (
+                          <span className="topic-state-icon" aria-hidden="true">
+                            {getTopicStatus(topic.id, progress.data) ===
+                            "completed" ? (
                               <Check size={18} />
+                            ) : getTopicStatus(topic.id, progress.data) ===
+                              "in-progress" ? (
+                              <Clock3 size={17} />
                             ) : (
                               <Circle size={15} />
                             )}
@@ -186,6 +194,11 @@ export function CurriculumPage({
                           <div>
                             <strong>{topic.title}</strong>
                             <small>{topic.tags.slice(0, 4).join(" · ")}</small>
+                            {user && (
+                              <TopicStatusBadge
+                                status={getTopicStatus(topic.id, progress.data)}
+                              />
+                            )}
                           </div>
                           <span className="topic-meta">
                             <Clock3 size={13} />

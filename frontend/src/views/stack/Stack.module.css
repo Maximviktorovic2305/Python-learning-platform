@@ -21,6 +21,47 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.technologies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+.technology {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 3px 0;
+  border-radius: 3px;
+  transition: color 150ms ease;
+}
+.technology > svg:first-child {
+  color: var(--python-blue);
+}
+.technology:hover,
+.technology:focus,
+.technology:focus-visible {
+  color: var(--python-blue);
+}
+.technology:focus {
+  outline: 1px solid var(--python-blue);
+  outline-offset: 0;
+}
+.technology:hover > span,
+.technology:focus > span,
+.technology:focus-visible > span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.external {
+  color: var(--muted);
+  opacity: 0.6;
+}
+.technology:hover .external,
+.technology:focus-visible .external {
+  opacity: 1;
+  color: var(--python-blue);
+}
 .card dd {
   margin: 5px 0 0;
   color: var(--muted);

@@ -10,7 +10,11 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
-import type { Progress } from "@/entities/progress";
+import {
+  getTopicStatus,
+  TopicStatusBadge,
+  type Progress,
+} from "@/entities/progress";
 import type { Course } from "@/entities/course";
 import { allTopics } from "@/entities/course";
 import { ActionLink, PageHeading, ProgressBar, Tag } from "@/shared/ui";
@@ -79,7 +83,7 @@ export function DashboardOverview({
           <div className="eyebrow">CONTINUE LEARNING</div>
           <div className="continue-content">
             <div>
-              <Tag tone="blue">
+              <Tag tone={next ? "blue" : "green"}>
                 {next ? "СЛЕДУЮЩИЙ ШАГ" : "ОТЛИЧНАЯ РАБОТА"}
               </Tag>
               <h2>{next?.title ?? "Все опубликованные темы пройдены"}</h2>
@@ -88,6 +92,11 @@ export function DashboardOverview({
                   "Повторите сложные темы или приступите к самостоятельному проекту."}
               </p>
               <div className="meta-row">
+                {next && (
+                  <TopicStatusBadge
+                    status={getTopicStatus(next.id, progress)}
+                  />
+                )}
                 <span>
                   <Clock3 size={14} />
                   {next?.minutes ?? 20} мин
