@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { LEGAL_ROUTES } from "@/shared/config";
 import styles from "./Legal.module.css";
-export function ConsentFields() {
+import type { FormValidation } from "../use-form-validation";
+export function ConsentFields({ validation }: { validation: FormValidation }) {
   return (
     <div className={styles.consentChecks}>
       <label>
-        <input type="checkbox" name="acceptTerms" required />
+        <input
+          type="checkbox"
+          name="acceptTerms"
+          required
+          {...validation.field("acceptTerms")}
+        />
         <span>
           Принимаю{" "}
           <Link
@@ -18,8 +24,14 @@ export function ConsentFields() {
           .
         </span>
       </label>
+      {validation.error("acceptTerms")}
       <label>
-        <input type="checkbox" name="acceptDataProcessing" required />
+        <input
+          type="checkbox"
+          name="acceptDataProcessing"
+          required
+          {...validation.field("acceptDataProcessing")}
+        />
         <span>
           Даю{" "}
           <Link
@@ -40,6 +52,7 @@ export function ConsentFields() {
           .
         </span>
       </label>
+      {validation.error("acceptDataProcessing")}
     </div>
   );
 }

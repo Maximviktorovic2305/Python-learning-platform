@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight, AlertCircle } from "lucide-react";
+import { ArrowUpRight, AlertCircle, LoaderCircle } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { Skeleton } from "./skeleton";
 export {
   Skeleton,
   SkeletonRegion,
@@ -21,12 +20,10 @@ export function Button({
       disabled={pending || props.disabled}
       aria-busy={pending || undefined}
     >
-      {pending ? (
-        <span className="button-pending-content">{children}</span>
-      ) : (
-        children
+      {pending && (
+        <LoaderCircle className="button-loader" size={18} aria-hidden="true" />
       )}
-      {pending && <Skeleton className="button-skeleton" />}
+      {children}
     </button>
   );
 }

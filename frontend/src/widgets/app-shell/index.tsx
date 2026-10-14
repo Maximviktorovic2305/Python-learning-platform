@@ -8,11 +8,11 @@ import {
   Route,
   FolderCode,
   Award,
+  Layers3,
   UserRound,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
@@ -30,6 +30,7 @@ const items = [
   { href: "/projects", title: "Проекты", icon: FolderCode },
   { href: "/achievements", title: "Достижения", icon: Award },
   { href: "/profile", title: "Профиль", icon: UserRound },
+  { href: "/stack", title: "Стек", icon: Layers3 },
 ];
 function skeletonVariant(path: string): PageSkeletonVariant {
   if (path.startsWith("/learn/")) return "lesson";
@@ -89,24 +90,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="sidebar-course">
-          <small>ВАШ СЛЕДУЮЩИЙ ШАГ</small>
-          <h3>
-            Одна тема.
-            <br />
-            Каждый день.
-          </h3>
-          <p>Маленькие шаги превращаются в большие проекты.</p>
-          {loading ? (
-            <Skeleton width={125} height={14} />
-          ) : (
-            <Link href={user ? "/practice" : "/register"}>
-              Начать практику <ArrowUpRight size={15} />
-            </Link>
-          )}
-        </div>
-        <div className="sidebar-bottom">
+        <section
+          className="sidebar-legal"
+          aria-labelledby="sidebar-legal-title"
+        >
+          <h2 id="sidebar-legal-title">Правовые документы</h2>
           <LegalLinks />
+        </section>
+        <div className="sidebar-bottom">
           {loading ? (
             <SkeletonRegion label="Восстанавливаем сессию…">
               <div className="skeleton-row">

@@ -8,6 +8,7 @@ import pytest
 
 from app.content.bank import build_bank
 from app.content.curriculum import TOPICS
+from app.content.exercises import exercise_starter
 from app.domain.learning import next_streak, select_questions
 
 
@@ -20,6 +21,18 @@ def test_authored_examples_execute(topic):
         )
         assert result.returncode == 0, (scenario.task, result.stderr)
         assert result.stdout.rstrip("\r\n") == scenario.output, scenario.task
+
+
+@pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)
+def test_every_practice_scaffold_is_incomplete(topic):
+    for scenario in topic.cases[:8]:
+        starter = exercise_starter(scenario.code)
+        assert starter.strip() != scenario.code.strip()
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", starter], capture_output=True, text=True, timeout=3
+        )
+        assert result.returncode == 0, (scenario.task, result.stderr)
+        assert result.stdout.rstrip("\r\n") != scenario.output, scenario.task
 
 
 @pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)

@@ -5,6 +5,7 @@ from collections.abc import Awaitable, Callable
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
@@ -75,3 +76,14 @@ async def guard_requests(
 @app.exception_handler(IntegrityError)
 async def conflict(request: Request, error: IntegrityError) -> JSONResponse:
     return JSONResponse(status_code=409, content={"detail": "Email, имя или запись уже существуют"})
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request(request: Request, error: RequestValidationError) -> JSONResponse:
+    # Pydantic's input/ctx can contain passwords; expose only locations and error codes.
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": [{"loc": issue["loc"], "type": issue["type"]} for issue in error.errors()]
+        },
+    )

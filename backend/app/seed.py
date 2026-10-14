@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.content.bank import build_bank
 from app.content.curriculum import LEVELS, TOPICS, TopicContent
+from app.content.exercises import exercise_starter
 from app.core.database import SessionFactory, engine
 from app.models.tables import (
     Achievement,
@@ -58,14 +59,8 @@ async def seed_topic(
     )
     for i, scenario in enumerate(content.cases[:8]):
         eid = f"{content.slug}-e{i + 1}"
-        kind = "code_completion" if i in (1, 4) else "refactoring" if i == 5 else "code_writing"
-        starter = (
-            scenario.code.splitlines()[0] + "\n# Допишите решение\n"
-            if kind == "code_completion"
-            else scenario.code
-            if kind == "refactoring"
-            else "# Напишите решение здесь\n"
-        )
+        kind = "code_completion" if i in (1, 4) else "code_writing"
+        starter = exercise_starter(scenario.code)
         await session.merge(
             Exercise(
                 id=eid,

@@ -22,10 +22,17 @@ import {
   endSession,
   revokeSession,
   subscribeSessionEnd,
-  errorMessage,
   type Schema,
 } from "@/shared/api";
 import { Button } from "@/shared/ui";
+import { useFormValidation } from "@/shared/ui/use-form-validation";
+import {
+  usernameRule,
+  emailRule,
+  passwordRule,
+  consentRules,
+  formErrorMessage,
+} from "@/shared/lib/form-validation";
 type AuthState = {
   user: User | null;
   loading: boolean;
@@ -106,6 +113,11 @@ export function useAuth() {
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const { accept, loggingOut } = useAuth();
+  const validation = useFormValidation({
+    ...(mode === "register" ? { username: usernameRule, ...consentRules } : {}),
+    email: emailRule,
+    password: passwordRule("Пароль", mode === "register" ? 12 : 1),
+  });
   const mutation = useMutation({
     mutationKey: ["auth", mode],
     mutationFn: async (body: {
@@ -133,9 +145,17 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       accept(data);
       router.replace("/dashboard");
     },
+    onError: validation.acceptServerError,
   });
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (
+      mutation.isPending ||
+      loggingOut ||
+      mutation.isError ||
+      !validation.validate(event.currentTarget)
+    )
+      return;
     const form = new FormData(event.currentTarget);
     if (
       mode === "register" &&
@@ -150,12 +170,21 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     });
   };
   return (
-    <form className="auth-form" onSubmit={submit}>
+    <form
+      className="auth-form"
+      {...validation.formProps}
+      onSubmit={submit}
+      onChange={(event) => {
+        validation.onChange(event);
+        if (!mutation.isPending) mutation.reset();
+      }}
+    >
       {mode === "register" && (
         <label>
           Имя пользователя
           <input
             name="username"
+            {...validation.field("username")}
             minLength={3}
             maxLength={40}
             pattern="[a-zA-Z0-9_]+"
@@ -164,22 +193,27 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             placeholder="python_explorer"
           />
           <small>Латинские буквы, цифры и подчёркивание.</small>
+          {validation.error("username")}
         </label>
       )}
       <label>
         Email
         <input
           name="email"
+          {...validation.field("email")}
+          maxLength={254}
           type="email"
           required
           autoComplete="email"
           placeholder="you@example.com"
         />
+        {validation.error("email")}
       </label>
       <label>
         Пароль
         <input
           name="password"
+          {...validation.field("password")}
           type="password"
           minLength={mode === "register" ? 12 : 1}
           maxLength={128}
@@ -191,15 +225,20 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             mode === "register" ? "Не менее 12 символов" : "Ваш пароль"
           }
         />
+        {validation.error("password")}
       </label>
-      {mode === "register" && <ConsentFields />}
+      {mode === "register" && <ConsentFields validation={validation} />}
       <LegalLinks />
       {mutation.error && (
         <p className="form-error" role="alert">
-          {errorMessage(mutation.error)}
+          {formErrorMessage(mutation.error, mode)}
         </p>
       )}
-      <Button pending={mutation.isPending || loggingOut}>
+      <Button
+        type="submit"
+        pending={mutation.isPending || loggingOut}
+        disabled={!validation.valid || mutation.isError}
+      >
         {mode === "register" ? "Создать аккаунт" : "Войти в лабораторию"}
       </Button>
       <p className="form-foot">

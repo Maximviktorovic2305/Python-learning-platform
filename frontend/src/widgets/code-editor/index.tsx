@@ -9,6 +9,8 @@ import {
   Check,
   Lightbulb,
   ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import type { Exercise } from "@/entities/exercise";
 import {
@@ -34,10 +36,14 @@ export function CodeEditor({
   const [running, setRunning] = useState(false);
   const [hint, setHint] = useState(0);
   const [message, setMessage] = useState("");
+  const [messageKind, setMessageKind] = useState<"passed" | "failed" | "error">(
+    "error",
+  );
   const [copied, setCopied] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const overlay = useRef<HTMLPreElement | null>(null);
   const numbers = useRef<HTMLDivElement | null>(null);
+  const input = useRef<HTMLTextAreaElement | null>(null);
   const { user } = useAuth();
   const client = useQueryClient();
   useEffect(() => () => controller.current?.abort(), []);
@@ -48,6 +54,7 @@ export function CodeEditor({
     try {
       setOutput(await runPython(code, controller.current.signal));
     } catch (error) {
+      setMessageKind("error");
       setMessage(errorMessage(error));
     } finally {
       setRunning(false);
@@ -60,6 +67,7 @@ export function CodeEditor({
       setMessage("");
     },
     onSuccess: async (result) => {
+      setMessageKind(result.status === "passed" ? "passed" : "failed");
       setOutput({
         status: result.status === "passed" ? "ok" : "error",
         stdout: result.stdout,
@@ -77,6 +85,7 @@ export function CodeEditor({
       ]);
     },
     onError: (error) => {
+      setMessageKind("error");
       setMessage(errorMessage(error));
     },
   });
@@ -151,6 +160,7 @@ export function CodeEditor({
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1500);
                 } catch {
+                  setMessageKind("error");
                   setMessage("Выделите код и скопируйте вручную.");
                 }
               }}
@@ -159,7 +169,7 @@ export function CodeEditor({
             </button>
           </div>
         </div>
-        <div className="editor-code">
+        <div className="editor-code" onClick={() => input.current?.focus()}>
           <div className="editor-numbers" ref={numbers} aria-hidden="true">
             {code.split("\n").map((_, i) => (
               <span key={i}>{i + 1}</span>
@@ -170,8 +180,12 @@ export function CodeEditor({
               <Highlight code={code + "\n"} />
             </pre>
             <textarea
+              ref={input}
               aria-label="Редактор Python"
               spellCheck={false}
+              autoCapitalize="off"
+              autoCorrect="off"
+              wrap="off"
               value={code}
               maxLength={20000}
               onChange={(e) => setCode(e.target.value)}
@@ -274,9 +288,26 @@ export function CodeEditor({
         </div>
       </div>
       {message && (
-        <p className="execution-message" role="status">
-          {message}
-        </p>
+        <div
+          className={`execution-message ${messageKind === "passed" ? "success" : "error"}`}
+          role="status"
+        >
+          {messageKind === "passed" ? (
+            <CheckCircle2 size={22} aria-hidden="true" />
+          ) : (
+            <AlertCircle size={22} aria-hidden="true" />
+          )}
+          <div>
+            <strong>
+              {messageKind === "passed"
+                ? "Задание выполнено"
+                : messageKind === "failed"
+                  ? "Проверка не пройдена"
+                  : "Не удалось выполнить действие"}
+            </strong>
+            <p>{message}</p>
+          </div>
+        </div>
       )}
       <p className="muted small-text">
         Локальный запуск выполняется на вашем устройстве. XP выдаётся после

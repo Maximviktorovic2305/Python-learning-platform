@@ -9,6 +9,7 @@ from jwt import InvalidTokenError
 from sqlalchemy import select, text
 
 from app.api.dependencies import AdminUser, CurrentUser, Session, bearer, require_origin
+from app.content.exercises import exercise_starter
 from app.core.config import get_settings
 from app.core.security import decode_access, hash_password, verify_password
 from app.models.tables import (
@@ -275,7 +276,12 @@ async def complete_lesson(topic_id: str, user: CurrentUser, session: Session) ->
 @router.get("/exercises", response_model=list[ExerciseView], tags=["learning"])
 async def exercises(topic_id: str, session: Session) -> list[ExerciseView]:
     return [
-        ExerciseView.model_validate(e)
+        ExerciseView.model_validate(e).model_copy(
+            update={
+                "starter_code": exercise_starter(e.solution),
+                "kind": "code_writing" if e.kind == "refactoring" else e.kind,
+            }
+        )
         for e in await session.scalars(
             select(Exercise).where(Exercise.topic_id == topic_id).order_by(Exercise.id)
         )

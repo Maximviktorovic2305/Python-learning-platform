@@ -73,6 +73,7 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly fields: readonly string[] = [],
   ) {
     super(message);
     this.name = "ApiError";
@@ -102,7 +103,32 @@ export function unwrap<T>(result: {
   response: Response;
 }): T {
   if (result.data !== undefined) return result.data;
-  throw new ApiError(result.response.status, detailMessage(result.error));
+  // Keep only field names: validation payloads can contain passwords in input/ctx.
+  const detail =
+    typeof result.error === "object" &&
+    result.error !== null &&
+    "detail" in result.error
+      ? result.error.detail
+      : undefined;
+  const fields = Array.isArray(detail)
+    ? detail.flatMap((issue: unknown) => {
+        if (
+          typeof issue !== "object" ||
+          issue === null ||
+          !("loc" in issue) ||
+          !Array.isArray(issue.loc)
+        )
+          return [];
+        return issue.loc[0] === "body" && typeof issue.loc[1] === "string"
+          ? [issue.loc[1]]
+          : [];
+      })
+    : [];
+  throw new ApiError(
+    result.response.status,
+    detailMessage(result.error),
+    fields,
+  );
 }
 
 const apiFetch: typeof fetch = async (input, init) => {
