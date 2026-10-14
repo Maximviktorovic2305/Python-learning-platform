@@ -53,6 +53,38 @@ async function dismissNotice(page: Page) {
   await page.getByRole("button", { name: "Понятно", exact: true }).click();
 }
 
+test("credentials entered before hydration remain valid when the form becomes interactive", async ({
+  page,
+}) => {
+  await session(page, false);
+  let booted = false;
+  await page.route("**/api/auth/refresh", (route) => {
+    booted = true;
+    return route.fulfill({ status: 401, json: { detail: "anonymous" } });
+  });
+  let release!: () => void;
+  const scripts = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/_next/static/chunks/*.js*", async (route) => {
+    await scripts;
+    await route.continue();
+  });
+  try {
+    await page.goto("/login", { waitUntil: "commit" });
+    await page.getByLabel("Email", { exact: true }).fill(user.email);
+    await page
+      .getByLabel("Пароль", { exact: true })
+      .fill("recovery-password-1234");
+  } finally {
+    release();
+  }
+  await expect.poll(() => booted).toBe(true);
+  await expect(
+    page.getByRole("button", { name: "Войти в лабораторию", exact: true }),
+  ).toBeEnabled();
+});
+
 for (const failure of ["server", "network", "rate-limit"]) {
   test(`login can retry a ${failure} failure without changing valid credentials`, async ({
     page,

@@ -41,6 +41,8 @@ test("cookie notice persists and donation information supports mouse and keyboar
     name: "Поддержать автора",
     exact: true,
   });
+  await expect(support).toHaveText("");
+  await expect(support.locator("svg")).toHaveCount(1);
   await expect(support.locator("..")).toHaveCSS("position", "fixed");
   await support.hover();
   await expect(
@@ -55,5 +57,8 @@ test("cookie notice persists and donation information supports mouse and keyboar
   await expect(page.locator("footer .author-support")).toHaveAttribute(
     "href",
     "https://tips.yandex.ru/guest/payment/9462891",
+  );
+  await expect(page.locator("footer .author-support")).toContainText(
+    "Поддержать автора",
   );
 });

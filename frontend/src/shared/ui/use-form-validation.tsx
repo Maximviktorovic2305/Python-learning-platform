@@ -1,6 +1,8 @@
 "use client";
 import {
   useId,
+  useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type FormEvent,
@@ -37,6 +39,24 @@ export function useFormValidation(
       }),
     );
   };
+  const syncBrowserFields = useEffectEvent(() => {
+    const form = ref.current;
+    if (!form) return;
+    // Browsers can restore or accept values before React attaches listeners.
+    setErrors(readErrors(form));
+    const data = new FormData(form);
+    setTouched((previous) => ({
+      ...previous,
+      ...Object.fromEntries(
+        Object.keys(rules)
+          .filter((name) => String(data.get(name) ?? "").length > 0)
+          .map((name) => [name, true]),
+      ),
+    }));
+  });
+  useEffect(() => {
+    syncBrowserFields();
+  }, []);
   const update = (
     event: FormEvent<HTMLFormElement> | FocusEvent<HTMLFormElement>,
   ) => {
