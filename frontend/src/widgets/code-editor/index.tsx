@@ -67,16 +67,31 @@ export function CodeEditor({
       setMessage("");
     },
     onSuccess: async (result) => {
-      setMessageKind(result.status === "passed" ? "passed" : "failed");
+      setMessageKind(
+        result.status === "passed"
+          ? "passed"
+          : result.status === "failed"
+            ? "failed"
+            : "error",
+      );
       setOutput({
-        status: result.status === "passed" ? "ok" : "error",
+        status:
+          result.status === "passed"
+            ? "ok"
+            : result.status === "timeout"
+              ? "timeout"
+              : "error",
         stdout: result.stdout,
         stderr: result.stderr,
       });
       setMessage(
         result.status === "passed"
           ? `Пройдено ${result.passed}/${result.total} проверок. +${result.xp} XP`
-          : `Пройдено ${result.passed}/${result.total} проверок. Попробуйте ещё раз.`,
+          : result.status === "failed"
+            ? `Пройдено ${result.passed}/${result.total} проверок. Попробуйте ещё раз.`
+            : result.status === "timeout"
+              ? "Проверка остановлена по лимиту времени. XP не начислен. Проверьте циклы и повторите запуск."
+              : "Не удалось выполнить Python-код. XP не начислен. Подробности — в выводе программы.",
       );
       await Promise.all([
         client.invalidateQueries({ queryKey: ["progress"] }),
@@ -200,6 +215,7 @@ export function CodeEditor({
                   numbers.current.scrollTop = e.currentTarget.scrollTop;
               }}
               onKeyDown={(e) => {
+                if (e.currentTarget.readOnly) return;
                 if (
                   e.key === "Tab" &&
                   !e.shiftKey &&
@@ -314,7 +330,8 @@ export function CodeEditor({
       <p className="muted small-text">
         Локальный запуск выполняется на вашем устройстве. XP выдаётся после
         серверной проверки. Программа получает пустой stdin; для этой задачи
-        используйте заданные значения.
+        используйте заданные значения. Сетевые запросы из локального Python
+        недоступны.
       </p>
     </div>
   );

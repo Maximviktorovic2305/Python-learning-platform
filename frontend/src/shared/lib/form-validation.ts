@@ -111,6 +111,12 @@ export function serverFieldErrors(
   return errors;
 }
 
+export function canRetryFormError(error: unknown): boolean {
+  return (
+    !(error instanceof ApiError) || error.status === 429 || error.status >= 500
+  );
+}
+
 export function formErrorMessage(
   error: unknown,
   mode?: "login" | "register",

@@ -24,6 +24,13 @@
 }
 .card h2 {
   font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.card > div {
+  min-width: 0;
+}
+.card > svg {
+  flex-shrink: 0;
 }
 .card p {
   margin-top: 10px;

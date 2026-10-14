@@ -32,6 +32,7 @@ import {
   passwordRule,
   consentRules,
   formErrorMessage,
+  canRetryFormError,
 } from "@/shared/lib/form-validation";
 type AuthState = {
   user: User | null;
@@ -152,7 +153,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     if (
       mutation.isPending ||
       loggingOut ||
-      mutation.isError ||
+      (mutation.isError && !canRetryFormError(mutation.error)) ||
       !validation.validate(event.currentTarget)
     )
       return;
@@ -237,7 +238,10 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       <Button
         type="submit"
         pending={mutation.isPending || loggingOut}
-        disabled={!validation.valid || mutation.isError}
+        disabled={
+          !validation.valid ||
+          (mutation.isError && !canRetryFormError(mutation.error))
+        }
       >
         {mode === "register" ? "Создать аккаунт" : "Войти в лабораторию"}
       </Button>

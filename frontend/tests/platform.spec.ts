@@ -163,6 +163,9 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   }
   await page.goto("/learn/first-program");
   await page.getByRole("tab", { name: "Практика", exact: true }).click();
+  await expect(
+    page.getByLabel("Редактор Python", { exact: true }),
+  ).toBeVisible();
   await page.screenshot({
     path: "../.local/lesson-mobile.png",
     fullPage: true,

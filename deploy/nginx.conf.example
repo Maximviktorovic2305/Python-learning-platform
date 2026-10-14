@@ -32,6 +32,7 @@ http {
         }
         location ~ ^/api/exercises/[^/]+/submit$ {
             limit_req zone=execution burst=3 nodelay;
+            proxy_read_timeout 180s;
             proxy_pass http://python_frontend;
         }
         location /api/ {

@@ -9,6 +9,7 @@ import {
   usernameRule,
   passwordRule,
   formErrorMessage,
+  canRetryFormError,
 } from "@/shared/lib/form-validation";
 export function ProfileForm({
   user,
@@ -71,7 +72,7 @@ export function ProfileForm({
     event.preventDefault();
     if (
       mutation.isPending ||
-      mutation.isError ||
+      (mutation.isError && !canRetryFormError(mutation.error)) ||
       !validation.validate(event.currentTarget)
     )
       return;
@@ -151,7 +152,10 @@ export function ProfileForm({
       <Button
         type="submit"
         pending={mutation.isPending}
-        disabled={!validation.valid || mutation.isError}
+        disabled={
+          !validation.valid ||
+          (mutation.isError && !canRetryFormError(mutation.error))
+        }
       >
         Сохранить изменения
       </Button>
@@ -188,7 +192,7 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
     event.preventDefault();
     if (
       mutation.isPending ||
-      mutation.isError ||
+      (mutation.isError && !canRetryFormError(mutation.error)) ||
       !validation.validate(event.currentTarget)
     )
       return;
@@ -240,7 +244,10 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
         type="submit"
         className="secondary"
         pending={mutation.isPending}
-        disabled={!validation.valid || mutation.isError}
+        disabled={
+          !validation.valid ||
+          (mutation.isError && !canRetryFormError(mutation.error))
+        }
       >
         Изменить пароль
       </Button>

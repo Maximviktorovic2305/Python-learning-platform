@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit",
     "lint:fsd": "node scripts/check-fsd.mjs",
     "test": "playwright test",
-    "format": "prettier --write src tests scripts *.ts *.mjs *.json",
-    "format:check": "prettier --check src tests scripts *.ts *.mjs *.json",
+    "format": "prettier --write src tests scripts public/python-worker.js *.ts *.mjs *.json",
+    "format:check": "prettier --check src tests scripts public/python-worker.js *.ts *.mjs *.json",
     "api:generate": "openapi-typescript ../backend/openapi.json -o src/shared/api/schema.ts"
   },
   "dependencies": {

@@ -20,7 +20,12 @@ export function ProfilePage() {
         description="Настройте удобный ритм и защитите свой аккаунт."
       />
       {data.error && !data.data ? (
-        <ErrorState message={errorMessage(data.error)} />
+        <ErrorState
+          message={errorMessage(data.error)}
+          retry={() => {
+            void data.refetch();
+          }}
+        />
       ) : data.data ? (
         <div className="profile-grid">
           <section className="panel">

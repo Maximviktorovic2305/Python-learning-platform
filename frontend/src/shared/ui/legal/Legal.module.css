@@ -181,6 +181,12 @@
   }
 }
 @media (max-width: 40rem) {
+  .supportFloating {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    margin: 1.25rem;
+  }
   .privacyNotice {
     bottom: 6.5rem;
   }

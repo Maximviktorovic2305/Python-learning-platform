@@ -34,7 +34,8 @@ class RemoteRunner:
     async def execute(self, request: ExecutionRequest) -> ExecutionResult:
         settings = get_settings()
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            # Up to eight cases, each with bounded container startup, execution and cleanup.
+            async with httpx.AsyncClient(timeout=httpx.Timeout(150, connect=5, pool=5)) as client:
                 response = await client.post(
                     f"{settings.runner_url}/execute",
                     json=request.model_dump(),

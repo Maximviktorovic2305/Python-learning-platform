@@ -1,7 +1,10 @@
+import asyncio
 import os
 
+import httpx
 import pytest
 
+from runner import main
 from runner.main import run_case
 
 pytestmark = pytest.mark.skipif(
@@ -17,6 +20,15 @@ async def test_real_python_executes_with_stdin():
 
 
 @pytest.mark.asyncio
+async def test_slow_startup_does_not_consume_execution_budget(monkeypatch):
+    monkeypatch.setattr(
+        main, "BOOTSTRAP", "import time; time.sleep(6)\n" + main.BOOTSTRAP
+    )
+    out, err, status, timeout = await run_case("print('ready')", "")
+    assert (out, err, status, timeout) == ("ready\n", "", 0, False)
+
+
+@pytest.mark.asyncio
 async def test_infinite_loop_times_out():
     _, _, status, timeout = await run_case("while True: pass", "")
     assert status != 0 and timeout
@@ -26,6 +38,119 @@ async def test_infinite_loop_times_out():
 async def test_output_is_bounded():
     _, err, status, timeout = await run_case("print('x' * 20000)", "")
     assert status != 0 and not timeout and "16" in err
+
+
+@pytest.mark.asyncio
+async def test_output_limit_is_shared_by_stdout_and_stderr():
+    _, err, status, timeout = await run_case(
+        "import sys; print('x' * 10000); sys.stderr.write('y' * 10000)", ""
+    )
+    assert status != 0 and not timeout and "16" in err
+
+
+@pytest.mark.asyncio
+async def test_cancelled_execution_removes_its_container(monkeypatch):
+    started = asyncio.Event()
+    removed = []
+    reads = 0
+    original_read = main.read_bounded
+    original_remove = main.remove_container
+
+    async def read(reader, budget):
+        nonlocal reads
+        reads += 1
+        if reads == 2:
+            started.set()
+        return await original_read(reader, budget)
+
+    async def remove(name):
+        removed.append(name)
+        await original_remove(name)
+
+    monkeypatch.setattr(main, "read_bounded", read)
+    monkeypatch.setattr(main, "remove_container", remove)
+    task = asyncio.create_task(run_case("while True: pass", ""))
+    try:
+        await asyncio.wait_for(started.wait(), 15)
+    finally:
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    assert len(removed) == 1
+    process = await asyncio.create_subprocess_exec(
+        "docker",
+        "ps",
+        "-aq",
+        "--filter",
+        f"name=^{removed[0]}$",
+        stdout=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await process.communicate()
+    assert process.returncode == 0 and not stdout.strip()
+
+
+@pytest.mark.asyncio
+async def test_broker_tokens_and_multi_case_execution(monkeypatch):
+    token = "test-runner-token-" * 3
+    monkeypatch.setattr(main, "TOKEN", token)
+    job = {
+        "code": "print(int(input()) * 2)",
+        "tests": [
+            {"stdin": f"{n}\n", "expected_stdout": f"{n * 2}\n"} for n in [2, 5, 8]
+        ],
+    }
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=main.app), base_url="http://runner"
+    ) as client:
+        for authorization in [None, "Bearer wrong-token", token]:
+            headers = {"Authorization": authorization} if authorization else {}
+            assert (
+                await client.post("/execute", json=job, headers=headers)
+            ).status_code == 401
+        response = await client.post(
+            "/execute", json=job, headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "passed",
+            "stdout": "16\n",
+            "stderr": "",
+            "passed": 3,
+            "total": 3,
+            "xp": 0,
+        }
+        monkeypatch.setattr(main, "TOKEN", "short")
+        assert (
+            await client.post(
+                "/execute", json=job, headers={"Authorization": "Bearer short"}
+            )
+        ).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_busy_broker_rejects_job_without_executing_it(monkeypatch):
+    token = "test-runner-token-" * 3
+    monkeypatch.setattr(main, "TOKEN", token)
+    monkeypatch.setattr(main, "slots", asyncio.Semaphore(0))
+    calls = []
+
+    async def unexpected_run(*args):
+        calls.append(args)
+        raise AssertionError("Busy broker must not start a container")
+
+    monkeypatch.setattr(main, "run_case", unexpected_run)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=main.app), base_url="http://runner"
+    ) as client:
+        response = await client.post(
+            "/execute",
+            json={
+                "code": "print(1)",
+                "tests": [{"stdin": "", "expected_stdout": "1\n"}],
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    assert response.status_code == 429 and calls == []
 
 
 @pytest.mark.asyncio

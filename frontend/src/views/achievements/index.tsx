@@ -30,7 +30,12 @@ export function AchievementsPage() {
         }
       />
       {query.error && !query.data ? (
-        <ErrorState message={errorMessage(query.error)} />
+        <ErrorState
+          message={errorMessage(query.error)}
+          retry={() => {
+            void query.refetch();
+          }}
+        />
       ) : query.isPending ? (
         <PageSkeleton variant="achievements" />
       ) : (

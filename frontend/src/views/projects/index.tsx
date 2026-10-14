@@ -24,7 +24,12 @@ export function ProjectsPage() {
       (user && submissions.isPending && !projects.error) ? (
         <PageSkeleton variant="projects" />
       ) : projects.error && !projects.data ? (
-        <ErrorState message={errorMessage(projects.error)} />
+        <ErrorState
+          message={errorMessage(projects.error)}
+          retry={() => {
+            void projects.refetch();
+          }}
+        />
       ) : submissions.error && !submissions.data ? (
         <ErrorState
           message={errorMessage(submissions.error)}

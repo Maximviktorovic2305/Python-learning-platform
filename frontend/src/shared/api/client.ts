@@ -81,9 +81,15 @@ export class ApiError extends Error {
 }
 
 export function errorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Не удалось выполнить запрос. Попробуйте ещё раз.";
+  if (!(error instanceof ApiError))
+    return "Не удалось связаться с сервером. Проверьте соединение и повторите попытку.";
+  if (error.status === 429)
+    return "Слишком много запросов. Подождите минуту и попробуйте ещё раз.";
+  if (error.status >= 500)
+    return "Сервис временно недоступен. Попробуйте ещё раз позже.";
+  if (error.status === 401)
+    return "Сессия завершена. Войдите снова и повторите действие.";
+  return error.message;
 }
 
 function detailMessage(error: unknown): string {

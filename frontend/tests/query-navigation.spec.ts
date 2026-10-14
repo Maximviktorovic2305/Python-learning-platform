@@ -13,7 +13,14 @@ async function register(page: Page, prefix: string) {
     .fill("query-test-password-1234");
   await page.getByRole("checkbox").nth(0).check();
   await page.getByRole("checkbox").nth(1).check();
+  const registered = page.waitForResponse((response) =>
+    response.url().endsWith("/api/auth/register"),
+  );
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
+  const cookie = await (await registered).headerValue("set-cookie");
+  expect(/\bHttpOnly\b/i.test(cookie ?? "")).toBe(true);
+  expect(/\bSameSite=Strict\b/i.test(cookie ?? "")).toBe(true);
+  expect(/\bPath=\/api\/auth\b/i.test(cookie ?? "")).toBe(true);
   await expect(
     page.getByRole("heading", { name: `Привет, ${username}.` }),
   ).toBeVisible();
@@ -23,6 +30,7 @@ async function register(page: Page, prefix: string) {
 test("tabs serialize refresh and logout clears every tab without storing tokens", async ({
   page,
   context,
+  browserName,
 }) => {
   const username = await register(page, "tabs");
   const other = await context.newPage();
@@ -47,7 +55,10 @@ test("tabs serialize refresh and logout clears every tab without storing tokens"
     (cookie) => cookie.name === "refresh",
   );
   expect(refreshCookie?.httpOnly).toBe(true);
-  expect(refreshCookie?.sameSite).toBe("Strict");
+  // SameSite is checked on the wire in register(): Windows WebKit reports None
+  // in its cookie inspector even when the response specifies Strict.
+  if (browserName !== "webkit" || process.platform !== "win32")
+    expect(refreshCookie?.sameSite).toBe("Strict");
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
   await expect(page).toHaveURL("/login");
   await expect(other).toHaveURL("/login");
@@ -111,6 +122,13 @@ test("cached navigation preserves the shell and never inserts skeletons or a sec
   await expect(
     page.getByRole("heading", { name: "Первая программа и инструменты" }),
   ).toBeVisible();
+  // SSR theory can appear before the client exercise query starts. Warm the
+  // actual practice data before checking that revisits use the cache.
+  await page.getByRole("tab", { name: "Практика", exact: true }).click();
+  await expect(
+    page.getByLabel("Редактор Python", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Теория", exact: true }).click();
   await expect(page.locator("main .skeleton")).toHaveCount(0);
   for (const { name, path, title } of routes) {
     await page
@@ -123,13 +141,13 @@ test("cached navigation preserves the shell and never inserts skeletons or a sec
     ).toBeVisible();
     await expect(page.locator("main .skeleton")).toHaveCount(0);
   }
-  let reads = 0;
+  const reads: string[] = [];
   page.on("request", (request) => {
     if (
       request.method() === "GET" &&
       new URL(request.url()).pathname.startsWith("/api/")
     )
-      reads += 1;
+      reads.push(new URL(request.url()).pathname);
   });
   await page.locator(".app-sidebar").evaluate((el) => {
     el.setAttribute("data-persistent", "yes");
@@ -187,7 +205,7 @@ test("cached navigation preserves the shell and never inserts skeletons or a sec
     "data-persistent",
     "yes",
   );
-  expect(reads).toBe(0);
+  expect(reads).toEqual([]);
 });
 
 test("logout clears cached account data even when the server fails and an old save arrives late", async ({

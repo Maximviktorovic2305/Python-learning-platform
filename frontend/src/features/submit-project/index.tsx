@@ -4,7 +4,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap, type Schema } from "@/shared/api";
 import { Button } from "@/shared/ui";
 import { useFormValidation } from "@/shared/ui/use-form-validation";
-import { projectRules, formErrorMessage } from "@/shared/lib/form-validation";
+import {
+  projectRules,
+  formErrorMessage,
+  canRetryFormError,
+} from "@/shared/lib/form-validation";
 export function ProjectForm({
   projectId,
   initialUrl = "",
@@ -35,7 +39,7 @@ export function ProjectForm({
     event.preventDefault();
     if (
       mutation.isPending ||
-      mutation.isError ||
+      (mutation.isError && !canRetryFormError(mutation.error)) ||
       !validation.validate(event.currentTarget)
     )
       return;
@@ -84,7 +88,10 @@ export function ProjectForm({
       <Button
         type="submit"
         pending={mutation.isPending}
-        disabled={!validation.valid || mutation.isError}
+        disabled={
+          !validation.valid ||
+          (mutation.isError && !canRetryFormError(mutation.error))
+        }
       >
         Сохранить работу
       </Button>

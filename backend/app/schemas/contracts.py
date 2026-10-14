@@ -242,6 +242,13 @@ class ProjectInput(Contract):
     repository_url: HttpUrl
     notes: str = Field(min_length=20, max_length=5000)
 
+    @field_validator("notes")
+    @classmethod
+    def require_description(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Добавьте описание выполненного проекта")
+        return value
+
 
 class ProjectSubmissionView(Contract):
     id: UUID

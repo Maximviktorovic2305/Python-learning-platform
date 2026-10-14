@@ -27,7 +27,7 @@ test("browser Python can print but cannot reach authenticated API routes", async
   await editor.fill("from js import fetch\nawait fetch('/api/health')");
   await page.getByRole("button", { name: "Запустить локально" }).click();
   await expect(page.locator(".execution-error")).toContainText(
-    "Failed to fetch",
+    "Сетевые запросы из локального Python запрещены",
     { timeout: 50000 },
   );
   expect(apiResponses).toEqual([]);

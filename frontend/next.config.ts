@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   devIndicators: false,
+  experimental: {
+    // Eight sandbox cases may each need startup, execution and cleanup time.
+    proxyTimeout: 180000,
+  },
   reactCompiler: true,
   turbopack: {
     rules: {

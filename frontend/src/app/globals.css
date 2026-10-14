@@ -1746,8 +1746,12 @@ details[open] > summary > svg:last-child {
   margin-bottom: 28px;
 }
 .page-heading h1 {
+  overflow-wrap: anywhere;
   font-size: 32px;
   margin-top: 10px;
+}
+.page-heading > div {
+  min-width: 0;
 }
 .page-heading p {
   color: var(--muted);
@@ -1788,13 +1792,14 @@ details[open] > summary > svg:last-child {
 }
 .dashboard-metrics {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 15px;
   margin: 28px 0;
 }
 .dashboard-metrics > div {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   background: var(--surface);
   padding: 20px;
   border: 1px solid var(--border);
@@ -3554,7 +3559,7 @@ details[open] > summary > svg:last-child {
     padding: 25px 20px;
   }
   .dashboard-metrics {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
   .dashboard-main-grid,
@@ -3878,7 +3883,7 @@ details[open] > summary > svg:last-child {
     padding: 17px;
   }
   .dashboard-metrics strong {
-    font-size: 24px;
+    font-size: clamp(16px, 4vw, 24px);
   }
   .continue-panel {
     padding: 22px;
@@ -4024,12 +4029,17 @@ details[open] > summary > svg:last-child {
     flex-wrap: wrap;
   }
   .profile-identity > span {
+    flex-shrink: 0;
     width: 55px;
     height: 55px;
   }
   .profile-identity h2 {
+    overflow-wrap: anywhere;
     font-size: 20px;
   }
+}
+.profile-identity > div {
+  min-width: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   html {

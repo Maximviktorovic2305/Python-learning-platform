@@ -15,10 +15,13 @@ slots = asyncio.Semaphore(4)
 IMAGE = os.environ.get("SANDBOX_IMAGE", "python:3.14-slim")
 TOKEN = os.environ.get("RUNNER_TOKEN", "")
 MAX_OUTPUT = 16000
+STARTUP_TIMEOUT = 10
+EXECUTION_TIMEOUT = 5
 BOOTSTRAP = """import io, sys
-source, data = sys.argv[1:]
+source, data, ready = sys.argv[1:]
 sys.argv = ['solution.py']
 sys.stdin = io.TextIOWrapper(io.BytesIO(data.encode('utf-8')), encoding='utf-8')
+print(ready, flush=True)
 exec(compile(source, 'solution.py', 'exec'), {'__name__': '__main__'})
 """
 
@@ -46,11 +49,12 @@ class OutputLimit(Exception):
     pass
 
 
-async def read_bounded(reader: asyncio.StreamReader) -> str:
+async def read_bounded(reader: asyncio.StreamReader, budget: list[int]) -> str:
     data = bytearray()
     while chunk := await reader.read(4096):
         data.extend(chunk)
-        if len(data) > MAX_OUTPUT:
+        budget[0] += len(chunk)
+        if budget[0] > MAX_OUTPUT:
             raise OutputLimit
     return data.decode("utf8", errors="replace")
 
@@ -70,6 +74,7 @@ async def remove_container(name: str) -> None:
 
 async def run_case(code: str, stdin: str) -> tuple[str, str, int, bool]:
     name = f"python-lab-{uuid4().hex}"
+    ready = secrets.token_hex(16)
     process = await asyncio.create_subprocess_exec(
         "docker",
         "run",
@@ -96,6 +101,7 @@ async def run_case(code: str, stdin: str) -> tuple[str, str, int, bool]:
         BOOTSTRAP,
         code,
         stdin,
+        ready,
         stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -105,26 +111,47 @@ async def run_case(code: str, stdin: str) -> tuple[str, str, int, bool]:
         await remove_container(name)
         raise RuntimeError("Container pipes unavailable")
 
-    async def collect() -> tuple[str, str, int]:
-        stdout_task = asyncio.create_task(read_bounded(output_stream))
-        stderr_task = asyncio.create_task(read_bounded(error_stream))
-        try:
-            stdout, stderr = await asyncio.gather(stdout_task, stderr_task)
-            return stdout, stderr, await process.wait()
-        finally:
-            for task in (stdout_task, stderr_task):
-                if not task.done():
-                    task.cancel()
-            await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
+    output_budget = [0]
+    stderr_task = asyncio.create_task(read_bounded(error_stream, output_budget))
+    stream_tasks = [stderr_task]
 
     try:
-        stdout, stderr, exit_code = await asyncio.wait_for(collect(), timeout=5)
+        try:
+            # User code starts after this trusted first line; it cannot spoof readiness.
+            marker = await asyncio.wait_for(
+                output_stream.readline(), timeout=STARTUP_TIMEOUT
+            )
+        except TimeoutError:
+            return (
+                "",
+                "Песочница не запустилась вовремя. Повторите проверку позже.",
+                -1,
+                False,
+            )
+        if marker.rstrip(b"\r\n") != ready.encode():
+            return "", "Песочница не запустилась. Повторите проверку позже.", -1, False
+
+        async def collect() -> tuple[str, str, int]:
+            stdout_task = asyncio.create_task(
+                read_bounded(output_stream, output_budget)
+            )
+            stream_tasks.append(stdout_task)
+            stdout, stderr = await asyncio.gather(stdout_task, stderr_task)
+            return stdout, stderr, await process.wait()
+
+        stdout, stderr, exit_code = await asyncio.wait_for(
+            collect(), timeout=EXECUTION_TIMEOUT
+        )
         return stdout, stderr, exit_code, False
     except TimeoutError:
         return "", "Превышен лимит времени 5 секунд.", -1, True
     except OutputLimit:
         return "", "Превышен лимит вывода 16 КБ.", -1, False
     finally:
+        for task in stream_tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*stream_tasks, return_exceptions=True)
         await remove_container(name)
         if process.returncode is None:
             with suppress(ProcessLookupError):

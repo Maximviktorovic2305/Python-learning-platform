@@ -85,7 +85,12 @@ export function LessonPage({
             </div>
           ) : course.error ? (
             <div className="lesson-sidebar">
-              <ErrorState message={errorMessage(course.error)} />
+              <ErrorState
+                message={errorMessage(course.error)}
+                retry={() => {
+                  void course.refetch();
+                }}
+              />
             </div>
           ) : (
             <LessonNavigationSkeleton />
@@ -222,7 +227,12 @@ export function LessonPage({
                   {loading ? (
                     <PageSkeleton variant="exercise" />
                   ) : exercises.error ? (
-                    <ErrorState message={errorMessage(exercises.error)} />
+                    <ErrorState
+                      message={errorMessage(exercises.error)}
+                      retry={() => {
+                        void exercises.refetch();
+                      }}
+                    />
                   ) : currentExercise ? (
                     <>
                       <div
