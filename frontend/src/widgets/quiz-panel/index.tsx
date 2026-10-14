@@ -140,6 +140,11 @@ export function QuizPanel({ topicId }: { topicId: string }) {
             <RotateCcw size={15} />
             Новая попытка
           </Button>
+          {error && (
+            <p className="form-error" role="alert">
+              {errorMessage(error)}
+            </p>
+          )}
         </div>
         <h3>Разбор каждого ответа</h3>
         {result.review.map((review, i) => (

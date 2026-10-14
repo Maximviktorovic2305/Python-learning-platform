@@ -63,7 +63,12 @@ export function PracticePage() {
       {course.isPending || (!course.error && user && progress.isPending) ? (
         <PageSkeleton variant="practice" />
       ) : course.error && !course.data ? (
-        <ErrorState message={errorMessage(course.error)} />
+        <ErrorState
+          message={errorMessage(course.error)}
+          retry={() => {
+            void course.refetch();
+          }}
+        />
       ) : progress.error && !progress.data ? (
         <ErrorState
           message={errorMessage(progress.error)}

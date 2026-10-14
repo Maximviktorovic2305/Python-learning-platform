@@ -407,17 +407,25 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     }),
   );
   let passed = false;
-  await page.route("**/api/exercises/first-program-e1/submit", (route) =>
-    route.fulfill({
-      json: {
-        status: passed ? "passed" : "failed",
-        stdout: passed ? "Hello, Python!\n" : "",
-        stderr: "",
-        passed: passed ? 1 : 0,
-        total: 1,
-        xp: passed ? 30 : 0,
-      },
-    }),
+  let releaseVerification!: () => void;
+  const verificationReady = new Promise<void>((resolve) => {
+    releaseVerification = resolve;
+  });
+  await page.route(
+    "**/api/exercises/first-program-e1/submit",
+    async (route) => {
+      if (passed) await verificationReady;
+      await route.fulfill({
+        json: {
+          status: passed ? "passed" : "failed",
+          stdout: passed ? "Hello, Python!\n" : "",
+          stderr: "",
+          passed: passed ? 1 : 0,
+          total: 1,
+          xp: passed ? 30 : 0,
+        },
+      });
+    },
   );
   await page.goto("/learn/first-program?tab=practice");
   const editor = page.getByLabel("Редактор Python", { exact: true });
@@ -457,6 +465,14 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
   passed = true;
   await editor.fill("print('Hello, Python!')");
   await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+  await expect(
+    page.getByRole("button", { name: "Запустить локально" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Сбросить код" }),
+  ).toBeDisabled();
+  await expect(editor).toHaveAttribute("readonly", "");
+  releaseVerification();
   await expect(page.locator(".execution-message.success")).toContainText(
     "Задание выполнено",
   );

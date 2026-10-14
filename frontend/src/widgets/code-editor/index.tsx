@@ -144,6 +144,7 @@ export function CodeEditor({
             <Tag>PYTHON 3</Tag>
             <button
               aria-label="Сбросить код"
+              disabled={running || verifying}
               onClick={() => {
                 setCode(exercise.starter_code);
                 setOutput(null);
@@ -187,6 +188,7 @@ export function CodeEditor({
               autoCorrect="off"
               wrap="off"
               value={code}
+              readOnly={running || verifying}
               maxLength={20000}
               onChange={(e) => setCode(e.target.value)}
               onScroll={(e) => {
@@ -230,7 +232,7 @@ export function CodeEditor({
               Остановить
             </Button>
           ) : (
-            <Button onClick={run} disabled={!code.trim()}>
+            <Button onClick={run} disabled={verifying || !code.trim()}>
               <Play size={15} />
               Запустить локально
             </Button>

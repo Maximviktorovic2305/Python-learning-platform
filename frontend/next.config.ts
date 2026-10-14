@@ -5,6 +5,7 @@ const webOrigin = new URL(process.env.WEB_ORIGIN ?? "http://localhost:3010")
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  devIndicators: false,
   reactCompiler: true,
   turbopack: {
     rules: {

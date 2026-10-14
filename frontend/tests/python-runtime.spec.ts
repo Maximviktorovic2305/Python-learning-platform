@@ -32,3 +32,37 @@ test("browser Python can print but cannot reach authenticated API routes", async
   );
   expect(apiResponses).toEqual([]);
 });
+
+test("Python errors, time limits and cancellation allow another successful run", async ({
+  page,
+}) => {
+  await page.goto("/learn/first-program?tab=practice");
+  const editor = page.getByLabel("Редактор Python");
+  const run = page.getByRole("button", { name: "Запустить локально" });
+  await editor.fill("print(");
+  await run.click();
+  await expect(page.locator(".execution-error")).toContainText("SyntaxError", {
+    timeout: 50000,
+  });
+  await editor.fill("while True: pass");
+  await run.click();
+  await expect(page.locator(".execution-error")).toContainText(
+    "Превышен лимит 5 секунд",
+    { timeout: 20000 },
+  );
+  await run.click();
+  await page.getByRole("button", { name: "Остановить", exact: true }).click();
+  await expect(page.locator(".execution-error")).toContainText(
+    "Выполнение остановлено",
+  );
+  await editor.fill("print('recovered')");
+  await run.click();
+  await expect(page.locator(".editor-output pre").first()).toHaveText(
+    "recovered\n",
+    { timeout: 20000 },
+  );
+  await expect(page.locator(".execution-error")).toHaveCount(0);
+  await page
+    .locator(".editor")
+    .screenshot({ path: "../.local/audit-runtime-recovered.png" });
+});
