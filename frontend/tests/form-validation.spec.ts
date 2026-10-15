@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import type { Progress } from "../src/entities/progress/model";
 
 const user = {
   id: "validation-user",
@@ -387,7 +388,21 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
   );
   await page.route("**/api/progress**", (route) =>
     route.fulfill({
-      json: { lesson_ids: [], exercise_ids: [], weak_topics: [] },
+      json: {
+        user,
+        lesson_ids: [],
+        exercise_ids: [],
+        quiz_ids: [],
+        completed_topics: [],
+        continue_topic: "first-program",
+        course_percent: 0,
+        level_percent: {},
+        module_percent: {},
+        daily_xp: 0,
+        activity: [],
+        weak_topics: [],
+        week_xp: [0, 0, 0, 0, 0, 0, 0],
+      } satisfies Progress,
     }),
   );
   await page.route("**/api/exercises?*", (route) =>
