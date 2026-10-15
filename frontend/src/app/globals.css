@@ -2558,6 +2558,23 @@ details[open] > summary > svg:last-child {
   font-size: 14px;
   line-height: 1.9;
 }
+.theory-content p + p,
+.theory-content .code-block + p {
+  margin-top: 14px;
+}
+.theory-content p code {
+  font-size: 0.92em;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.lesson-tabs {
+  scroll-margin-top: 85px;
+}
+.lesson-guest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 .theory-content .code-block {
   margin-top: 20px;
 }
