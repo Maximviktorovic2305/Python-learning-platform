@@ -24,9 +24,18 @@ test("a failed new quiz attempt keeps the review and offers a visible retry", as
   await page.route("**/api/progress**", (route) =>
     route.fulfill({
       json: {
+        user,
         lesson_ids: [],
         exercise_ids: [],
-        quiz_topic_ids: [],
+        quiz_ids: [],
+        completed_topics: [],
+        continue_topic: "first-program",
+        course_percent: 0,
+        level_percent: {},
+        module_percent: {},
+        daily_xp: 0,
+        activity: [],
+        week_xp: [0, 0, 0, 0, 0, 0, 0],
         weak_topics: [],
       },
     }),

@@ -205,7 +205,10 @@ test("cached navigation preserves the shell and never inserts skeletons or a sec
     "data-persistent",
     "yes",
   );
-  expect(reads).toEqual([]);
+  // Progress refreshes in the background so another device cannot leave a
+  // recently visited page showing old completion or XP. Public content stays cached.
+  expect(reads.length).toBeGreaterThan(0);
+  expect(reads.every((path) => path === "/api/progress")).toBe(true);
 });
 
 test("logout clears cached account data even when the server fails and an old save arrives late", async ({

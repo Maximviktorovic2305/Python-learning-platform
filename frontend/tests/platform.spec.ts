@@ -89,11 +89,13 @@ test("register, reload session, complete lesson, quiz review, persisted progress
       .getByRole("status")
       .filter({ hasText: "Пройдено 1/1 проверок. +30 XP" }),
   ).toBeVisible({ timeout: 20000 });
-  await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+  await page
+    .getByRole("button", { name: "Проверить повторно · без XP" })
+    .click();
   await expect(
     page
       .getByRole("status")
-      .filter({ hasText: "Пройдено 1/1 проверок. +0 XP" }),
+      .filter({ hasText: "Баллы за это задание уже получены" }),
   ).toBeVisible({ timeout: 20000 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({

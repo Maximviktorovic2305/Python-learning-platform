@@ -11,3 +11,7 @@ export {
 } from "./client";
 export type { Schema } from "./client";
 export { createQueryClient } from "./query-client";
+export {
+  refreshLearningData,
+  subscribeLearningUpdates,
+} from "./learning-updates";

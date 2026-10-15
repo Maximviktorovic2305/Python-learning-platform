@@ -21,7 +21,7 @@ import {
 import { useAuth } from "@/features/auth";
 import { Button, Tag, SkeletonRegion, SkeletonCode } from "@/shared/ui";
 import { Highlight } from "@/shared/ui/code";
-import { errorMessage } from "@/shared/api";
+import { errorMessage, refreshLearningData } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 
 export function CodeEditor({
@@ -40,6 +40,8 @@ export function CodeEditor({
     "error",
   );
   const [copied, setCopied] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const solved = completed || verified;
   const controller = useRef<AbortController | null>(null);
   const overlay = useRef<HTMLPreElement | null>(null);
   const numbers = useRef<HTMLDivElement | null>(null);
@@ -67,6 +69,7 @@ export function CodeEditor({
       setMessage("");
     },
     onSuccess: async (result) => {
+      if (result.status === "passed") setVerified(true);
       setMessageKind(
         result.status === "passed"
           ? "passed"
@@ -86,22 +89,21 @@ export function CodeEditor({
       });
       setMessage(
         result.status === "passed"
-          ? `Пройдено ${result.passed}/${result.total} проверок. +${result.xp} XP`
+          ? `Пройдено ${result.passed}/${result.total} проверок. ${result.xp > 0 ? `+${result.xp} XP` : "Баллы за это задание уже получены. Повторная проверка без XP."}`
           : result.status === "failed"
             ? `Пройдено ${result.passed}/${result.total} проверок. Попробуйте ещё раз.`
             : result.status === "timeout"
               ? "Проверка остановлена по лимиту времени. XP не начислен. Проверьте циклы и повторите запуск."
               : "Не удалось выполнить Python-код. XP не начислен. Подробности — в выводе программы.",
       );
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ["progress"] }),
-        client.invalidateQueries({ queryKey: ["achievements"] }),
-        client.invalidateQueries({ queryKey: ["user"] }),
-      ]);
+      if (user) await refreshLearningData(client, user.id);
     },
     onError: (error) => {
       setMessageKind("error");
       setMessage(errorMessage(error));
+    },
+    onSettled: (_result, error) => {
+      if (error && user) return refreshLearningData(client, user.id);
     },
   });
   const verifying = verification.isPending;
@@ -128,7 +130,7 @@ export function CodeEditor({
             {exercise.difficulty}
           </Tag>
           <Tag>{exercise.kind.replaceAll("_", " ")}</Tag>
-          {completed && (
+          {solved && (
             <Tag tone="green">
               <Check size={12} />
               Решено
@@ -205,7 +207,11 @@ export function CodeEditor({
               value={code}
               readOnly={running || verifying}
               maxLength={20000}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setMessage("");
+                setOutput(null);
+              }}
               onScroll={(e) => {
                 if (overlay.current) {
                   overlay.current.scrollTop = e.currentTarget.scrollTop;
@@ -226,6 +232,8 @@ export function CodeEditor({
                   const start = e.currentTarget.selectionStart;
                   const end = e.currentTarget.selectionEnd;
                   setCode(code.slice(0, start) + "    " + code.slice(end));
+                  setMessage("");
+                  setOutput(null);
                   const element = e.currentTarget;
                   requestAnimationFrame(() => {
                     element.selectionStart = element.selectionEnd = start + 4;
@@ -260,7 +268,7 @@ export function CodeEditor({
             pending={verifying}
           >
             <ShieldCheck size={15} />
-            Проверить · +30 XP
+            {solved ? "Проверить повторно · без XP" : "Проверить · +30 XP"}
           </Button>
         </div>
         <div
@@ -332,6 +340,8 @@ export function CodeEditor({
         серверной проверки. Программа получает пустой stdin; для этой задачи
         используйте заданные значения. Сетевые запросы из локального Python
         недоступны.
+        {solved &&
+          " Баллы за это задание уже получены. Можно практиковаться без повторного начисления XP."}
       </p>
     </div>
   );

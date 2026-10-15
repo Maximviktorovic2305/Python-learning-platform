@@ -17,7 +17,13 @@ import {
 } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { CompleteLesson } from "@/features/complete-lesson";
-import { Button, Tag, ErrorState, Skeleton } from "@/shared/ui";
+import {
+  Button,
+  Tag,
+  ErrorState,
+  Skeleton,
+  CachedDataNotice,
+} from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
 
@@ -48,6 +54,7 @@ export function LessonPage({
   const next = topics[topics.findIndex((t) => t.id === id) + 1];
   return (
     <>
+      <CachedDataNotice query={progress} />
       {progress.error && !progress.data ? (
         <ErrorState
           message={errorMessage(progress.error)}
@@ -118,6 +125,24 @@ export function LessonPage({
                   </Tag>
                 )}
               </div>
+              {user && progress.data && exercises.data && (
+                <p className="muted small-text" aria-live="polite">
+                  Теория: {completed ? "изучена" : "не изучена"} · Практика:{" "}
+                  {
+                    exercises.data.filter((exercise) =>
+                      progress.data.exercise_ids.includes(exercise.id),
+                    ).length
+                  }
+                  /{exercises.data.length} · Тест:{" "}
+                  {progress.data.quiz_ids.includes(`${id}-quiz`)
+                    ? "зачтён"
+                    : "не зачтён"}
+                  .
+                  {progress.data.completed_topics.includes(id)
+                    ? " Тема завершена."
+                    : " Для завершения темы изучите теорию, решите все задания и сдайте тест на 70% или выше."}
+                </p>
+              )}
             </div>
             <div
               className="lesson-tabs"
@@ -183,11 +208,12 @@ export function LessonPage({
                   ))}
                   <div className="lesson-bottom">
                     <p>Понятна идея? Теперь проверим её в действии.</p>
-                    {loading ? (
+                    {loading || (user && progress.isPending) ? (
                       <Skeleton className="skeleton-button" />
                     ) : user ? (
                       <CompleteLesson
                         id={id}
+                        userId={user.id}
                         completed={completed}
                         onComplete={() => setTab("practice")}
                       />
@@ -224,7 +250,7 @@ export function LessonPage({
               )}
               {tab === "practice" && (
                 <div>
-                  {loading ? (
+                  {loading || (user && progress.isPending) ? (
                     <PageSkeleton variant="exercise" />
                   ) : exercises.error ? (
                     <ErrorState

@@ -91,6 +91,21 @@ export function ErrorState({
     </div>
   );
 }
+export function CachedDataNotice({
+  query,
+}: {
+  query: { data: unknown; error: unknown; refetch: () => Promise<unknown> };
+}) {
+  if (!query.error || query.data === undefined) return null;
+  return (
+    <ErrorState
+      message="Не удалось обновить данные. Показаны последние загруженные значения."
+      retry={() => {
+        void query.refetch();
+      }}
+    />
+  );
+}
 export function PageHeading({
   eyebrow,
   title,

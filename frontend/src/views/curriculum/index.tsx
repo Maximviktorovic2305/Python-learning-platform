@@ -25,6 +25,7 @@ import {
   Skeleton,
   ErrorState,
   ProgressBar,
+  CachedDataNotice,
 } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function CurriculumPage({
@@ -58,6 +59,8 @@ export function CurriculumPage({
       .filter((l) => l.modules.length) ?? [];
   return (
     <>
+      <CachedDataNotice query={progress} />
+      <CachedDataNotice query={course} />
       <PageHeading
         eyebrow="LEARNING PATH / 00 → 11"
         title="Твой маршрут в Python."

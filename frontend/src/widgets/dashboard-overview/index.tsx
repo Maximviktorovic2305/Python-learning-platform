@@ -46,7 +46,7 @@ export function DashboardOverview({
     {
       icon: BookOpen,
       value: progress.lesson_ids.length,
-      title: "Уроков изучено",
+      title: "Теория изучена",
       color: "blue",
     },
     {
@@ -97,13 +97,17 @@ export function DashboardOverview({
                     status={getTopicStatus(next.id, progress)}
                   />
                 )}
-                <span>
-                  <Clock3 size={14} />
-                  {next?.minutes ?? 20} мин
-                </span>
-                <span>
-                  <PythonLogo size={14} />8 заданий
-                </span>
+                {next && (
+                  <span>
+                    <Clock3 size={14} />
+                    {next.minutes} мин
+                  </span>
+                )}
+                {next && (
+                  <span>
+                    <PythonLogo size={14} />8 заданий
+                  </span>
+                )}
                 <span>
                   <Sparkles size={14} />
                   Новые знания
@@ -121,9 +125,11 @@ export function DashboardOverview({
               тем закреплено
             </span>
             <ActionLink href={next ? `/learn/${next.id}` : "/practice"}>
-              {progress.lesson_ids.length
-                ? "Продолжить обучение"
-                : "Начать первый урок"}
+              {!next
+                ? "Повторить пройденное"
+                : progress.lesson_ids.length
+                  ? "Продолжить обучение"
+                  : "Начать первый урок"}
             </ActionLink>
           </div>
           <ProgressBar value={progress.course_percent} label="Прогресс курса" />
@@ -211,7 +217,11 @@ export function DashboardOverview({
           ) : (
             <div className="empty-note">
               <Check size={28} />
-              <strong>Начнём с чистого листа</strong>
+              <strong>
+                {progress.quiz_ids.length
+                  ? "Нет тем с точностью ниже 80%"
+                  : "Пока нет результатов тестов"}
+              </strong>
               <p>
                 После тестов здесь появятся темы, в которых можно стать
                 увереннее.
@@ -269,10 +279,12 @@ export function DashboardOverview({
                   </strong>
                   <small>
                     {activity.kind === "lesson"
-                      ? "Урок изучен"
+                      ? "Теория изучена"
                       : activity.kind === "quiz"
                         ? "Тест пройден"
-                        : "Задание решено"}
+                        : activity.kind === "project"
+                          ? "Проект принят"
+                          : "Задание решено"}
                   </small>
                 </div>
                 <b>+{activity.xp} XP</b>

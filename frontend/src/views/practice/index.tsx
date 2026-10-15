@@ -12,7 +12,13 @@ import {
   TopicStatusLegend,
 } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
-import { PageHeading, Tag, Skeleton, ErrorState } from "@/shared/ui";
+import {
+  PageHeading,
+  Tag,
+  Skeleton,
+  ErrorState,
+  CachedDataNotice,
+} from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 export function PracticePage() {
@@ -28,6 +34,8 @@ export function PracticePage() {
     : [];
   return (
     <>
+      <CachedDataNotice query={progress} />
+      <CachedDataNotice query={course} />
       <PageHeading
         eyebrow="PRACTICE / EXPERIMENT / REPEAT"
         title="Территория практики."
@@ -39,8 +47,8 @@ export function PracticePage() {
             <Skeleton width={170} height={16} />
           ) : (
             <>
-              {progress.data?.exercise_ids.length ?? 0} /{" "}
-              {course.data?.exercise_count ?? 120} заданий решено
+              {progress.data?.exercise_ids.length ?? "—"} /{" "}
+              {course.data?.exercise_count ?? "—"} заданий решено
             </>
           )}
         </p>

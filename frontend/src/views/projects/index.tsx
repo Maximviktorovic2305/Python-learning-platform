@@ -6,7 +6,7 @@ import { PageSkeleton } from "@/widgets/app-shell";
 import { projectsQuery, submissionsQuery } from "@/entities/project";
 import { useAuth } from "@/features/auth";
 import { ProjectForm } from "@/features/submit-project";
-import { PageHeading, Tag, ErrorState } from "@/shared/ui";
+import { PageHeading, Tag, ErrorState, CachedDataNotice } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function ProjectsPage() {
   const { user, loading } = useAuth();
@@ -14,6 +14,8 @@ export function ProjectsPage() {
   const submissions = useQuery(submissionsQuery(user?.id));
   return (
     <>
+      <CachedDataNotice query={projects} />
+      <CachedDataNotice query={submissions} />
       <PageHeading
         eyebrow="BUILD SOMETHING REAL / PORTFOLIO"
         title="От знаний к работающим вещам."

@@ -174,7 +174,7 @@ svg {
 small {
   font-size: 12px;
 }
-input,
+input:not([type="radio"]):not([type="checkbox"]),
 textarea,
 select {
   border: 1px solid var(--border);
@@ -188,7 +188,7 @@ select {
     border-color 150ms ease,
     box-shadow 150ms ease;
 }
-input:focus,
+input:not([type="radio"]):not([type="checkbox"]):focus,
 textarea:focus,
 select:focus {
   border-color: var(--python-blue);
@@ -211,7 +211,7 @@ input::placeholder,
 textarea::placeholder {
   color: var(--subtle);
 }
-input:read-only {
+input:not([type="radio"]):not([type="checkbox"]):read-only {
   color: var(--muted);
   background: var(--surface-raised);
 }
@@ -3009,7 +3009,38 @@ details[open] > summary > svg:last-child {
   width: 15px;
   height: 15px;
   margin: 0;
+  padding: 0;
+  flex-shrink: 0;
   accent-color: var(--python-blue);
+}
+input[type="radio"] {
+  appearance: none;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  background: var(--bg);
+}
+input[type="radio"]:checked {
+  border-color: var(--python-blue);
+  background-image: radial-gradient(
+    circle,
+    var(--python-blue) 0 40%,
+    transparent 45%
+  );
+}
+input[type="radio"]:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 5px var(--python-blue);
+}
+@media (forced-colors: active) {
+  input[type="radio"] {
+    appearance: auto;
+  }
+  input[type="radio"]:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 .option-letter {
   font-family: var(--font-mono), monospace;

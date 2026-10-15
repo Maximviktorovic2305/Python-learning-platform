@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   X,
@@ -13,6 +13,7 @@ import Link from "next/link";
 import { startQuiz, submitQuiz } from "@/features/submit-quiz";
 import { useAuth } from "@/features/auth";
 import type { Attempt, QuizResult } from "@/entities/quiz";
+import { progressQuery } from "@/entities/progress";
 import {
   Button,
   Tag,
@@ -22,7 +23,7 @@ import {
   SkeletonLines,
 } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
-import { errorMessage } from "@/shared/api";
+import { errorMessage, refreshLearningData } from "@/shared/api";
 
 function QuizSkeleton() {
   return (
@@ -53,6 +54,10 @@ function QuizSkeleton() {
 export function QuizPanel({ topicId }: { topicId: string }) {
   const { user, loading } = useAuth();
   const client = useQueryClient();
+  const progress = useQuery(progressQuery(user?.id));
+  const [passed, setPassed] = useState(false);
+  const completed =
+    passed || (progress.data?.quiz_ids.includes(`${topicId}-quiz`) ?? false);
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [selections, setSelections] = useState<Record<string, number[]>>({});
   const [current, setCurrent] = useState(0);
@@ -79,12 +84,12 @@ export function QuizPanel({ topicId }: { topicId: string }) {
       answers: Record<string, number[]>;
     }) => submitQuiz(id, answers),
     onSuccess: async (data) => {
+      if (data.score >= 70) setPassed(true);
       setResult(data);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ["progress"] }),
-        client.invalidateQueries({ queryKey: ["achievements"] }),
-        client.invalidateQueries({ queryKey: ["user"] }),
-      ]);
+      if (user) await refreshLearningData(client, user.id);
+    },
+    onError: () => {
+      if (user) return refreshLearningData(client, user.id);
     },
   });
   const pending = startMutation.isPending || submitMutation.isPending;
@@ -96,7 +101,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
   const submit = () => {
     if (attempt) submitMutation.mutate({ id: attempt.id, answers: selections });
   };
-  if (loading) return <QuizSkeleton />;
+  if (loading || (user && progress.isPending)) return <QuizSkeleton />;
   if (!user)
     return (
       <div className="quiz-intro">
@@ -134,7 +139,13 @@ export function QuizPanel({ topicId }: { topicId: string }) {
             <span>
               {Math.floor(result.seconds / 60)} мин {result.seconds % 60} сек
             </span>
-            <span>+{result.xp} XP</span>
+            <span>
+              {result.xp > 0
+                ? `+${result.xp} XP за первый зачёт · однократно`
+                : result.score >= 70 || completed
+                  ? "Баллы за тест уже получены"
+                  : "XP не начислены"}
+            </span>
           </div>
           <Button onClick={start} pending={pending} className="secondary">
             <RotateCcw size={15} />
@@ -191,9 +202,13 @@ export function QuizPanel({ topicId }: { topicId: string }) {
             теста — подробный разбор. Для зачёта нужно 70%.
           </p>
           <div className="quiz-rules">
-            <span>Без повторов</span>
+            <span>Без повторов в попытке</span>
             <span>Подсказки доступны</span>
-            <span>+50 XP за первый зачёт</span>
+            <span>
+              {completed
+                ? "Тест уже зачтён · повторение без XP"
+                : "+50 XP за первый зачёт"}
+            </span>
           </div>
           <Button pending={pending} onClick={start}>
             Начать тест
@@ -230,6 +245,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
                     question.kind === "multiple_select" ? "checkbox" : "radio"
                   }
                   name={question.id}
+                  disabled={pending}
                   checked={selections[question.id]?.includes(i) ?? false}
                   onChange={() =>
                     setSelections((previous) => {
@@ -272,7 +288,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
           <div className="quiz-navigation">
             <Button
               className="secondary"
-              disabled={current === 0}
+              disabled={current === 0 || pending}
               onClick={() => {
                 setCurrent(current - 1);
                 setHint(false);
@@ -286,7 +302,7 @@ export function QuizPanel({ topicId }: { topicId: string }) {
             </span>
             {current < attempt.questions.length - 1 ? (
               <Button
-                disabled={!Object.hasOwn(selections, question.id)}
+                disabled={pending || !Object.hasOwn(selections, question.id)}
                 onClick={() => {
                   setCurrent(current + 1);
                   setHint(false);

@@ -5,7 +5,7 @@ import { DashboardOverview } from "@/widgets/dashboard-overview";
 import { courseQuery } from "@/entities/course";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
-import { ErrorState } from "@/shared/ui";
+import { ErrorState, CachedDataNotice } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function DashboardPage() {
   const { user } = useAuth();
@@ -13,6 +13,8 @@ export function DashboardPage() {
   const progress = useQuery(progressQuery(user?.id));
   return (
     <>
+      <CachedDataNotice query={progress} />
+      <CachedDataNotice query={course} />
       {(course.error && !course.data) || (progress.error && !progress.data) ? (
         <ErrorState
           message={errorMessage(course.error ?? progress.error)}

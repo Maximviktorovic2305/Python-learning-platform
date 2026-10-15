@@ -7,6 +7,7 @@ export const progressQuery = (userId?: string) =>
   queryOptions({
     queryKey: ["progress", userId ?? null],
     enabled: !!userId,
+    staleTime: 0,
     queryFn: async ({ signal }) =>
       unwrap(await api.GET("/api/progress", { signal })),
   });

@@ -1,14 +1,16 @@
 "use client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, unwrap, errorMessage } from "@/shared/api";
+import { api, unwrap, errorMessage, refreshLearningData } from "@/shared/api";
 import { Button } from "@/shared/ui";
 import { Check, ArrowRight } from "lucide-react";
 export function CompleteLesson({
   id,
+  userId,
   completed,
   onComplete,
 }: {
   id: string;
+  userId: string;
   completed: boolean;
   onComplete: () => void;
 }) {
@@ -21,13 +23,10 @@ export function CompleteLesson({
         }),
       ),
     onSuccess: async () => {
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ["progress"] }),
-        client.invalidateQueries({ queryKey: ["achievements"] }),
-        client.invalidateQueries({ queryKey: ["user"] }),
-      ]);
+      await refreshLearningData(client, userId);
       onComplete();
     },
+    onError: () => refreshLearningData(client, userId),
   });
   return (
     <div>
@@ -38,7 +37,7 @@ export function CompleteLesson({
         {completed ? <Check size={16} /> : <ArrowRight size={16} />}
         {completed ? "Перейти к практике" : "Теория изучена · +20 XP"}
       </Button>
-      {mutation.error && (
+      {mutation.error && !completed && (
         <p className="form-error" role="alert">
           {errorMessage(mutation.error)}
         </p>

@@ -4,7 +4,13 @@ import { Award, Flame, Trophy, LockKeyhole, Check } from "lucide-react";
 import { PageSkeleton } from "@/widgets/app-shell";
 import { achievementsQuery } from "@/entities/achievement";
 import { useAuth } from "@/features/auth";
-import { PageHeading, Tag, ErrorState, Skeleton } from "@/shared/ui";
+import {
+  PageHeading,
+  Tag,
+  ErrorState,
+  Skeleton,
+  CachedDataNotice,
+} from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 export function AchievementsPage() {
@@ -13,6 +19,7 @@ export function AchievementsPage() {
   const earned = query.data?.filter((a) => a.earned_at).length ?? 0;
   return (
     <>
+      <CachedDataNotice query={query} />
       <PageHeading
         eyebrow="MILESTONES / SMALL WINS MATTER"
         title="Каждый шаг имеет значение."
@@ -23,7 +30,9 @@ export function AchievementsPage() {
               <Skeleton width={110} height={15} />
             ) : (
               <>
-                {earned} / {query.data?.length ?? 16} ОТКРЫТО
+                {query.data
+                  ? `${earned} / ${query.data.length} ОТКРЫТО`
+                  : "Нет данных"}
               </>
             )}
           </Tag>

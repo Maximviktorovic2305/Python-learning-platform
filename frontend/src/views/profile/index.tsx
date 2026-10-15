@@ -6,7 +6,7 @@ import { PageSkeleton } from "@/widgets/app-shell";
 import { userQuery } from "@/entities/user";
 import { useAuth } from "@/features/auth";
 import { ProfileForm, PasswordForm } from "@/features/update-profile";
-import { PageHeading, ErrorState, Tag } from "@/shared/ui";
+import { PageHeading, ErrorState, Tag, CachedDataNotice } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function ProfilePage() {
   const { user, logout, updateUser } = useAuth();
@@ -14,6 +14,7 @@ export function ProfilePage() {
   const router = useRouter();
   return (
     <>
+      <CachedDataNotice query={data} />
       <PageHeading
         eyebrow="ACCOUNT / PERSONAL SETTINGS"
         title="Ваша точка отсчёта."
