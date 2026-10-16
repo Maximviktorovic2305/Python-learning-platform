@@ -166,7 +166,7 @@ test("completion and rewards refresh across all learning views without reloading
   const app = await learning(context);
   await open(page, "/curriculum"); // Prime the curriculum and progress caches.
   await page.locator('.topic-row[href="/learn/first-program"]').click();
-  await page.getByRole("button", { name: "Теория изучена · +20 XP" }).click();
+  await page.getByRole("button", { name: "Перейти к примерам" }).click();
   await expect(
     page.getByRole("tab", { name: "Примеры", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
@@ -174,15 +174,18 @@ test("completion and rewards refresh across all learning views without reloading
     .getByRole("button", { name: "Перейти к практике", exact: true })
     .click();
   const verify = page.getByRole("button", {
-    name: "Проверить · +30 XP",
+    name: "Проверить",
     exact: true,
   });
   await verify.click();
   await expect(page.locator(".execution-message")).toContainText("+30 XP");
   const repeat = page.getByRole("button", {
-    name: "Проверить повторно · без XP",
+    name: "Проверить повторно",
   });
   await repeat.click();
+  await expect(
+    page.getByRole("button").filter({ hasText: /XP|начислен/i }),
+  ).toHaveCount(0);
   await expect(page.locator(".execution-message")).toContainText(
     "Баллы за это задание уже получены",
   );
@@ -194,6 +197,7 @@ test("completion and rewards refresh across all learning views without reloading
     .getByRole("button", { name: "Перейти к практике", exact: true })
     .click();
   expect(app.theoryRequests()).toBe(1);
+  await page.locator(".exercise-selector button").last().click();
   await page.getByRole("button", { name: "Перейти к тесту" }).click();
   await page.getByRole("button", { name: "Начать тест" }).click();
   await passQuiz(page);
@@ -265,9 +269,7 @@ test("a completion in another tab immediately refreshes status and repeat reward
   await open(second, "/curriculum");
   const topic = second.locator('.topic-row[href="/learn/first-program"]');
   await expect(topic).toHaveAttribute("data-topic-status", "in-progress");
-  await page
-    .getByRole("button", { name: "Проверить · +30 XP", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(topic).toHaveAttribute("data-topic-status", "completed");
   await expect(page.locator(".lesson-heading .topic-status")).toHaveText(
     "Завершена",
@@ -281,7 +283,8 @@ test("a committed completion with a lost response refreshes before retry", async
   const app = await learning(context);
   app.loseResponse();
   await open(page, "/learn/first-program");
-  await page.getByRole("button", { name: "Теория изучена · +20 XP" }).click();
+  await page.getByRole("button", { name: "Перейти к примерам" }).click();
+  await expect(page.locator(".lesson-heading")).toContainText("Теория изучена");
   await expect(
     page.getByRole("button", { name: "Перейти к примерам", exact: true }),
   ).toBeVisible();
@@ -299,14 +302,12 @@ test("editing a checked solution clears the result for the previous code", async
 }) => {
   await learning(context);
   await open(page, "/learn/first-program?tab=practice");
-  await page
-    .getByRole("button", { name: "Проверить · +30 XP", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(page.locator(".execution-message")).toContainText(
     "Задание выполнено",
   );
   const repeat = page.getByRole("button", {
-    name: "Проверить повторно · без XP",
+    name: "Проверить повторно",
   });
   await expect(repeat).toBeEnabled();
   await page
@@ -323,7 +324,7 @@ test("failed refresh labels cached progress and keeps a verified task free of re
   const app = await learning(context);
   await open(page, "/learn/first-program?tab=practice");
   const verify = page.getByRole("button", {
-    name: "Проверить · +30 XP",
+    name: "Проверить",
     exact: true,
   });
   await expect(verify).toBeVisible();
@@ -335,7 +336,7 @@ test("failed refresh labels cached progress and keeps a verified task free of re
       .filter({ hasText: "Показаны последние загруженные значения" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Проверить повторно · без XP" }),
+    page.getByRole("button", { name: "Проверить повторно" }),
   ).toBeVisible();
   app.failProgress(false);
   await page.getByRole("button", { name: "Повторить", exact: true }).click();

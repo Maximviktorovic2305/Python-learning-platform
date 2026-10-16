@@ -50,6 +50,7 @@ export function LessonPage({
     lessonSteps.some((step) => step.id === initialTab) ? initialTab : "theory",
   );
   const tabsRef = useRef<HTMLDivElement>(null);
+  const exerciseSelectorRef = useRef<HTMLDivElement>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [navOpen, setNavOpen] = useState(false);
   const { user, loading } = useAuth();
@@ -59,6 +60,7 @@ export function LessonPage({
   const progress = useQuery(progressQuery(user?.id));
   const completed = progress.data?.lesson_ids.includes(id) ?? false;
   const currentExercise = exercises.data?.[exerciseIndex];
+  const nextExercise = exercises.data?.[exerciseIndex + 1];
   const topics = course.data
     ? allTopics(course.data).filter((t) => t.published)
     : [];
@@ -70,6 +72,13 @@ export function LessonPage({
     setTab(target);
     tabsRef.current?.scrollIntoView({ block: "start" });
     document.getElementById(`tab-${target}`)?.focus({ preventScroll: true });
+  };
+  const goToExercise = (index: number) => {
+    setExerciseIndex(index);
+    exerciseSelectorRef.current?.scrollIntoView({ block: "start" });
+    exerciseSelectorRef.current
+      ?.querySelectorAll("button")
+      [index]?.focus({ preventScroll: true });
   };
   return (
     <>
@@ -280,6 +289,7 @@ export function LessonPage({
                     <>
                       <div
                         className="exercise-selector"
+                        ref={exerciseSelectorRef}
                         aria-label="Выбор задания"
                       >
                         {exercises.data?.map((exercise, i) => (
@@ -353,13 +363,29 @@ export function LessonPage({
                 >
                   <Button
                     className="secondary"
-                    onClick={() => goToStep(previousStep.id)}
+                    onClick={() =>
+                      tab === "practice" && exerciseIndex > 0
+                        ? goToExercise(exerciseIndex - 1)
+                        : goToStep(previousStep.id)
+                    }
                   >
-                    Назад: {previousStep.name}
+                    {tab === "practice" && exerciseIndex > 0
+                      ? "Предыдущее задание"
+                      : `Назад: ${previousStep.name}`}
                   </Button>
                   {nextStep && (
-                    <Button onClick={() => goToStep(nextStep.id)}>
-                      {nextStep.action} <ArrowRight size={15} />
+                    <Button
+                      disabled={tab === "practice" && !currentExercise}
+                      onClick={() =>
+                        tab === "practice" && nextExercise
+                          ? goToExercise(exerciseIndex + 1)
+                          : goToStep(nextStep.id)
+                      }
+                    >
+                      {tab === "practice" && nextExercise
+                        ? "Следующее задание"
+                        : nextStep.action}{" "}
+                      <ArrowRight size={15} />
                     </Button>
                   )}
                 </nav>

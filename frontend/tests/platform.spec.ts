@@ -75,7 +75,7 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   await expect(
     page.getByRole("heading", { name: "Первая программа и инструменты" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /Теория изучена/ }).click();
+  await page.getByRole("button", { name: "Перейти к примерам" }).click();
   await expect(
     page.getByRole("tab", { name: "Примеры", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
@@ -89,15 +89,13 @@ test("register, reload session, complete lesson, quiz review, persisted progress
     "Hello, Python!\n",
     { timeout: 50000 },
   );
-  await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+  await page.getByRole("button", { name: "Проверить" }).click();
   await expect(
     page
       .getByRole("status")
       .filter({ hasText: "Пройдено 1/1 проверок. +30 XP" }),
   ).toBeVisible({ timeout: 20000 });
-  await page
-    .getByRole("button", { name: "Проверить повторно · без XP" })
-    .click();
+  await page.getByRole("button", { name: "Проверить повторно" }).click();
   await expect(
     page
       .getByRole("status")
@@ -108,6 +106,7 @@ test("register, reload session, complete lesson, quiz review, persisted progress
     path: "../.local/lesson-practice.png",
     fullPage: true,
   });
+  await page.locator(".exercise-selector button").last().click();
   await page.getByRole("button", { name: "Перейти к тесту" }).click();
   await page.getByRole("button", { name: "Начать тест" }).click();
   for (let i = 0; i < 10; i++) {

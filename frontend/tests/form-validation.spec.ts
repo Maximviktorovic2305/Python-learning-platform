@@ -463,7 +463,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     );
   }
   await editor.fill("print('wrong')");
-  await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+  await page.getByRole("button", { name: "Проверить" }).click();
   await expect(page.locator(".execution-message.error")).toContainText(
     "Проверка не пройдена",
   );
@@ -479,7 +479,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     .screenshot({ path: "../.local/editor-result-failed.png" });
   passed = true;
   await editor.fill("print('Hello, Python!')");
-  await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+  await page.getByRole("button", { name: "Проверить" }).click();
   await expect(
     page.getByRole("button", { name: "Запустить локально" }),
   ).toBeDisabled();

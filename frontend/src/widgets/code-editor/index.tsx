@@ -268,7 +268,7 @@ export function CodeEditor({
             pending={verifying}
           >
             <ShieldCheck size={15} />
-            {solved ? "Проверить повторно · без XP" : "Проверить · +30 XP"}
+            {solved ? "Проверить повторно" : "Проверить"}
           </Button>
         </div>
         <div

@@ -327,7 +327,7 @@ for (const result of [
     await page
       .getByLabel("Редактор Python", { exact: true })
       .fill("print('Hello, Python!')");
-    await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+    await page.getByRole("button", { name: "Проверить" }).click();
     const message = page.locator(".execution-message");
     await expect(message).toContainText(result.title);
     await expect(message).toContainText(result.message);
@@ -432,7 +432,7 @@ test("Tab cannot change the submitted Python code while verification is pending"
   const editor = page.getByLabel("Редактор Python", { exact: true });
   const source = "print('Hello, Python!')";
   await editor.fill(source);
-  await page.getByRole("button", { name: "Проверить · +30 XP" }).click();
+  await page.getByRole("button", { name: "Проверить" }).click();
   await expect.poll(() => started).toBe(true);
   await editor.press("Tab");
   const value = await editor.inputValue();
