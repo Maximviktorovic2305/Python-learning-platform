@@ -17,7 +17,11 @@ def test_authored_examples_execute(topic):
     for scenario in topic.cases:
         # Only repository-authored trusted teaching code, never user submissions.
         result = subprocess.run(
-            [sys.executable, "-I", "-c", scenario.code], capture_output=True, text=True, timeout=3
+            [sys.executable, "-X", "utf8", "-I", "-c", scenario.code],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=3,
         )
         assert result.returncode == 0, (scenario.task, result.stderr)
         assert result.stdout.rstrip("\r\n") == scenario.output, scenario.task
@@ -29,7 +33,11 @@ def test_every_practice_scaffold_is_incomplete(topic):
         starter = exercise_starter(scenario.code)
         assert starter.strip() != scenario.code.strip()
         result = subprocess.run(
-            [sys.executable, "-I", "-c", starter], capture_output=True, text=True, timeout=3
+            [sys.executable, "-X", "utf8", "-I", "-c", starter],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=3,
         )
         assert result.returncode == 0, (scenario.task, result.stderr)
         assert result.stdout.rstrip("\r\n") != scenario.output, scenario.task
