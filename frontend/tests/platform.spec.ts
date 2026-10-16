@@ -76,12 +76,6 @@ test("register, reload session, complete lesson, quiz review, persisted progress
     page.getByRole("heading", { name: "Первая программа и инструменты" }),
   ).toBeVisible();
   await page.getByRole("button", { name: /Теория изучена/ }).click();
-  await expect(
-    page.getByRole("tab", { name: "Примеры", exact: true }),
-  ).toHaveAttribute("aria-selected", "true");
-  await page
-    .getByRole("button", { name: "Перейти к практике", exact: true })
-    .click();
   await expect(page.getByLabel("Редактор Python")).toBeVisible();
   await page.getByLabel("Редактор Python").fill("print('Hello, Python!')");
   await page.getByRole("button", { name: "Запустить локально" }).click();

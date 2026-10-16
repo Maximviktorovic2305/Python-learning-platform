@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Clock3, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -27,39 +27,6 @@ import {
 import { CodeBlock } from "@/shared/ui/code";
 import { errorMessage } from "@/shared/api";
 
-const lessonSteps = [
-  { id: "theory", name: "Теория", action: "Вернуться к теории" },
-  { id: "examples", name: "Примеры", action: "Перейти к примерам" },
-  { id: "practice", name: "Практика", action: "Перейти к практике" },
-  { id: "quiz", name: "Тест", action: "Перейти к тесту" },
-  { id: "review", name: "Закрепление", action: "Перейти к закреплению" },
-];
-
-function TheoryBody({ body }: { body: string }) {
-  return body.split(/(```python\n[\s\S]*?\n```)/g).map((part, index) =>
-    part.startsWith("```python\n") ? (
-      <CodeBlock key={index} code={part.slice(10, -4)} />
-    ) : (
-      part
-        .split("\n\n")
-        .filter(Boolean)
-        .map((paragraph, i) => (
-          <p key={`${index}-${i}`}>
-            {paragraph
-              .split(/(`[^`]+`)/g)
-              .map((text, j) =>
-                text.startsWith("`") ? (
-                  <code key={j}>{text.slice(1, -1)}</code>
-                ) : (
-                  text
-                ),
-              )}
-          </p>
-        ))
-    ),
-  );
-}
-
 export function LessonPage({
   id,
   initialTab = "theory",
@@ -71,10 +38,7 @@ export function LessonPage({
   initialLesson?: Lesson;
   initialCourse?: Course;
 }) {
-  const [tab, setTab] = useState(
-    lessonSteps.some((step) => step.id === initialTab) ? initialTab : "theory",
-  );
-  const tabsRef = useRef<HTMLDivElement>(null);
+  const [tab, setTab] = useState(initialTab);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [navOpen, setNavOpen] = useState(false);
   const { user, loading } = useAuth();
@@ -88,14 +52,6 @@ export function LessonPage({
     ? allTopics(course.data).filter((t) => t.published)
     : [];
   const next = topics[topics.findIndex((t) => t.id === id) + 1];
-  const stepIndex = lessonSteps.findIndex((step) => step.id === tab);
-  const previousStep = lessonSteps[stepIndex - 1];
-  const nextStep = lessonSteps[stepIndex + 1];
-  const goToStep = (target: string) => {
-    setTab(target);
-    tabsRef.current?.scrollIntoView({ block: "start" });
-    document.getElementById(`tab-${target}`)?.focus({ preventScroll: true });
-  };
   return (
     <>
       <CachedDataNotice query={progress} />
@@ -190,11 +146,16 @@ export function LessonPage({
             </div>
             <div
               className="lesson-tabs"
-              ref={tabsRef}
               role="tablist"
               aria-label="Этапы урока"
             >
-              {lessonSteps.map((t) => (
+              {[
+                { id: "theory", name: "Теория" },
+                { id: "examples", name: "Примеры" },
+                { id: "practice", name: "Практика" },
+                { id: "quiz", name: "Тест" },
+                { id: "review", name: "Закрепление" },
+              ].map((t) => (
                 <button
                   role="tab"
                   aria-selected={tab === t.id}
@@ -205,15 +166,16 @@ export function LessonPage({
                   onClick={() => setTab(t.id)}
                   onKeyDown={(e) => {
                     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                      e.preventDefault();
-                      const tabs = lessonSteps.map((step) => step.id);
+                      const tabs = [
+                        "theory",
+                        "examples",
+                        "practice",
+                        "quiz",
+                        "review",
+                      ];
                       const index = tabs.indexOf(t.id);
                       const target =
-                        tabs[
-                          (index +
-                            (e.key === "ArrowRight" ? 1 : tabs.length - 1)) %
-                            tabs.length
-                        ];
+                        tabs[(index + (e.key === "ArrowRight" ? 1 : 4)) % 5];
                       if (target) {
                         setTab(target);
                         document.getElementById(`tab-${target}`)?.focus();
@@ -238,11 +200,14 @@ export function LessonPage({
                     <section key={section.title}>
                       <span className="section-count">0{i + 1}</span>
                       <h2>{section.title}</h2>
-                      <TheoryBody body={section.body} />
+                      <p>{section.body}</p>
+                      {i === 1 && lesson.data.examples[0] && (
+                        <CodeBlock code={lesson.data.examples[0].code} />
+                      )}
                     </section>
                   ))}
                   <div className="lesson-bottom">
-                    <p>Дальше — примеры: посмотрим, как работает изученное.</p>
+                    <p>Понятна идея? Теперь проверим её в действии.</p>
                     {loading || (user && progress.isPending) ? (
                       <Skeleton className="skeleton-button" />
                     ) : user ? (
@@ -250,17 +215,13 @@ export function LessonPage({
                         id={id}
                         userId={user.id}
                         completed={completed}
-                        onComplete={() => goToStep("examples")}
+                        onComplete={() => setTab("practice")}
                       />
                     ) : (
-                      <div className="lesson-guest-actions">
-                        <Button onClick={() => goToStep("examples")}>
-                          Перейти к примерам <ArrowRight size={16} />
-                        </Button>
-                        <Link href="/register" className="button secondary">
-                          Создать аккаунт и сохранить прогресс
-                        </Link>
-                      </div>
+                      <Link href="/register" className="button">
+                        Создать аккаунт и сохранить прогресс{" "}
+                        <ArrowRight size={16} />
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -334,6 +295,16 @@ export function LessonPage({
                           ) ?? false
                         }
                       />
+                      <div className="lesson-bottom">
+                        <span>После практики — проверка понимания.</span>
+                        <Button
+                          className="secondary"
+                          onClick={() => setTab("quiz")}
+                        >
+                          Перейти к тесту
+                          <ArrowRight size={15} />
+                        </Button>
+                      </div>
                     </>
                   ) : (
                     <PageSkeleton variant="exercise" />
@@ -367,24 +338,6 @@ export function LessonPage({
                     </Link>
                   )}
                 </div>
-              )}
-              {previousStep && (
-                <nav
-                  className="lesson-bottom"
-                  aria-label="Переходы между этапами"
-                >
-                  <Button
-                    className="secondary"
-                    onClick={() => goToStep(previousStep.id)}
-                  >
-                    Назад: {previousStep.name}
-                  </Button>
-                  {nextStep && (
-                    <Button onClick={() => goToStep(nextStep.id)}>
-                      {nextStep.action} <ArrowRight size={15} />
-                    </Button>
-                  )}
-                </nav>
               )}
             </div>
           </article>

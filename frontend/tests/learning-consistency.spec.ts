@@ -167,12 +167,6 @@ test("completion and rewards refresh across all learning views without reloading
   await open(page, "/curriculum"); // Prime the curriculum and progress caches.
   await page.locator('.topic-row[href="/learn/first-program"]').click();
   await page.getByRole("button", { name: "Теория изучена · +20 XP" }).click();
-  await expect(
-    page.getByRole("tab", { name: "Примеры", exact: true }),
-  ).toHaveAttribute("aria-selected", "true");
-  await page
-    .getByRole("button", { name: "Перейти к практике", exact: true })
-    .click();
   const verify = page.getByRole("button", {
     name: "Проверить · +30 XP",
     exact: true,
@@ -187,9 +181,6 @@ test("completion and rewards refresh across all learning views without reloading
     "Баллы за это задание уже получены",
   );
   await page.getByRole("tab", { name: "Теория", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Перейти к примерам", exact: true })
-    .click();
   await page
     .getByRole("button", { name: "Перейти к практике", exact: true })
     .click();
@@ -283,10 +274,10 @@ test("a committed completion with a lost response refreshes before retry", async
   await open(page, "/learn/first-program");
   await page.getByRole("button", { name: "Теория изучена · +20 XP" }).click();
   await expect(
-    page.getByRole("button", { name: "Перейти к примерам", exact: true }),
+    page.getByRole("button", { name: "Перейти к практике", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Перейти к примерам", exact: true })
+    .getByRole("button", { name: "Перейти к практике", exact: true })
     .click();
   expect(app.theoryRequests()).toBe(1);
   expect(app.state.user.total_xp).toBe(230);

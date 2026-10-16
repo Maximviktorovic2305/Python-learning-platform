@@ -2,7 +2,7 @@ import asyncio
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.content.bank import TOPIC_HINTS, build_bank
+from app.content.bank import build_bank
 from app.content.curriculum import LEVELS, TOPICS, TopicContent
 from app.content.exercises import exercise_starter
 from app.core.database import SessionFactory, engine
@@ -69,12 +69,12 @@ async def seed_topic(
                 description=scenario.task
                 + " Программа должна вывести:\n"
                 + scenario.output
-                + "\nИспользуйте приёмы из теории этого урока. Не добавляйте к выводу лишние сообщения.",
+                + "\nСоблюдайте семантику изучаемой темы; вывод должен совпадать без лишних сообщений.",
                 difficulty="easy" if i < 3 else "medium" if i < 6 else "hard",
                 kind=kind,
                 starter_code=starter,
                 solution=scenario.code,
-                hints=[TOPIC_HINTS[content.slug], scenario.explanation],
+                hints=[scenario.explanation, content.mistake],
             )
         )
         await session.flush()
