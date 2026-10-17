@@ -184,6 +184,15 @@
     transform: translateY(0);
   }
 }
+.privacyInline {
+  position: static;
+  width: auto;
+  max-height: none;
+  margin: 1.25rem 1.25rem 0;
+}
+:global(body:has(.app-shell)) .privacyNotice:not(.privacyInline) {
+  display: none;
+}
 @media (max-width: 40rem) {
   .supportFloating {
     position: relative;

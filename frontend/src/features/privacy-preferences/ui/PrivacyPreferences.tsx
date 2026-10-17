@@ -9,7 +9,7 @@ import {
 } from "@/shared/lib/privacy-choice";
 import styles from "@/shared/ui/legal/Legal.module.css";
 
-export function PrivacyPreferences() {
+export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
   const choice = usePrivacyChoice();
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -37,7 +37,10 @@ export function PrivacyPreferences() {
     if (revoke) window.location.reload();
   };
   return (
-    <aside className={styles.privacyNotice} aria-label="Информация о cookie">
+    <aside
+      className={`${styles.privacyNotice} ${inline ? styles.privacyInline : ""}`}
+      aria-label="Информация о cookie"
+    >
       <h2>Мы используем cookie</h2>
       <p>
         Технические cookie и локальное хранилище помогают сайту работать

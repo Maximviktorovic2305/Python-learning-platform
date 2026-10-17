@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
+import { PrivacyPreferences } from "@/features/privacy-preferences";
 import { PythonLogo } from "@/shared/ui/python-logo";
 import { PageSkeleton, type PageSkeletonVariant } from "./skeleton";
 import { Skeleton, SkeletonRegion } from "@/shared/ui";
@@ -157,6 +158,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <ThemeToggle />
           </div>
         </header>
+        <PrivacyPreferences inline />
         <main id="main" className="app-content">
           {protectedPage && (loading || !user) ? (
             <PageSkeleton variant={skeletonVariant(path)} heading />

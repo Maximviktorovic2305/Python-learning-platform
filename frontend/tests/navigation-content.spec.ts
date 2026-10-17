@@ -9,6 +9,50 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
+test("cookie notice leaves sidebar navigation usable on phone, tablet and laptop", async ({
+  page,
+}) => {
+  await page.goto("/tasks");
+  const notice = page.getByRole("complementary", {
+    name: "Информация о cookie",
+  });
+  const sidebar = page.locator(".app-sidebar");
+  const menuToggle = page.getByRole("button", {
+    name: "Навигация курса",
+    exact: true,
+  });
+  for (const width of [320, 390, 640, 641, 768, 1024, 1366]) {
+    await page.setViewportSize({ width, height: 600 });
+    await expect(notice).toBeVisible();
+    // WebKit can exclude its scrollbar when evaluating the CSS breakpoint.
+    const mobileMenu = await menuToggle.isVisible();
+    if (mobileMenu) {
+      await menuToggle.click();
+      await expect(menuToggle).toHaveAttribute("aria-expanded", "true");
+    } else {
+      const bounds = await notice.boundingBox();
+      const menu = await sidebar.boundingBox();
+      expect(menu!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x).toBeGreaterThanOrEqual(menu!.x + menu!.width);
+    }
+    await sidebar
+      .getByRole("link", { name: "Правовые документы", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Правовые документы", exact: true }),
+    ).toBeVisible();
+    await expect(notice).toBeVisible();
+    if (mobileMenu) {
+      await expect(menuToggle).toHaveAttribute("aria-expanded", "false");
+      await menuToggle.click();
+    }
+    await sidebar.getByRole("link", { name: "Задачи", exact: true }).click();
+    await expect(page.getByLabel("Редактор Python")).toBeVisible();
+  }
+  await notice.getByRole("button", { name: "Понятно", exact: true }).click();
+  await expect(notice).toBeHidden();
+});
+
 test("sidebar opens the legal documents page and each policy is available in the content", async ({
   page,
 }) => {
