@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { HAS_ANALYTICS, LEGAL_ROUTES } from "@/shared/config";
 import {
   OPEN_PRIVACY_EVENT,
@@ -14,12 +14,11 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
   const choice = usePrivacyChoice();
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [analyticsAllowed, setAnalyticsAllowed] = useState(false);
+  const analyticsInput = useRef<HTMLInputElement>(null);
   const id = useId();
   useEffect(() => {
     const frame = requestAnimationFrame(() => setReady(true));
     const open = () => {
-      setAnalyticsAllowed(choice === "analytics");
       setEditing(true);
     };
     window.addEventListener(OPEN_PRIVACY_EVENT, open);
@@ -31,7 +30,9 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
   if (!ready || (choice !== null && !editing)) return null;
   const acknowledge = () => {
     const next: PrivacyChoice =
-      HAS_ANALYTICS && analyticsAllowed ? "analytics" : "essential";
+      HAS_ANALYTICS && analyticsInput.current?.checked
+        ? "analytics"
+        : "essential";
     const revoke = choice === "analytics" && next === "essential";
     savePrivacyChoice(next);
     setEditing(false);
@@ -54,10 +55,11 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
       {HAS_ANALYTICS && (
         <label className={styles.analyticsConsent} htmlFor={id}>
           <input
+            key={choice ?? "unselected"}
+            ref={analyticsInput}
             id={id}
             type="checkbox"
-            checked={analyticsAllowed}
-            onChange={(event) => setAnalyticsAllowed(event.target.checked)}
+            defaultChecked={choice === "analytics"}
           />
           <span>
             Разрешаю аналитику Яндекс Метрики{" "}

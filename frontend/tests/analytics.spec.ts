@@ -172,6 +172,55 @@ test("a blocked analytics script does not break navigation or editing", async ({
   expect(errors).toEqual([]);
 });
 
+test("removing stored consent in another tab stops analytics", async ({
+  page,
+}) => {
+  await page.goto("/cookie-policy");
+  await page.getByRole("checkbox", { name: /Разрешаю аналитику/ }).check();
+  await page.getByRole("button", { name: "Понятно", exact: true }).click();
+  await expect.poll(() => calls(page, "init")).toHaveLength(1);
+  const other = await page.context().newPage();
+  await other.goto("/cookie-policy");
+  await other.evaluate((name) => localStorage.removeItem(name), key);
+  await expect.poll(() => calls(page, "destruct")).toHaveLength(1);
+  await expect(
+    page.getByRole("checkbox", { name: /Разрешаю аналитику/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: /Разрешаю аналитику/ }),
+  ).not.toBeChecked();
+});
+
+test("a changed choice applies when storage writes are blocked", async ({
+  page,
+}) => {
+  await page.addInitScript((choiceKey) => {
+    localStorage.setItem(choiceKey, "essential");
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === choiceKey)
+        throw new DOMException("Storage is blocked", "QuotaExceededError");
+      setItem.call(this, name, value);
+    };
+  }, key);
+  await page.goto("/cookie-policy");
+  await page
+    .getByRole("button", { name: "Настройки аналитики и cookie", exact: true })
+    .click();
+  await page.getByRole("checkbox", { name: /Разрешаю аналитику/ }).check();
+  await page.getByRole("button", { name: "Понятно", exact: true }).click();
+  await expect.poll(() => calls(page, "init")).toHaveLength(1);
+  expect(await page.evaluate((name) => localStorage.getItem(name), key)).toBe(
+    "essential",
+  );
+  await page
+    .getByRole("button", { name: "Настройки аналитики и cookie", exact: true })
+    .click();
+  await expect(
+    page.getByRole("checkbox", { name: /Разрешаю аналитику/ }),
+  ).toBeChecked();
+});
+
 test("recording excludes source code, input and account forms", async ({
   page,
 }) => {
