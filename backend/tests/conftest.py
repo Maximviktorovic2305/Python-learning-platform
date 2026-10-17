@@ -24,6 +24,8 @@ async def database() -> AsyncIterator[tuple[AsyncEngine, async_sessionmaker[Asyn
         raise RuntimeError("Tests require a dedicated database named python_lab_test")
     engine = create_async_engine(url)
     async with engine.begin() as connection:
+        if engine.dialect.name == "sqlite":
+            await connection.exec_driver_sql("PRAGMA foreign_keys=ON")
         await connection.run_sync(Base.metadata.drop_all)
         await connection.run_sync(Base.metadata.create_all)
     factory = async_sessionmaker(engine, expire_on_commit=False)

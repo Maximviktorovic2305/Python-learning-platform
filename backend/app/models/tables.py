@@ -124,7 +124,13 @@ class Lesson(Base):
 class Exercise(Base):
     __tablename__ = "exercises"
     id: Mapped[str] = mapped_column(String(100), primary_key=True)
-    topic_id: Mapped[str] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), index=True)
+    topic_id: Mapped[str | None] = mapped_column(
+        ForeignKey("topics.id", ondelete="CASCADE"), index=True
+    )
+    catalog: Mapped[str] = mapped_column(
+        String(20), default="lesson", server_default="lesson", index=True
+    )
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
     title: Mapped[str]
     description: Mapped[str]
     difficulty: Mapped[str] = mapped_column(String(10))

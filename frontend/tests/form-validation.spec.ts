@@ -336,7 +336,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
 }) => {
   await mockApi(page, true);
   const topic = {
-    id: "first-program",
+    id: "academy-introduction",
     module_id: "module-0",
     position: 0,
     title: "Первая программа",
@@ -375,10 +375,10 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
       },
     }),
   );
-  await page.route("**/api/lessons/first-program", (route) =>
+  await page.route("**/api/lessons/academy-introduction", (route) =>
     route.fulfill({
       json: {
-        id: "first-program",
+        id: "academy-introduction",
         topic,
         theory: [],
         examples: [],
@@ -394,7 +394,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
         exercise_ids: [],
         quiz_ids: [],
         completed_topics: [],
-        continue_topic: "first-program",
+        continue_topic: "academy-introduction",
         course_percent: 0,
         level_percent: {},
         module_percent: {},
@@ -409,8 +409,8 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     route.fulfill({
       json: [
         {
-          id: "first-program-e1",
-          topic_id: "first-program",
+          id: "academy-introduction-e1",
+          topic_id: "academy-introduction",
           title: "Выведите приветствие",
           description: "Напишите программу",
           difficulty: "easy",
@@ -427,7 +427,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     releaseVerification = resolve;
   });
   await page.route(
-    "**/api/exercises/first-program-e1/submit",
+    "**/api/exercises/academy-introduction-e1/submit",
     async (route) => {
       if (passed) await verificationReady;
       await route.fulfill({
@@ -442,7 +442,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
       });
     },
   );
-  await page.goto("/learn/first-program?tab=practice");
+  await page.goto("/learn/academy-introduction?tab=practice");
   const editor = page.getByLabel("Редактор Python", { exact: true });
   await expect(editor).toBeVisible();
   await expect(editor).not.toHaveValue("print('Hello, Python!')");

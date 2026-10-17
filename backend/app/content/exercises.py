@@ -3,6 +3,23 @@
 import ast
 
 
+def local_supported(solution: str) -> bool:
+    """WebAssembly lacks the OS threads/processes used by these lessons."""
+    for node in ast.walk(ast.parse(solution)):
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            names = [node.module or ""]
+        else:
+            continue
+        if any(
+            name.split(".")[0] in {"threading", "multiprocessing", "subprocess", "concurrent"}
+            for name in names
+        ):
+            return False
+    return True
+
+
 def exercise_starter(solution: str) -> str:
     lines: list[str] = []
     for statement in ast.parse(solution).body:

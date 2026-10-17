@@ -29,7 +29,7 @@ test("a failed new quiz attempt keeps the review and offers a visible retry", as
         exercise_ids: [],
         quiz_ids: [],
         completed_topics: [],
-        continue_topic: "first-program",
+        continue_topic: "academy-introduction",
         course_percent: 0,
         level_percent: {},
         module_percent: {},
@@ -53,7 +53,7 @@ test("a failed new quiz attempt keeps the review and offers a visible retry", as
     hint: "Посмотрите на число.",
   };
   let starts = 0;
-  await page.route("**/api/quizzes/first-program/attempts", (route) => {
+  await page.route("**/api/quizzes/academy-introduction/attempts", (route) => {
     starts += 1;
     return route.fulfill(
       starts === 2
@@ -81,7 +81,7 @@ test("a failed new quiz attempt keeps the review and offers a visible retry", as
       },
     }),
   );
-  await page.goto("/learn/first-program?tab=quiz");
+  await page.goto("/learn/academy-introduction?tab=quiz");
   await page.getByRole("button", { name: "Понятно", exact: true }).click();
   await page.getByRole("button", { name: "Начать тест" }).click();
   await page.getByRole("radio").first().check();
@@ -136,5 +136,5 @@ test("practice recovers from a failed course request without reloading", async (
   ).toBeVisible();
   failed = false;
   await page.getByRole("button", { name: "Повторить", exact: true }).click();
-  await expect(page.locator(".practice-card")).toHaveCount(15);
+  await expect(page.locator(".practice-card")).toHaveCount(50);
 });

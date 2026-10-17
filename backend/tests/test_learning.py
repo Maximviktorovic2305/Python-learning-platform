@@ -21,34 +21,60 @@ def test_authored_examples_execute(topic):
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=3,
+            timeout=15,
         )
         assert result.returncode == 0, (scenario.task, result.stderr)
-        assert result.stdout.rstrip("\r\n") == scenario.output, scenario.task
+        assert result.stdout.rstrip("\r\n") == scenario.output.rstrip("\r\n"), scenario.task
 
 
 @pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)
 def test_every_practice_scaffold_is_incomplete(topic):
-    for scenario in topic.cases[:8]:
-        starter = exercise_starter(scenario.code)
-        assert starter.strip() != scenario.code.strip()
-        result = subprocess.run(
-            [sys.executable, "-X", "utf8", "-I", "-c", starter],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=3,
-        )
-        assert result.returncode == 0, (scenario.task, result.stderr)
-        assert result.stdout.rstrip("\r\n") != scenario.output, scenario.task
+    for exercise in topic.practice:
+        starter = exercise_starter(exercise.solution)
+        assert starter.strip() != exercise.solution.strip()
+        # A blank scaffold may match an empty-output case, but must never pass
+        # the entire exercise's collection of normal and boundary cases.
+        mismatches = 0
+        for stdin, expected in exercise.tests:
+            result = subprocess.run(
+                [sys.executable, "-X", "utf8", "-I", "-c", starter],
+                input=stdin + "\n",
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=15,
+            )
+            mismatches += bool(
+                result.returncode or result.stdout.rstrip("\r\n") != expected.rstrip("\r\n")
+            )
+        assert mismatches, exercise.title
+
+
+@pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)
+def test_practice_solutions_pass_all_cases(topic):
+    for exercise in topic.practice:
+        assert len(exercise.tests) >= 2
+        assert len(set(exercise.tests)) == len(exercise.tests)
+        assert len({stdin for stdin, _ in exercise.tests}) >= 2
+        for stdin, expected in exercise.tests:
+            result = subprocess.run(
+                [sys.executable, "-X", "utf8", "-I", "-c", exercise.solution],
+                input=stdin + "\n",
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=15,
+            )
+            assert result.returncode == 0, (exercise.title, result.stderr)
+            assert result.stdout.rstrip("\r\n") == expected.rstrip("\r\n"), (exercise.title, stdin)
 
 
 @pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)
 def test_bank_is_answerable_and_quiz_preserves_distribution(topic):
     bank = build_bank(topic)
-    assert len(bank) == 32
-    assert len({q.id for q in bank}) == 32
-    assert len({(q.prompt, q.code, tuple(q.options)) for q in bank}) == 32
+    assert len(bank) == 20
+    assert len({q.id for q in bank}) == 20
+    assert len({(q.prompt, q.code, tuple(q.options)) for q in bank}) == 20
     for question in bank:
         assert len(question.options) == len(set(question.options)), question.id
         assert all(0 <= index < len(question.options) for index in question.correct_answer)

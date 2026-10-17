@@ -5,4 +5,5 @@ WORKDIR /runner
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
-CMD ["sh", "-c", "docker pull python:3.14-slim && exec uvicorn main:app --host 0.0.0.0 --port 8090"]
+COPY sandbox /sandbox
+CMD ["sh", "-c", "docker build -t python-lab-sandbox:2026-10 /sandbox && exec uvicorn main:app --host 0.0.0.0 --port 8090"]

@@ -31,19 +31,21 @@ async def test_repeating_all_topic_stages_preserves_xp_and_completion(
     _, factory = database
     app.dependency_overrides[get_runner] = CheckingRunner
     for round_number in range(3):
-        theory = await client.post("/api/lessons/first-program/complete", headers=student)
+        theory = await client.post("/api/lessons/academy-introduction/complete", headers=student)
         assert theory.status_code == 200
         assert theory.json()["message"].endswith(f"+{20 if round_number == 0 else 0} XP")
-        for index in range(1, 9):
+        for index in range(1, 3):
             result = await client.post(
-                f"/api/exercises/first-program-e{index}/submit",
+                f"/api/exercises/academy-introduction-e{index}/submit",
                 headers=student,
                 json={"code": "correct"},
             )
             assert result.status_code == 200, result.text
             assert result.json()["xp"] == (30 if round_number == 0 else 0)
 
-        attempt = (await client.post("/api/quizzes/first-program/attempts", headers=student)).json()
+        attempt = (
+            await client.post("/api/quizzes/academy-introduction/attempts", headers=student)
+        ).json()
         async with factory() as session:
             questions = await session.scalars(
                 select(Question).where(
@@ -61,16 +63,16 @@ async def test_repeating_all_topic_stages_preserves_xp_and_completion(
         )
         assert replay.json() == result.json()  # Replayed result describes the original reward.
         failed = await client.post(
-            "/api/exercises/first-program-e1/submit", headers=student, json={"code": "wrong"}
+            "/api/exercises/academy-introduction-e1/submit", headers=student, json={"code": "wrong"}
         )
         assert failed.json()["xp"] == 0
         progress = (await client.get("/api/progress", headers=student)).json()
-        assert progress["user"]["total_xp"] == progress["daily_xp"] == 310
-        assert progress["completed_topics"] == ["first-program"]
-        assert len(progress["activity"]) == 10
+        assert progress["user"]["total_xp"] == progress["daily_xp"] == 130
+        assert progress["completed_topics"] == ["academy-introduction"]
+        assert len(progress["activity"]) == 4
         async with factory() as session:
-            assert await session.scalar(select(func.count()).select_from(Completion)) == 10
-            assert await session.scalar(select(func.sum(Completion.xp))) == 310
+            assert await session.scalar(select(func.count()).select_from(Completion)) == 4
+            assert await session.scalar(select(func.sum(Completion.xp))) == 130
 
 
 async def test_concurrent_exercise_and_distinct_quiz_attempts_award_once(
@@ -83,7 +85,7 @@ async def test_concurrent_exercise_and_distinct_quiz_attempts_award_once(
         pytest.skip("Requires PostgreSQL row locks")
     app.dependency_overrides[get_runner] = CheckingRunner
     attempts = [
-        (await client.post("/api/quizzes/first-program/attempts", headers=student)).json()
+        (await client.post("/api/quizzes/academy-introduction/attempts", headers=student)).json()
         for _ in range(3)
     ]
     async with factory() as session:
@@ -91,7 +93,7 @@ async def test_concurrent_exercise_and_distinct_quiz_attempts_award_once(
     responses = await asyncio.gather(
         *(
             client.post(
-                "/api/exercises/first-program-e1/submit",
+                "/api/exercises/academy-introduction-e1/submit",
                 headers=student,
                 json={"code": "correct"},
             )

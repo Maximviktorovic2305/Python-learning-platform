@@ -20,6 +20,15 @@ async def test_real_python_executes_with_stdin():
 
 
 @pytest.mark.asyncio
+async def test_teaching_libraries_available_without_network():
+    out, err, status, timeout = await run_case(
+        "import sqlalchemy, pytest; print(callable(sqlalchemy.create_engine), callable(pytest.fixture))",
+        "",
+    )
+    assert (out, err, status, timeout) == ("True True\n", "", 0, False)
+
+
+@pytest.mark.asyncio
 async def test_slow_startup_does_not_consume_execution_budget(monkeypatch):
     monkeypatch.setattr(
         main, "BOOTSTRAP", "import time; time.sleep(6)\n" + main.BOOTSTRAP

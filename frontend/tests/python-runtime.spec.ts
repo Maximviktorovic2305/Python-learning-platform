@@ -8,7 +8,7 @@ test("browser Python can print but cannot reach authenticated API routes", async
     if (response.url().endsWith("/api/health"))
       apiResponses.push(response.url());
   });
-  await page.goto("/learn/first-program");
+  await page.goto("/learn/academy-introduction");
   await page.getByRole("tab", { name: "Практика", exact: true }).click();
   const editor = page.getByLabel("Редактор Python");
   await editor.fill("# keyboard");
@@ -36,7 +36,7 @@ test("browser Python can print but cannot reach authenticated API routes", async
 test("Python errors, time limits and cancellation allow another successful run", async ({
   page,
 }) => {
-  await page.goto("/learn/first-program?tab=practice");
+  await page.goto("/learn/academy-introduction?tab=practice");
   const editor = page.getByLabel("Редактор Python");
   const run = page.getByRole("button", { name: "Запустить локально" });
   await editor.fill("print(");

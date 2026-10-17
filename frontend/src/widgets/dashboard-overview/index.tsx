@@ -275,7 +275,9 @@ export function DashboardOverview({
                 <div>
                   <strong>
                     {topics.find((t) => t.id === activity.topic_id)?.title ??
-                      "Самостоятельный проект"}
+                      (activity.kind === "trainer"
+                        ? "Задача тренажёра"
+                        : "Самостоятельный проект")}
                   </strong>
                   <small>
                     {activity.kind === "lesson"

@@ -43,7 +43,7 @@ test.describe("session request lifecycle", () => {
     const code = 'print("Hello, Python!")';
     const result = unwrap(
       await api.POST("/api/exercises/{exercise_id}/submit", {
-        params: { path: { exercise_id: "first-program-e1" } },
+        params: { path: { exercise_id: "academy-introduction-e1" } },
         body: { code },
       }),
     );

@@ -22,7 +22,7 @@ export function LessonNavigation({
         Программа курса
       </Link>
       <nav aria-label="Уроки курса">
-        {course.levels.slice(0, 3).map((level) => (
+        {course.levels.map((level) => (
           <details
             open={level.modules.some((m) =>
               m.topics.some((t) => t.id === currentId),
@@ -30,7 +30,7 @@ export function LessonNavigation({
             key={level.id}
           >
             <summary>
-              <span>0{level.position}</span>
+              <span>{String(level.position + 1).padStart(2, "0")}</span>
               {level.title}
               <ChevronRight size={14} />
             </summary>

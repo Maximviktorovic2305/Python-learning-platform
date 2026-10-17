@@ -3,7 +3,7 @@ import { publicMetadata } from "@/shared/config";
 import { getPublicCourse } from "@/shared/api/public-content";
 export const metadata = publicMetadata(
   "Программа бесплатного курса Python",
-  "12 уровней изучения Python: основы, коллекции, функции, ООП, работа с данными и проекты. Открытые уроки и практические задачи.",
+  "50 тем Python в четырёх разделах: теория, примеры, практика, тесты. От переменных до SQLAlchemy, pytest и asyncio.",
   "/curriculum",
 );
 export default async function Page() {

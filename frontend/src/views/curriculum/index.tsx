@@ -62,20 +62,21 @@ export function CurriculumPage({
       <CachedDataNotice query={progress} />
       <CachedDataNotice query={course} />
       <PageHeading
-        eyebrow="LEARNING PATH / 00 → 11"
+        eyebrow="ПРОГРАММА / 01 → 04"
         title="Твой маршрут в Python."
-        description="12 уровней. От первой программы до самостоятельной разработки."
+        description="4 раздела, 50 тем. От первого запуска до баз данных, тестов и асинхронности."
       />
       <div className="curriculum-banner">
         <div>
-          <Tag tone="blue">PYTHON — FROM ZERO TO PROFESSIONAL</Tag>
+          <Tag tone="blue">PYTHON / ТЕОРИЯ И ПРАКТИКА</Tag>
           <h2>
             Понимание складывается
             <br />
             по одной теме.
           </h2>
           <p>
-            Уровни 0–2 доступны полностью. Программа следующих этапов — ниже.
+            В каждой теме: теория, четыре разобранных примера, практика с
+            несколькими проверками и тест с объяснениями.
           </p>
         </div>
         <div>
@@ -146,21 +147,19 @@ export function CurriculumPage({
           {levels.map((level) => (
             <section className="curriculum-level" key={level.id} id={level.id}>
               <div className="level-rail">
-                <span>{String(level.position).padStart(2, "0")}</span>
+                <span>{String(level.position + 1).padStart(2, "0")}</span>
                 <i />
               </div>
               <div className="level-content">
                 <div className="level-heading">
                   <div>
-                    <div className="eyebrow">LEVEL {level.position}</div>
+                    <div className="eyebrow">РАЗДЕЛ {level.position + 1}</div>
                     <h2>{level.title}</h2>
                     <p>{level.description}</p>
                   </div>
-                  <Tag tone={level.position < 3 ? "green" : ""}>
-                    {level.position < 3 ? "ДОСТУПНО" : "В ПРОГРАММЕ"}
-                  </Tag>
+                  <Tag tone="green">ДОСТУПНО</Tag>
                 </div>
-                {level.position < 3 && user && (
+                {user && (
                   <ProgressBar
                     value={progress.data?.level_percent[level.id] ?? 0}
                     label={level.title}

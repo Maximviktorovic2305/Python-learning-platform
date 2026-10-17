@@ -11,7 +11,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:18.6
@@ -57,7 +57,7 @@ jobs:
         env:
           RUN_DOCKER_TESTS: '1'
         run: |
-          docker pull python:3.14-slim
+          docker build -t python-lab-sandbox:2026-10 runner/sandbox
           pytest runner/test_sandbox.py -q
       - name: Install frontend dependencies and browser
         working-directory: frontend

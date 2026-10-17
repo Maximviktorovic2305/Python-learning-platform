@@ -14,6 +14,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Code2,
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { ThemeToggle } from "@/features/change-theme";
@@ -27,6 +28,7 @@ const items = [
   { href: "/dashboard", title: "Мой прогресс", icon: LayoutDashboard },
   { href: "/curriculum", title: "Программа курса", icon: Route },
   { href: "/practice", title: "Практика", icon: PythonLogo },
+  { href: "/tasks", title: "Задачи", icon: Code2 },
   { href: "/projects", title: "Проекты", icon: FolderCode },
   { href: "/achievements", title: "Достижения", icon: Award },
   { href: "/profile", title: "Профиль", icon: UserRound },
@@ -39,6 +41,7 @@ function skeletonVariant(path: string): PageSkeletonVariant {
     "/dashboard": "dashboard",
     "/curriculum": "curriculum",
     "/practice": "practice",
+    "/tasks": "practice",
     "/projects": "projects",
     "/achievements": "achievements",
     "/profile": "profile",
@@ -79,7 +82,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               href={href}
               className={
                 path === href ||
-                (href === "/curriculum" && path.startsWith("/learn"))
+                (href === "/curriculum" && path.startsWith("/learn")) ||
+                (href === "/tasks" && path.startsWith("/tasks/"))
                   ? "selected"
                   : ""
               }

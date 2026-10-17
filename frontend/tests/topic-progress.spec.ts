@@ -17,9 +17,9 @@ const user = {
   created_at: "2026-10-14T00:00:00Z",
 };
 const topics = [
-  { id: "first-program", title: "Первая программа" },
-  { id: "variables-types", title: "Переменные и типы" },
-  { id: "numbers-operators", title: "Числа и операторы" },
+  { id: "academy-introduction", title: "Первая программа" },
+  { id: "academy-variables", title: "Переменные и типы" },
+  { id: "academy-numbers", title: "Числа и операторы" },
 ].map((topic, position) => ({
   ...topic,
   position,
@@ -34,8 +34,8 @@ const course = {
   title: "Python",
   description: "Учебный курс",
   published_topics: 3,
-  exercise_count: 24,
-  question_count: 96,
+  exercise_count: 6,
+  question_count: 60,
   levels: [
     {
       id: "level-0",
@@ -57,14 +57,14 @@ const course = {
 };
 const initialProgress: Progress = {
   user,
-  lesson_ids: ["first-program", "variables-types"],
+  lesson_ids: ["academy-introduction", "academy-variables"],
   exercise_ids: Array.from(
-    { length: 8 },
-    (_, index) => `first-program-e${index + 1}`,
+    { length: 2 },
+    (_, index) => `academy-introduction-e${index + 1}`,
   ),
-  quiz_ids: ["first-program-quiz"],
-  completed_topics: ["first-program"],
-  continue_topic: "variables-types",
+  quiz_ids: ["academy-introduction-quiz"],
+  completed_topics: ["academy-introduction"],
+  continue_topic: "academy-variables",
   course_percent: 33,
   level_percent: { "level-0": 33 },
   module_percent: { "module-0": 33 },
@@ -100,41 +100,47 @@ async function mockLearning(page: Page, readProgress = () => initialProgress) {
 }
 
 test("topic completion requires the complete server result, while partial study and current topic are in progress", () => {
-  expect(getTopicStatus("first-program", initialProgress)).toBe("completed");
-  expect(getTopicStatus("variables-types", initialProgress)).toBe(
+  expect(getTopicStatus("academy-introduction", initialProgress)).toBe(
+    "completed",
+  );
+  expect(getTopicStatus("academy-variables", initialProgress)).toBe(
     "in-progress",
   );
-  expect(getTopicStatus("numbers-operators", initialProgress)).toBe(
+  expect(getTopicStatus("academy-numbers", initialProgress)).toBe(
     "not-started",
   );
   expect(
-    getTopicStatus("numbers-operators", initialProgress, "numbers-operators"),
+    getTopicStatus("academy-numbers", initialProgress, "academy-numbers"),
   ).toBe("in-progress");
   expect(
-    getTopicStatus("first-program", initialProgress, "first-program"),
+    getTopicStatus(
+      "academy-introduction",
+      initialProgress,
+      "academy-introduction",
+    ),
   ).toBe("completed");
   const exerciseOnly = {
     ...initialProgress,
     lesson_ids: [],
-    exercise_ids: ["variables-types-e1"],
+    exercise_ids: ["academy-variables-e1"],
     quiz_ids: [],
     completed_topics: [],
   };
-  expect(getTopicStatus("variables-types", exerciseOnly)).toBe("in-progress");
+  expect(getTopicStatus("academy-variables", exerciseOnly)).toBe("in-progress");
   expect(getTopicStatus("variables", exerciseOnly)).toBe("not-started");
   const quizOnly = {
     ...exerciseOnly,
     exercise_ids: [],
-    quiz_ids: ["variables-types-quiz"],
+    quiz_ids: ["academy-variables-quiz"],
   };
-  expect(getTopicStatus("variables-types", quizOnly)).toBe("in-progress");
+  expect(getTopicStatus("academy-variables", quizOnly)).toBe("in-progress");
   expect(
-    getTopicStatus("variables-types", {
+    getTopicStatus("academy-variables", {
       ...quizOnly,
       quiz_ids: [],
       weak_topics: [
         {
-          id: "variables-types",
+          id: "academy-variables",
           title: "Переменные",
           accuracy: 40,
           answers: 10,
@@ -142,7 +148,7 @@ test("topic completion requires the complete server result, while partial study 
       ],
     }),
   ).toBe("in-progress");
-  expect(getTopicStatus("first-program")).toBe("not-started");
+  expect(getTopicStatus("academy-introduction")).toBe("not-started");
 });
 
 for (const theme of ["light", "dark"]) {
@@ -172,13 +178,13 @@ for (const theme of ["light", "dark"]) {
       const selector =
         route === "/curriculum" ? ".topic-row" : ".practice-card";
       const completed = page.locator(
-        `${selector}[href^="/learn/first-program"]`,
+        `${selector}[href^="/learn/academy-introduction"]`,
       );
       const active = page.locator(
-        `${selector}[href^="/learn/variables-types"]`,
+        `${selector}[href^="/learn/academy-variables"]`,
       );
       const untouched = page.locator(
-        `${selector}[href^="/learn/numbers-operators"]`,
+        `${selector}[href^="/learn/academy-numbers"]`,
       );
       await expect(completed).toHaveAttribute("data-topic-status", "completed");
       await expect(completed.locator(".topic-status")).toHaveText("Завершена");
@@ -224,22 +230,23 @@ for (const theme of ["light", "dark"]) {
         })),
       ).toEqual([]);
     }
-    await page.goto("/learn/variables-types");
+    await page.goto("/learn/academy-variables");
     const navigation = page.getByRole("navigation", { name: "Уроки курса" });
-    const current = navigation.locator('[href="/learn/variables-types"]');
+    const current = navigation.locator('[href="/learn/academy-variables"]');
     await expect(current).toHaveAttribute("aria-current", "page");
     await expect(current).toContainText("Вы сейчас здесь");
     await expect(current).toHaveCSS("color", colors.active);
     await expect(current.locator(".topic-status")).toHaveText("В процессе");
-    await expect(navigation.locator('[href="/learn/first-program"]')).toHaveCSS(
-      "color",
-      colors.done,
-    );
+    await expect(
+      navigation.locator('[href="/learn/academy-introduction"]'),
+    ).toHaveCSS("color", colors.done);
     await expect(page.locator(".lesson-heading .topic-status")).toHaveText(
       "В процессе",
     );
-    await page.goto("/learn/first-program");
-    const finishedCurrent = navigation.locator('[href="/learn/first-program"]');
+    await page.goto("/learn/academy-introduction");
+    const finishedCurrent = navigation.locator(
+      '[href="/learn/academy-introduction"]',
+    );
     await expect(finishedCurrent).toHaveAttribute("aria-current", "page");
     await expect(finishedCurrent).toHaveCSS("color", colors.done);
     await expect(finishedCurrent).toContainText("Вы сейчас здесь");
@@ -254,7 +261,7 @@ for (const theme of ["light", "dark"]) {
       "color",
       colors.active,
     );
-    await page.goto("/learn/first-program");
+    await page.goto("/learn/academy-introduction");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole("button", { name: "Навигация по урокам" }).click();
     await expect(finishedCurrent).toBeVisible();
@@ -265,7 +272,7 @@ for (const theme of ["light", "dark"]) {
     ).toBe(true);
     await page.goto("/curriculum");
     await expect(
-      page.locator('.topic-row[href="/learn/variables-types"]'),
+      page.locator('.topic-row[href="/learn/academy-variables"]'),
     ).toHaveAttribute("data-topic-status", "in-progress");
     expect(
       await page.evaluate(
@@ -284,11 +291,11 @@ test("updated completion changes the topic color after a reload", async ({
   let progress = initialProgress;
   await mockLearning(page, () => progress);
   await page.goto("/curriculum");
-  const topic = page.locator('.topic-row[href="/learn/variables-types"]');
+  const topic = page.locator('.topic-row[href="/learn/academy-variables"]');
   await expect(topic).toHaveAttribute("data-topic-status", "in-progress");
   progress = {
     ...initialProgress,
-    completed_topics: ["first-program", "variables-types"],
+    completed_topics: ["academy-introduction", "academy-variables"],
   };
   await page.reload();
   await expect(topic).toHaveAttribute("data-topic-status", "completed");

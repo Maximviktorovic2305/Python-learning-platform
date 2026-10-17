@@ -19,7 +19,7 @@ export function ProjectsPage() {
       <PageHeading
         eyebrow="BUILD SOMETHING REAL / PORTFOLIO"
         title="От знаний к работающим вещам."
-        description="Восемь проектов, чтобы связать отдельные темы в полноценное приложение."
+        description="Четыре проекта, чтобы связать отдельные темы в полноценное приложение."
       />
       {loading ||
       projects.isPending ||

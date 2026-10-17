@@ -73,6 +73,13 @@ services:
     depends_on:
       sandbox-daemon: {condition: service_healthy}
     networks: [execution, sandbox-control]
+    healthcheck:
+      # The broker starts only after the teaching sandbox image is built.
+      test: [CMD, python, -c, "import socket; socket.create_connection(('127.0.0.1', 8090), timeout=2).close()"]
+      interval: 5s
+      timeout: 3s
+      start_period: 120s
+      retries: 60
 networks:
   data: {internal: true}
   application: {}

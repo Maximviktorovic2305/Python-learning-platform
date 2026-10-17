@@ -2407,12 +2407,225 @@ details[open] > summary > svg:last-child {
   margin: -10px -10px 0;
   align-items: start;
 }
+.trainer-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+}
+.trainer-summary strong {
+  color: var(--text);
+  font-size: 20px;
+  margin-right: 6px;
+}
+.trainer-summary > span:last-child {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+.trainer-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.trainer-catalog {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  scroll-margin-top: 85px;
+}
+.trainer-filters {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.trainer-filters .search-field {
+  width: 100%;
+  min-width: 0;
+}
+.trainer-filters input {
+  min-width: 0;
+  width: 100%;
+}
+.trainer-difficulties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.trainer-difficulties button {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+}
+.trainer-difficulties button[aria-pressed="true"] {
+  color: var(--text);
+  background: color-mix(in srgb, var(--python-blue) 12%, var(--surface));
+  border-color: var(--python-blue);
+}
+.trainer-difficulties button span {
+  font-family: var(--font-mono), monospace;
+}
+.trainer-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.trainer-status select {
+  min-width: 0;
+  flex: 1;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+.trainer-result-count {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.trainer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 680px;
+  overflow-y: auto;
+}
+.trainer-list li + li {
+  border-top: 1px solid var(--border);
+}
+.trainer-list a {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 12px;
+  color: var(--muted);
+  border-left: 3px solid transparent;
+}
+.trainer-list a:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+.trainer-list a[aria-current="page"] {
+  border-left-color: var(--python-blue);
+  background: color-mix(in srgb, var(--python-blue) 7%, var(--surface));
+  color: var(--text);
+}
+.trainer-list a > div {
+  flex: 1;
+  min-width: 0;
+}
+.trainer-list strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.trainer-list small {
+  display: block;
+  margin: 6px 0 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.trainer-task-number {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  padding-top: 4px;
+}
+.trainer-list a > svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.trainer-list a.solved > svg {
+  color: var(--green);
+}
+.trainer-workspace {
+  min-width: 0;
+  scroll-margin-top: 85px;
+}
+.trainer-workspace-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.trainer-workspace-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+}
+.trainer-empty {
+  padding: 24px 18px;
+  line-height: 1.7;
+}
+.trainer-empty .button {
+  margin-top: 12px;
+}
+@media (max-width: 1100px) {
+  .trainer-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trainer-list {
+    max-height: 340px;
+  }
+  .trainer-difficulties {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .trainer-summary {
+    padding: 16px;
+    gap: 12px;
+  }
+  .trainer-summary > span {
+    flex: 1 1 120px;
+  }
+  .trainer-difficulties {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .trainer-status select {
+    font-size: 16px;
+  }
+  .trainer-workspace-heading {
+    margin-bottom: 12px;
+  }
+}
 .lesson-main {
+  min-width: 0;
+}
+.lesson-nav-mobile {
   min-width: 0;
 }
 .lesson-sidebar {
   position: sticky;
   top: 20px;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   font-size: 13px;
 }
 .lesson-sidebar > a {
@@ -2515,6 +2728,7 @@ details[open] > summary > svg:last-child {
 .lesson-heading h1 {
   font-size: 32px;
   margin-top: 15px;
+  overflow-wrap: anywhere;
 }
 .lesson-tabs {
   display: flex;
@@ -2555,8 +2769,10 @@ details[open] > summary > svg:last-child {
 }
 .theory-content p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.9;
+  max-width: 75ch;
+  overflow-wrap: anywhere;
 }
 .theory-content .code-block {
   margin-top: 20px;
@@ -2630,6 +2846,7 @@ details[open] > summary > svg:last-child {
   color: var(--green);
   margin: 8px 0 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .code-block {
   background: var(--code);
@@ -2681,7 +2898,7 @@ details[open] > summary > svg:last-child {
   padding: 20px 15px;
   overflow: auto;
   line-height: 1.9;
-  font-size: 11px;
+  font-size: 13px;
   font-family: var(--font-mono), monospace;
 }
 .code-line {
@@ -2848,6 +3065,42 @@ details[open] > summary > svg:last-child {
   background: transparent;
   color: transparent;
   caret-color: var(--python-blue);
+}
+.editor-stdin {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.editor-stdin textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  padding: 12px;
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+}
+.editor-stdin small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.lesson-tabs button,
+.exercise-selector button,
+.lesson-nav-toggle,
+.editor-controls .button {
+  min-height: 44px;
+}
+.quiz-options label > span:last-child {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .editor-input textarea::selection {
   color: transparent;
@@ -3472,8 +3725,25 @@ input[type="radio"]:focus-visible {
     grid-template-columns: repeat(2, 1fr);
   }
   .lesson-layout {
-    grid-template-columns: 180px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
+  }
+  .lesson-nav-mobile {
+    display: none;
+  }
+  .lesson-nav-mobile.open {
+    display: block;
+  }
+  .lesson-nav-toggle {
+    display: flex;
+    justify-self: start;
+  }
+  .lesson-sidebar {
+    position: static;
+    max-height: 55dvh;
+    border: 1px solid var(--border);
+    padding: 15px;
+    border-radius: 5px;
   }
   .lesson-tabs button {
     padding-inline: 12px;
@@ -3978,12 +4248,14 @@ input[type="radio"]:focus-visible {
     font-size: 8px;
   }
   .lesson-tabs {
-    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
   }
   .lesson-tabs button {
     padding: 12px;
     font-size: 13px;
-    white-space: nowrap;
+    white-space: normal;
   }
   .theory-content > section {
     padding-left: 25px;
@@ -3992,10 +4264,10 @@ input[type="radio"]:focus-visible {
     font-size: 21px;
   }
   .theory-content p {
-    font-size: 14px;
+    font-size: 16px;
   }
   .code-block pre {
-    font-size: 10px;
+    font-size: 13px;
     padding: 17px 8px;
   }
   .line-number {
@@ -4010,7 +4282,23 @@ input[type="radio"]:focus-visible {
     padding: 12px;
   }
   .editor-controls .button {
-    font-size: 9px;
+    font-size: 12px;
+    flex: 1 1 150px;
+  }
+  .editor-input pre,
+  .editor-input textarea,
+  .editor-numbers {
+    font-size: 16px;
+    line-height: 25px;
+  }
+  .editor-code {
+    height: clamp(280px, 45dvh, 420px);
+  }
+  .code-title button {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    align-items: center;
   }
   .exercise-description h2 {
     font-size: 22px;

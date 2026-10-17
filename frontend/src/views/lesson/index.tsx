@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Clock3, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -35,6 +35,10 @@ const lessonSteps = [
   { id: "review", name: "Закрепление", action: "Перейти к закреплению" },
 ];
 
+const subscribeToClient = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
 export function LessonPage({
   id,
   initialTab = "theory",
@@ -46,6 +50,11 @@ export function LessonPage({
   initialLesson?: Lesson;
   initialCourse?: Course;
 }) {
+  const interactive = useSyncExternalStore(
+    subscribeToClient,
+    clientSnapshot,
+    serverSnapshot,
+  );
   const [tab, setTab] = useState(
     lessonSteps.some((step) => step.id === initialTab) ? initialTab : "theory",
   );
@@ -101,6 +110,8 @@ export function LessonPage({
         <div className="lesson-layout">
           <button
             className="button secondary lesson-nav-toggle"
+            aria-controls="lesson-course-navigation"
+            disabled={!interactive}
             onClick={() => setNavOpen(!navOpen)}
             aria-expanded={navOpen}
           >
@@ -108,6 +119,7 @@ export function LessonPage({
           </button>
           {course.data ? (
             <div
+              id="lesson-course-navigation"
               className={
                 navOpen ? "lesson-nav-mobile open" : "lesson-nav-mobile"
               }
@@ -141,8 +153,8 @@ export function LessonPage({
                   <Clock3 size={14} />
                   {lesson.data.topic.minutes} мин
                 </span>
-                <Tag>8 ЗАДАНИЙ</Tag>
-                <Tag>32 ВОПРОСА В БАНКЕ</Tag>
+                <Tag>ПРАКТИКА: {lesson.data.exercise_count}</Tag>
+                <Tag>ВОПРОСОВ В БАНКЕ: {lesson.data.question_count}</Tag>
                 <TopicStatusBadge
                   status={getTopicStatus(id, progress.data, id)}
                 />
@@ -181,6 +193,7 @@ export function LessonPage({
               {lessonSteps.map((t) => (
                 <button
                   role="tab"
+                  disabled={!interactive}
                   aria-selected={tab === t.id}
                   aria-controls={`panel-${t.id}`}
                   id={`tab-${t.id}`}
@@ -220,7 +233,9 @@ export function LessonPage({
                 <div className="theory-content">
                   {lesson.data.theory.map((section, i) => (
                     <section key={section.title}>
-                      <span className="section-count">0{i + 1}</span>
+                      <span className="section-count">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
                       <h2>{section.title}</h2>
                       <p>{section.body}</p>
                       {i === 1 && lesson.data.examples[0] && (
@@ -267,7 +282,7 @@ export function LessonPage({
                       <CodeBlock code={example.code} />
                       <div className="example-output">
                         <span>OUTPUT</span>
-                        <pre>{example.output}</pre>
+                        <pre>{example.output || "(пустой вывод)"}</pre>
                       </div>
                       <p>{example.explanation}</p>
                     </section>

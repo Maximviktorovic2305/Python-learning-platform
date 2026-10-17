@@ -112,16 +112,20 @@ export function PracticePage() {
               )}
               <p>{topic.summary}</p>
               <div>
-                <Tag>3 EASY</Tag>
-                <Tag>3 MEDIUM</Tag>
-                <Tag>2 HARD</Tag>
+                {Object.entries(topic.practice_difficulties ?? {}).map(
+                  ([difficulty, count]) => (
+                    <Tag key={difficulty}>
+                      {count} {difficulty.toUpperCase()}
+                    </Tag>
+                  ),
+                )}
               </div>
               <footer>
                 <span>
                   {progress.data?.exercise_ids.filter((id) =>
                     id.startsWith(`${topic.id}-e`),
                   ).length ?? 0}{" "}
-                  / 8 решено
+                  / {topic.exercise_count ?? "—"} решено
                 </span>
                 <ArrowUpRight size={18} />
               </footer>

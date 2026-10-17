@@ -7,6 +7,7 @@ export type RunOutput = {
 export function runPython(
   code: string,
   signal: AbortSignal,
+  stdin: string = "",
 ): Promise<RunOutput> {
   return new Promise((resolve) => {
     const worker = new Worker("/python-worker.js", { type: "module" });
@@ -81,7 +82,7 @@ export function runPython(
         stderr:
           "Python не загрузился. Проверьте соединение и повторите запуск.",
       });
-    worker.postMessage({ code });
+    worker.postMessage({ code, stdin });
   });
 }
 export async function verifyExercise(id: string, code: string) {

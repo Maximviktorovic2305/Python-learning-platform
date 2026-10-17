@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 slots = asyncio.Semaphore(4)
-IMAGE = os.environ.get("SANDBOX_IMAGE", "python:3.14-slim")
+IMAGE = os.environ.get("SANDBOX_IMAGE", "python-lab-sandbox:2026-10")
 TOKEN = os.environ.get("RUNNER_TOKEN", "")
 MAX_OUTPUT = 16000
 STARTUP_TIMEOUT = 10

@@ -85,6 +85,9 @@ class TopicView(Contract):
     minutes: int
     published: bool
     tags: list[str]
+    exercise_count: int = 0
+    question_count: int = 0
+    practice_difficulties: dict[str, int] = Field(default_factory=dict)
 
 
 class ModuleView(Contract):
@@ -132,17 +135,24 @@ class LessonView(Contract):
     theory: list[TheorySection]
     examples: list[CodeExample]
     review: list[str]
+    exercise_count: int = 0
+    question_count: int = 0
 
 
 class ExerciseView(Contract):
     id: str
-    topic_id: str
+    topic_id: str | None
+    catalog: str = "lesson"
+    tags: list[str] = Field(default_factory=list)
     title: str
     description: str
     difficulty: str
     kind: str
     starter_code: str
     hints: list[str]
+    sample_stdin: str = ""
+    test_count: int = 0
+    local_supported: bool = True
 
 
 class QuestionView(Contract):
@@ -209,6 +219,7 @@ class ProgressView(Contract):
     user: UserView
     lesson_ids: list[str]
     exercise_ids: list[str]
+    trainer_exercise_ids: list[str] = Field(default_factory=list)
     quiz_ids: list[str]
     completed_topics: list[str]
     continue_topic: str | None

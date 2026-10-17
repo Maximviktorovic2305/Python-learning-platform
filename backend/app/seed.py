@@ -1,13 +1,17 @@
 import asyncio
 
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.content.bank import build_bank
 from app.content.curriculum import LEVELS, TOPICS, TopicContent
 from app.content.exercises import exercise_starter
+from app.content.trainer import TASKS
 from app.core.database import SessionFactory, engine
 from app.models.tables import (
     Achievement,
+    Answer,
+    Completion,
     Course,
     Exercise,
     ExerciseTest,
@@ -15,8 +19,11 @@ from app.models.tables import (
     Level,
     Module,
     Project,
+    ProjectSubmission,
     Question,
+    QuestionMemory,
     Quiz,
+    QuizAttempt,
     Topic,
 )
 
@@ -31,7 +38,7 @@ async def seed_topic(
             position=position,
             title=content.title,
             summary=content.summary,
-            minutes=20 + len(content.tags),
+            minutes=25 + len(content.tags),
             published=True,
             tags=list(content.tags),
         )
@@ -54,33 +61,51 @@ async def seed_topic(
                 {"title": c.task, "code": c.code, "output": c.output, "explanation": c.explanation}
                 for c in content.cases
             ],
-            review=[reason for _, _, reason in content.facts],
+            review=[
+                f"{statement} {reason}"
+                if truth
+                else f"Частая ошибка: «{statement}» Это неверно. {reason}"
+                for statement, truth, reason in content.facts
+            ],
         )
     )
-    for i, scenario in enumerate(content.cases[:8]):
+    for i, scenario in enumerate(content.practice):
         eid = f"{content.slug}-e{i + 1}"
-        kind = "code_completion" if i in (1, 4) else "code_writing"
-        starter = exercise_starter(scenario.code)
+        kind = "code_writing"
+        starter = exercise_starter(scenario.solution)
         await session.merge(
             Exercise(
                 id=eid,
                 topic_id=content.slug,
-                title=scenario.task,
-                description=scenario.task
-                + " Программа должна вывести:\n"
-                + scenario.output
-                + "\nСоблюдайте семантику изучаемой темы; вывод должен совпадать без лишних сообщений.",
-                difficulty="easy" if i < 3 else "medium" if i < 6 else "hard",
+                catalog="lesson",
+                tags=list(content.tags),
+                title=scenario.title,
+                description=scenario.description
+                + "\n\nПример ввода:\n"
+                + (scenario.tests[0][0] or "(пустая строка)")
+                + "\nОжидаемый вывод:\n"
+                + (scenario.tests[0][1] or "(пустой вывод)")
+                + "\n\nРешение проверяется на нескольких наборах данных. Не печатайте приглашение ко вводу.",
+                difficulty=scenario.difficulty,
                 kind=kind,
                 starter_code=starter,
-                solution=scenario.code,
-                hints=[scenario.explanation, content.mistake],
+                solution=scenario.solution,
+                hints=[scenario.hint, content.mistake],
             )
         )
         await session.flush()
-        await session.merge(
-            ExerciseTest(id=f"{eid}-t1", exercise_id=eid, stdin="", expected_stdout=scenario.output)
+        test_ids = [f"{eid}-t{index + 1}" for index in range(len(scenario.tests))]
+        await session.execute(
+            delete(ExerciseTest).where(
+                ExerciseTest.exercise_id == eid, ExerciseTest.id.not_in(test_ids)
+            )
         )
+        for index, (stdin, stdout) in enumerate(scenario.tests):
+            await session.merge(
+                ExerciseTest(
+                    id=test_ids[index], exercise_id=eid, stdin=stdin + "\n", expected_stdout=stdout
+                )
+            )
     for q in build_bank(content):
         await session.merge(
             Question(
@@ -111,14 +136,42 @@ async def seed(session: AsyncSession) -> None:
     await session.merge(
         Course(
             id="python",
-            title="Python — From Zero to Professional",
-            description="Практический путь от первой строки к приложениям, которые работают в production.",
+            title="Python: от основ к самостоятельной разработке",
+            description="50 тем: понятная теория, разобранные примеры, самостоятельная практика и тесты с объяснениями.",
         )
     )
     await session.flush()
+    # New resource IDs prevent old completion records from crediting different lessons.
+    # Remove legacy learning material; retain earned XP in its append-only ledger.
+    legacy_topics = select(Topic.id).where(Topic.id.not_in([topic.slug for topic in TOPICS]))
+    legacy_questions = select(Question.id).where(Question.topic_id.in_(legacy_topics))
+    legacy_quizzes = select(Quiz.id).where(Quiz.topic_id.in_(legacy_topics))
+    legacy_attempts = select(QuizAttempt.id).where(QuizAttempt.quiz_id.in_(legacy_quizzes))
+    await session.execute(delete(Answer).where(Answer.attempt_id.in_(legacy_attempts)))
+    await session.execute(delete(QuizAttempt).where(QuizAttempt.id.in_(legacy_attempts)))
+    await session.execute(
+        delete(QuestionMemory).where(QuestionMemory.question_id.in_(legacy_questions))
+    )
+    await session.execute(
+        update(Completion).where(Completion.topic_id.in_(legacy_topics)).values(topic_id=None)
+    )
+    legacy_exercises = select(Exercise.id).where(Exercise.topic_id.in_(legacy_topics))
+    await session.execute(
+        delete(ExerciseTest).where(ExerciseTest.exercise_id.in_(legacy_exercises))
+    )
+    await session.execute(delete(Exercise).where(Exercise.topic_id.in_(legacy_topics)))
+    await session.execute(delete(Question).where(Question.topic_id.in_(legacy_topics)))
+    await session.execute(delete(Quiz).where(Quiz.topic_id.in_(legacy_topics)))
+    await session.execute(delete(Lesson).where(Lesson.id.in_(legacy_topics)))
+    await session.execute(delete(Topic).where(Topic.id.in_(legacy_topics)))
+    # All old positions must be clear before inserting the replacement catalogue.
+    await session.execute(delete(Module).where(~Module.id.like("academy-%")))
+    await session.execute(
+        update(Level).where(~Level.id.like("academy-%")).values(position=Level.position + 100)
+    )
     authored = {topic.slug: topic for topic in TOPICS}
     for i, (title, description, modules) in enumerate(LEVELS):
-        lid = f"level-{i}"
+        lid = f"academy-level-{i}"
         await session.merge(
             Level(id=lid, course_id="python", position=i, title=title, description=description)
         )
@@ -169,94 +222,51 @@ async def seed(session: AsyncSession) -> None:
         )
     projects = (
         (
-            "01-cli",
+            "academy-word-report",
+            1,
+            "Анализатор текста",
+            "Подсчёт частот и поиск слов в пользовательском тексте.",
+            [
+                "Нормализация регистра и пробелов",
+                "Частоты через словарь или Counter",
+                "Стабильный порядок отчёта",
+                "Проверки пустого текста, повторов и кириллицы",
+            ],
+        ),
+        (
+            "academy-task-manager",
             2,
-            "CLI Task Manager",
-            "Менеджер задач в терминале с хранением состояния.",
+            "Менеджер задач",
+            "Консольные задачи с хранением JSON и объектной моделью.",
             [
-                "Добавление, завершение, удаление задач",
-                "Аргументы CLI и понятные ошибки",
-                "Сохранение JSON",
-                "Тесты обработки пустых данных",
+                "Добавление и завершение задач",
+                "Чтение и запись UTF-8 JSON",
+                "Обработка повреждённого файла",
+                "Разделение ввода, расчётов и хранения",
             ],
         ),
         (
-            "02-data",
-            5,
-            "File & Data Processing",
-            "Конвейер очистки CSV и формирования отчёта.",
+            "academy-sqlite-catalog",
+            3,
+            "Каталог в SQLite",
+            "Небольшой каталог с транзакциями и SQLAlchemy.",
             [
-                "Валидация строк CSV",
-                "Отчёт JSON",
-                "Логирование ошибок",
-                "Обработка больших файлов по строкам",
+                "Создание схемы и CRUD",
+                "Параметризованные фильтры",
+                "Ограничения и откат ошибок",
+                "Интеграционные тесты в отдельной базе",
             ],
         ),
         (
-            "03-rest",
-            8,
-            "REST API",
-            "Типизированный API заметок.",
+            "academy-tested-pipeline",
+            3,
+            "Проверенный конвейер данных",
+            "Обработка набора данных с тестами и асинхронным этапом.",
             [
-                "CRUD и пагинация",
-                "Pydantic-контракты",
-                "SQLAlchemy и миграции",
-                "Интеграционные тесты",
-            ],
-        ),
-        (
-            "04-auth",
-            8,
-            "Authentication Service",
-            "Сервис учётных записей и сессий.",
-            [
-                "Хеширование Argon2",
-                "JWT и ротация refresh",
-                "Отзыв сессий",
-                "Защита входа от перебора",
-            ],
-        ),
-        (
-            "05-blog",
-            9,
-            "Blog API",
-            "API публикаций с комментариями и правами.",
-            ["Роли и владение ресурсами", "Поиск и пагинация", "Транзакции", "Тесты авторизации"],
-        ),
-        (
-            "06-shop",
-            10,
-            "E-commerce Backend",
-            "Каталог, корзина и жизненный цикл заказов.",
-            [
-                "Decimal для денег",
-                "Идемпотентное создание заказа",
-                "Транзакции остатков",
-                "Сервисные границы",
-            ],
-        ),
-        (
-            "07-realtime",
-            11,
-            "Real-time Application",
-            "Чат с потоковыми событиями.",
-            [
-                "WebSocket и аутентификация",
-                "Переподключение клиента",
-                "Backpressure",
-                "Метрики соединений",
-            ],
-        ),
-        (
-            "08-capstone",
-            11,
-            "Production Capstone",
-            "Соберите, протестируйте и разверните самостоятельный продукт.",
-            [
-                "Документированная архитектура",
-                "CI и контейнеры",
-                "Наблюдаемость и health checks",
-                "Нагрузочная проверка и rollback",
+                "Фикстуры и параметризация pytest",
+                "Подмена внешней зависимости",
+                "Очередь с ограничением размера и завершением",
+                "Повторяемый запуск проверок и отчёт покрытия",
             ],
         ),
     )
@@ -264,7 +274,7 @@ async def seed(session: AsyncSession) -> None:
         await session.merge(
             Project(
                 id=pid,
-                level_id=f"level-{level}",
+                level_id=f"academy-level-{min(level, 3)}",
                 title=title,
                 description=description,
                 requirements=requirements,
@@ -277,6 +287,55 @@ async def seed(session: AsyncSession) -> None:
             )
         )
     await session.flush()
+    current_projects = [project[0] for project in projects]
+    await session.execute(
+        delete(ProjectSubmission).where(ProjectSubmission.project_id.not_in(current_projects))
+    )
+    await session.execute(delete(Project).where(Project.id.not_in(current_projects)))
+    await session.execute(delete(Level).where(~Level.id.like("academy-%")))
+    await seed_trainer(session)
+
+
+async def seed_trainer(session: AsyncSession) -> None:
+    current = [item.id for item in TASKS]
+    obsolete = select(Exercise.id).where(Exercise.catalog == "trainer", Exercise.id.not_in(current))
+    await session.execute(delete(ExerciseTest).where(ExerciseTest.exercise_id.in_(obsolete)))
+    await session.execute(delete(Exercise).where(Exercise.id.in_(obsolete)))
+    for item in TASKS:
+        content = item.practice
+        examples = "\n\n".join(
+            f"Пример {index + 1}\nВвод:\n{stdin or '(пустая строка)'}\nВывод:\n{stdout or '(пустой вывод)'}"
+            for index, (stdin, stdout) in enumerate(content.tests[:2])
+        )
+        await session.merge(
+            Exercise(
+                id=item.id,
+                topic_id=None,
+                catalog="trainer",
+                tags=list(item.tags),
+                title=content.title,
+                description=content.description
+                + "\n\n"
+                + examples
+                + "\n\nНе печатайте приглашение ко вводу. Проверяются несколько наборов данных.",
+                difficulty=content.difficulty,
+                kind="code_writing",
+                starter_code=exercise_starter(content.solution),
+                solution=content.solution,
+                hints=[content.hint],
+            )
+        )
+        await session.flush()
+        await session.execute(delete(ExerciseTest).where(ExerciseTest.exercise_id == item.id))
+        for index, (stdin, stdout) in enumerate(content.tests):
+            await session.merge(
+                ExerciseTest(
+                    id=f"{item.id}-t{index + 1}",
+                    exercise_id=item.id,
+                    stdin=stdin + "\n",
+                    expected_stdout=stdout,
+                )
+            )
 
 
 async def main() -> None:

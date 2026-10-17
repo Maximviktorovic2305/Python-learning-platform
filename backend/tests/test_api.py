@@ -21,19 +21,31 @@ async def test_catalog_and_idempotent_seed(
     response = await client.get("/api/courses/python")
     assert response.status_code == 200
     course = response.json()
-    assert len(course["levels"]) == 12
-    assert course["published_topics"] == 15
-    assert course["exercise_count"] == 120
-    assert course["question_count"] == 480
+    assert len(course["levels"]) == 4
+    assert course["published_topics"] == 50
+    assert course["exercise_count"] == 100
+    assert course["question_count"] == 1000
+    topics = [
+        topic
+        for level in course["levels"]
+        for module in level["modules"]
+        for topic in module["topics"]
+    ]
+    assert all(topic["exercise_count"] == 2 and topic["question_count"] == 20 for topic in topics)
+    assert all(sum(topic["practice_difficulties"].values()) == 2 for topic in topics)
     assert (await client.get("/api/lessons/classes")).status_code == 404
-    assert (await client.get("/api/lessons/first-program")).status_code == 200
-    questions = (await client.get("/api/questions?topic_id=first-program&limit=5")).json()
+    assert (await client.get("/api/lessons/academy-introduction")).status_code == 200
+    questions = (await client.get("/api/questions?topic_id=academy-introduction&limit=5")).json()
     assert len(questions) == 5
     assert all("correct_answer" not in q and "explanation" not in q for q in questions)
-    following = (await client.get("/api/questions?topic_id=first-program&limit=5&offset=5")).json()
+    following = (
+        await client.get("/api/questions?topic_id=academy-introduction&limit=5&offset=5")
+    ).json()
     assert {q["id"] for q in questions}.isdisjoint(q["id"] for q in following)
     assert (await client.get("/api/questions?topic_id=classes")).status_code == 404
-    assert (await client.get("/api/questions?topic_id=first-program&limit=101")).status_code == 422
+    assert (
+        await client.get("/api/questions?topic_id=academy-introduction&limit=101")
+    ).status_code == 422
 
 
 async def test_auth_refresh_rotation_logout_and_revocation(
@@ -187,13 +199,13 @@ async def test_lesson_completion_is_idempotent(
 ) -> None:
     for _ in range(2):
         assert (
-            await client.post("/api/lessons/first-program/complete", headers=student)
+            await client.post("/api/lessons/academy-introduction/complete", headers=student)
         ).status_code == 200
     data = (await client.get("/api/progress", headers=student)).json()
     assert data["user"]["total_xp"] == 20
     assert data["daily_xp"] == 20
     assert data["user"]["streak"] == 1
-    assert data["lesson_ids"] == ["first-program"]
+    assert data["lesson_ids"] == ["academy-introduction"]
     assert data["course_percent"] == 0  # Topic also requires exercises and a passed quiz.
     achievements = (await client.get("/api/achievements", headers=student)).json()
     assert next(a for a in achievements if a["id"] == "first-lesson")["earned_at"]
@@ -205,7 +217,9 @@ async def test_quiz_hides_answers_and_grades_server_side(
     database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
 ) -> None:
     _, factory = database
-    attempt = (await client.post("/api/quizzes/first-program/attempts", headers=student)).json()
+    attempt = (
+        await client.post("/api/quizzes/academy-introduction/attempts", headers=student)
+    ).json()
     assert len(attempt["questions"]) == 10
     assert all("correct_answer" not in q and "explanation" not in q for q in attempt["questions"])
     async with factory() as session:
@@ -252,7 +266,7 @@ async def test_incomplete_quiz_invalid_options_and_weak_topics(
     database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
 ) -> None:
     _, factory = database
-    attempt = (await client.post("/api/quizzes/variables-types/attempts", headers=student)).json()
+    attempt = (await client.post("/api/quizzes/academy-variables/attempts", headers=student)).json()
     assert (
         await client.post(
             f"/api/attempts/{attempt['id']}/submit", headers=student, json={"answers": []}
@@ -268,7 +282,7 @@ async def test_incomplete_quiz_invalid_options_and_weak_topics(
         bank = {
             q.id: q
             for q in await session.scalars(
-                select(Question).where(Question.topic_id == "variables-types")
+                select(Question).where(Question.topic_id == "academy-variables")
             )
         }
     answers = [
@@ -286,7 +300,7 @@ async def test_incomplete_quiz_invalid_options_and_weak_topics(
     assert result.status_code == 200
     assert result.json()["score"] == 0
     data = (await client.get("/api/progress", headers=student)).json()
-    assert data["weak_topics"][0]["id"] == "variables-types"
+    assert data["weak_topics"][0]["id"] == "academy-variables"
     assert data["weak_topics"][0]["accuracy"] == 0
     assert data["user"]["total_xp"] == 0
 
@@ -295,7 +309,7 @@ async def test_runner_disabled_does_not_execute_code_or_award_xp(
     client: httpx.AsyncClient, student: dict[str, str]
 ) -> None:
     result = await client.post(
-        "/api/exercises/first-program-e1/submit",
+        "/api/exercises/academy-introduction-e1/submit",
         headers=student,
         json={"code": "print('Hello, Python!')"},
     )
@@ -350,7 +364,7 @@ async def test_projects_require_review_and_admin(
     client: httpx.AsyncClient, student: dict[str, str]
 ) -> None:
     result = await client.post(
-        "/api/projects/01-cli/submissions",
+        "/api/projects/academy-task-manager/submissions",
         headers=student,
         json={
             "repository_url": "https://example.com/repo",
@@ -376,7 +390,10 @@ async def test_concurrent_completion_uses_postgres_lock(
     if engine.dialect.name != "postgresql":
         pytest.skip("Row-lock concurrency requires PostgreSQL")
     responses = await asyncio.gather(
-        *(client.post("/api/lessons/first-program/complete", headers=student) for _ in range(5))
+        *(
+            client.post("/api/lessons/academy-introduction/complete", headers=student)
+            for _ in range(5)
+        )
     )
     assert all(r.status_code == 200 for r in responses)
     async with factory() as session:

@@ -6,10 +6,10 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from jwt import InvalidTokenError
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 
 from app.api.dependencies import AdminUser, CurrentUser, Session, bearer, require_origin
-from app.content.exercises import exercise_starter
+from app.content.exercises import exercise_starter, local_supported
 from app.core.config import get_settings
 from app.core.security import decode_access, hash_password, verify_password
 from app.models.tables import (
@@ -248,7 +248,24 @@ async def topic(topic_id: str, session: Session) -> TopicView:
     result = await session.get(Topic, topic_id)
     if result is None:
         raise HTTPException(404, "Тема не найдена")
-    return TopicView.model_validate(result)
+    distribution = {
+        difficulty: int(count)
+        for difficulty, count in await session.execute(
+            select(Exercise.difficulty, func.count())
+            .where(Exercise.topic_id == topic_id)
+            .group_by(Exercise.difficulty)
+        )
+    }
+    return TopicView.model_validate(result).model_copy(
+        update={
+            "exercise_count": sum(distribution.values()),
+            "question_count": await session.scalar(
+                select(func.count()).select_from(Question).where(Question.topic_id == topic_id)
+            )
+            or 0,
+            "practice_difficulties": distribution,
+        }
+    )
 
 
 @router.get("/lessons/{topic_id}", response_model=LessonView, tags=["learning"])
@@ -263,6 +280,8 @@ async def lesson(topic_id: str, session: Session) -> LessonView:
         theory=[TheorySection.model_validate(s) for s in result.theory],
         examples=[CodeExample.model_validate(e) for e in result.examples],
         review=result.review,
+        exercise_count=t.exercise_count,
+        question_count=t.question_count,
     )
 
 
@@ -275,16 +294,46 @@ async def complete_lesson(topic_id: str, user: CurrentUser, session: Session) ->
 
 @router.get("/exercises", response_model=list[ExerciseView], tags=["learning"])
 async def exercises(topic_id: str, session: Session) -> list[ExerciseView]:
+    await topic(topic_id, session)
+    items = list(
+        await session.scalars(
+            select(Exercise).where(Exercise.topic_id == topic_id).order_by(Exercise.id)
+        )
+    )
+    return await exercise_views(items, session)
+
+
+@router.get("/tasks", response_model=list[ExerciseView], tags=["learning"])
+async def tasks(session: Session) -> list[ExerciseView]:
+    items = list(
+        await session.scalars(
+            select(Exercise).where(Exercise.catalog == "trainer").order_by(Exercise.id)
+        )
+    )
+    return await exercise_views(items, session)
+
+
+async def exercise_views(items: list[Exercise], session: Session) -> list[ExerciseView]:
+    examples = list(
+        await session.scalars(
+            select(ExerciseTest)
+            .where(ExerciseTest.exercise_id.in_([item.id for item in items]))
+            .order_by(ExerciseTest.id)
+        )
+    )
     return [
         ExerciseView.model_validate(e).model_copy(
             update={
                 "starter_code": exercise_starter(e.solution),
                 "kind": "code_writing" if e.kind == "refactoring" else e.kind,
+                "sample_stdin": next(
+                    (test.stdin.rstrip("\n") for test in examples if test.exercise_id == e.id), ""
+                ),
+                "test_count": sum(test.exercise_id == e.id for test in examples),
+                "local_supported": local_supported(e.solution),
             }
         )
-        for e in await session.scalars(
-            select(Exercise).where(Exercise.topic_id == topic_id).order_by(Exercise.id)
-        )
+        for e in items
     ]
 
 
@@ -312,7 +361,8 @@ async def submit_exercise(
         and result.passed == len(tests)
         and tests
     ):
-        result.xp = await award(session, user, "exercise", exercise.id, exercise.topic_id, 30)
+        kind = "trainer" if exercise.catalog == "trainer" else "exercise"
+        result.xp = await award(session, user, kind, exercise.id, exercise.topic_id, 30)
     return result
 
 

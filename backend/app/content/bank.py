@@ -44,7 +44,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
                 options=[options[i] for i in order],
                 correct_answer=[i for i, original in enumerate(order) if original in correct],
                 explanation=explanation,
-                hint="Разделите вычисление выражения и его побочный эффект. " + topic.mistake,
+                hint=topic.mistake,
                 tags=list(topic.tags),
             )
         )
@@ -69,18 +69,17 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
             "output_prediction",
             "Какой точный вывод произведёт программа?",
             scenario.code,
-            [scenario.output, *distractors],
+            [output or "(пустой вывод)" for output in [scenario.output, *distractors]],
             [0],
             scenario.explanation,
-            "easy" if i < 4 else "medium" if i < 8 else "hard",
+            "easy" if i < 2 else "medium",
         )
     for i in range(4):
-        scenario = topic.cases[8 + i]
+        scenario = topic.cases[i]
+        false_statements = [statement for statement, truth, _ in topic.facts if not truth]
         reasons = [
             scenario.explanation,
-            topic.cases[(i + 2) % 12].explanation,
-            topic.cases[(i + 5) % 12].explanation,
-            "Интерпретатор автоматически исправляет намерение автора.",
+            *false_statements[:3],
         ]
         add(
             "code_review",
@@ -101,22 +100,5 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
             [j for j, (_, truth, _) in enumerate(selected) if truth],
             " ".join(reason for _, _, reason in selected),
             "medium",
-        )
-    for i in range(4):
-        scenario = topic.cases[4 + i]
-        choices = [
-            scenario.task,
-            topic.cases[i].task,
-            topic.cases[i + 8].task,
-            "Код только объявляет переменные и никогда ничего не выводит.",
-        ]
-        add(
-            "architecture",
-            "Какую задачу решает эта программа?",
-            scenario.code,
-            choices,
-            [0],
-            scenario.explanation,
-            "easy",
         )
     return questions

@@ -13,12 +13,12 @@ test("every published lesson follows the five stages using footer buttons", asyn
   page,
   request,
 }) => {
-  test.setTimeout(180000);
+  test.setTimeout(360000);
   const response = await request.get("/api/courses/python");
   expect(response.ok()).toBe(true);
   const course: Course = await response.json();
   const topics = allTopics(course).filter((topic) => topic.published);
-  expect(topics).toHaveLength(15);
+  expect(topics).toHaveLength(50);
   for (const [index, topic] of topics.entries()) {
     await page.goto(`/learn/${topic.id}`);
     const notice = page.getByRole("button", { name: "Понятно", exact: true });
@@ -56,8 +56,8 @@ test("every published lesson follows the five stages using footer buttons", asyn
       page.getByRole("textbox", { name: "Редактор Python", exact: true }),
     ).toBeVisible();
     const exercises = page.locator(".exercise-selector button");
-    await expect(exercises).toHaveCount(8);
-    for (let exercise = 0; exercise < 8; exercise++) {
+    await expect(exercises).toHaveCount(2);
+    for (let exercise = 0; exercise < 2; exercise++) {
       await expect(exercises.nth(exercise)).toHaveAttribute(
         "aria-pressed",
         "true",
@@ -65,7 +65,7 @@ test("every published lesson follows the five stages using footer buttons", asyn
       await expect(page.locator(".exercise-description .eyebrow")).toHaveText(
         `CHALLENGE / ${exercise + 1}`,
       );
-      if (exercise < 7) {
+      if (exercise < 1) {
         await expect(
           page.getByRole("button", { name: "Перейти к тесту", exact: true }),
         ).toHaveCount(0);
@@ -93,7 +93,7 @@ test("every published lesson follows the five stages using footer buttons", asyn
     else await expect(page.locator(".review-content .button")).toHaveCount(0);
     for (const name of ["Тест", "Практика", "Примеры", "Теория"]) {
       if (name === "Примеры") {
-        for (let exercise = 6; exercise >= 0; exercise--) {
+        for (let exercise = 0; exercise >= 0; exercise--) {
           await page
             .getByRole("button", { name: "Предыдущее задание", exact: true })
             .click();
@@ -114,7 +114,7 @@ test("every published lesson follows the five stages using footer buttons", asyn
 
 test("tabs support keyboard navigation on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/learn/variables-types");
+  await page.goto("/learn/academy-variables");
   await page.getByRole("button", { name: "Понятно", exact: true }).click();
   const theory = page.getByRole("tab", { name: "Теория", exact: true });
   await theory.focus();

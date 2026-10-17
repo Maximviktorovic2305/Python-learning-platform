@@ -724,6 +724,31 @@
         }
       }
     },
+    "/api/tasks": {
+      "get": {
+        "tags": [
+          "learning"
+        ],
+        "summary": "Tasks",
+        "operationId": "tasks_api_tasks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseView"
+                  },
+                  "type": "array",
+                  "title": "Response Tasks Api Tasks Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/exercises/{exercise_id}/submit": {
       "post": {
         "tags": [
@@ -1538,8 +1563,27 @@
             "title": "Id"
           },
           "topic_id": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Topic Id"
+          },
+          "catalog": {
+            "type": "string",
+            "title": "Catalog",
+            "default": "lesson"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
           },
           "title": {
             "type": "string",
@@ -1567,6 +1611,21 @@
             },
             "type": "array",
             "title": "Hints"
+          },
+          "sample_stdin": {
+            "type": "string",
+            "title": "Sample Stdin",
+            "default": ""
+          },
+          "test_count": {
+            "type": "integer",
+            "title": "Test Count",
+            "default": 0
+          },
+          "local_supported": {
+            "type": "boolean",
+            "title": "Local Supported",
+            "default": true
           }
         },
         "additionalProperties": false,
@@ -1625,6 +1684,16 @@
             },
             "type": "array",
             "title": "Review"
+          },
+          "exercise_count": {
+            "type": "integer",
+            "title": "Exercise Count",
+            "default": 0
+          },
+          "question_count": {
+            "type": "integer",
+            "title": "Question Count",
+            "default": 0
           }
         },
         "additionalProperties": false,
@@ -1823,6 +1892,13 @@
             },
             "type": "array",
             "title": "Exercise Ids"
+          },
+          "trainer_exercise_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Trainer Exercise Ids"
           },
           "quiz_ids": {
             "items": {
@@ -2202,6 +2278,23 @@
             },
             "type": "array",
             "title": "Tags"
+          },
+          "exercise_count": {
+            "type": "integer",
+            "title": "Exercise Count",
+            "default": 0
+          },
+          "question_count": {
+            "type": "integer",
+            "title": "Question Count",
+            "default": 0
+          },
+          "practice_difficulties": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Practice Difficulties"
           }
         },
         "additionalProperties": false,

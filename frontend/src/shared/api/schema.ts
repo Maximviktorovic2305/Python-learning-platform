@@ -277,6 +277,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/tasks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Tasks */
+    get: operations["tasks_api_tasks_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/exercises/{exercise_id}/submit": {
     parameters: {
       query?: never;
@@ -599,7 +616,14 @@ export interface components {
       /** Id */
       id: string;
       /** Topic Id */
-      topic_id: string;
+      topic_id: string | null;
+      /**
+       * Catalog
+       * @default lesson
+       */
+      catalog: string;
+      /** Tags */
+      tags?: string[];
       /** Title */
       title: string;
       /** Description */
@@ -612,6 +636,21 @@ export interface components {
       starter_code: string;
       /** Hints */
       hints: string[];
+      /**
+       * Sample Stdin
+       * @default
+       */
+      sample_stdin: string;
+      /**
+       * Test Count
+       * @default 0
+       */
+      test_count: number;
+      /**
+       * Local Supported
+       * @default true
+       */
+      local_supported: boolean;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -629,6 +668,16 @@ export interface components {
       examples: components["schemas"]["CodeExample"][];
       /** Review */
       review: string[];
+      /**
+       * Exercise Count
+       * @default 0
+       */
+      exercise_count: number;
+      /**
+       * Question Count
+       * @default 0
+       */
+      question_count: number;
     };
     /** LevelView */
     LevelView: {
@@ -696,6 +745,8 @@ export interface components {
       lesson_ids: string[];
       /** Exercise Ids */
       exercise_ids: string[];
+      /** Trainer Exercise Ids */
+      trainer_exercise_ids?: string[];
       /** Quiz Ids */
       quiz_ids: string[];
       /** Completed Topics */
@@ -834,6 +885,20 @@ export interface components {
       published: boolean;
       /** Tags */
       tags: string[];
+      /**
+       * Exercise Count
+       * @default 0
+       */
+      exercise_count: number;
+      /**
+       * Question Count
+       * @default 0
+       */
+      question_count: number;
+      /** Practice Difficulties */
+      practice_difficulties?: {
+        [key: string]: number;
+      };
     };
     /** UserView */
     UserView: {
@@ -1401,6 +1466,26 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  tasks_api_tasks_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ExerciseView"][];
         };
       };
     };

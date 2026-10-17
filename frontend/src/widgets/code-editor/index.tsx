@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Play,
@@ -24,14 +25,54 @@ import { Highlight } from "@/shared/ui/code";
 import { errorMessage, refreshLearningData } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 
+function readDraft(key?: string): { code: string; stdin: string } | null {
+  if (!key || typeof window === "undefined") return null;
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) ?? "null");
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "code" in value &&
+      "stdin" in value &&
+      typeof value.code === "string" &&
+      value.code.length <= 20000 &&
+      typeof value.stdin === "string" &&
+      value.stdin.length <= 4000
+    )
+      return { code: value.code, stdin: value.stdin };
+  } catch {
+    /* Storage is optional; editing still works. */
+  }
+  return null;
+}
+
 export function CodeEditor({
   exercise,
   completed,
+  draftKey,
 }: {
   exercise: Exercise;
   completed: boolean;
+  draftKey?: string;
 }) {
-  const [code, setCode] = useState(exercise.starter_code);
+  const [draft] = useState(() => readDraft(draftKey));
+  const [code, setCode] = useState(draft?.code ?? exercise.starter_code);
+  const [stdin, setStdin] = useState(
+    draft?.stdin ?? exercise.sample_stdin ?? "",
+  );
+  const [draftStatus, setDraftStatus] = useState(draft ? "restored" : "new");
+  const saveDraft = (nextCode: string, nextStdin: string) => {
+    if (!draftKey) return;
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ code: nextCode, stdin: nextStdin }),
+      );
+      setDraftStatus("saved");
+    } catch {
+      setDraftStatus("unavailable");
+    }
+  };
   const [output, setOutput] = useState<RunOutput | null>(null);
   const [running, setRunning] = useState(false);
   const [hint, setHint] = useState(0);
@@ -54,7 +95,7 @@ export function CodeEditor({
     setRunning(true);
     setMessage("");
     try {
-      setOutput(await runPython(code, controller.current.signal));
+      setOutput(await runPython(code, controller.current.signal, stdin));
     } catch (error) {
       setMessageKind("error");
       setMessage(errorMessage(error));
@@ -114,7 +155,9 @@ export function CodeEditor({
     <div className="exercise-workspace">
       <div className="exercise-description">
         <div className="eyebrow">
-          CHALLENGE / {exercise.id.split("-e").at(-1)}
+          {exercise.catalog === "trainer"
+            ? `ЗАДАЧА / ${exercise.id.replace("trainer-", "")}`
+            : `CHALLENGE / ${exercise.id.split("-e").at(-1)}`}
         </div>
         <h2>{exercise.title}</h2>
         <div className="meta-row">
@@ -127,9 +170,14 @@ export function CodeEditor({
                   : "yellow"
             }
           >
-            {exercise.difficulty}
+            {(
+              { easy: "Лёгкая", medium: "Средняя", hard: "Сложная" } as Record<
+                string,
+                string
+              >
+            )[exercise.difficulty] ?? exercise.difficulty}
           </Tag>
-          <Tag>{exercise.kind.replaceAll("_", " ")}</Tag>
+          <Tag>Самостоятельная практика</Tag>
           {solved && (
             <Tag tone="green">
               <Check size={12} />
@@ -164,6 +212,8 @@ export function CodeEditor({
               disabled={running || verifying}
               onClick={() => {
                 setCode(exercise.starter_code);
+                setStdin(exercise.sample_stdin ?? "");
+                saveDraft(exercise.starter_code, exercise.sample_stdin ?? "");
                 setOutput(null);
                 setMessage("");
               }}
@@ -209,6 +259,7 @@ export function CodeEditor({
               maxLength={20000}
               onChange={(e) => {
                 setCode(e.target.value);
+                saveDraft(e.target.value, stdin);
                 setMessage("");
                 setOutput(null);
               }}
@@ -232,6 +283,10 @@ export function CodeEditor({
                   const start = e.currentTarget.selectionStart;
                   const end = e.currentTarget.selectionEnd;
                   setCode(code.slice(0, start) + "    " + code.slice(end));
+                  saveDraft(
+                    code.slice(0, start) + "    " + code.slice(end),
+                    stdin,
+                  );
                   setMessage("");
                   setOutput(null);
                   const element = e.currentTarget;
@@ -246,6 +301,31 @@ export function CodeEditor({
         <small className="editor-keyboard-note">
           Tab — отступ · Shift+Tab — выход из редактора
         </small>
+        <label className="editor-stdin">
+          <span>Входные данные для input()</span>
+          <textarea
+            value={stdin}
+            maxLength={4000}
+            rows={3}
+            spellCheck={false}
+            autoCapitalize="off"
+            readOnly={running || verifying}
+            onChange={(event) => {
+              setStdin(event.target.value);
+              saveDraft(code, event.target.value);
+            }}
+          />
+          <small>
+            Меняйте ввод для экспериментов. Сервер проверит решение на{" "}
+            {exercise.test_count} наборах данных.
+          </small>
+        </label>
+        {exercise.local_supported === false && (
+          <p className="hint-box">
+            Для потоков и процессов используйте кнопку «Проверить» после входа:
+            браузерный Python не поддерживает системные потоки и процессы.
+          </p>
+        )}
         <div className="editor-controls">
           {running ? (
             <Button
@@ -256,7 +336,12 @@ export function CodeEditor({
               Остановить
             </Button>
           ) : (
-            <Button onClick={run} disabled={verifying || !code.trim()}>
+            <Button
+              onClick={run}
+              disabled={
+                exercise.local_supported === false || verifying || !code.trim()
+              }
+            >
               <Play size={15} />
               Запустить локально
             </Button>
@@ -303,7 +388,9 @@ export function CodeEditor({
               <pre>
                 {output?.stdout ||
                   (!output
-                    ? "Нажмите «Запустить локально», чтобы увидеть результат."
+                    ? exercise.local_supported === false
+                      ? "Для этого задания используйте серверную проверку."
+                      : "Нажмите «Запустить локально», чтобы увидеть результат."
                     : "Программа завершилась без вывода.")}
               </pre>
               {output?.stderr && (
@@ -337,12 +424,28 @@ export function CodeEditor({
       )}
       <p className="muted small-text">
         Локальный запуск выполняется на вашем устройстве. XP выдаётся после
-        серверной проверки. Программа получает пустой stdin; для этой задачи
-        используйте заданные значения. Сетевые запросы из локального Python
-        недоступны.
+        серверной проверки. input() читает строки из поля «Входные данные».
+        Сетевые запросы из локального Python недоступны.
         {solved &&
           " Баллы за это задание уже получены. Можно практиковаться без повторного начисления XP."}
       </p>
+      {draftKey && (
+        <p className="muted small-text" role="status">
+          {draftStatus === "saved"
+            ? "Черновик сохранён в этом браузере."
+            : draftStatus === "restored"
+              ? "Черновик восстановлен из этого браузера."
+              : draftStatus === "unavailable"
+                ? "Браузер не разрешает сохранить черновик. Скопируйте код перед уходом со страницы."
+                : "Во время работы черновик сохраняется в этом браузере."}
+        </p>
+      )}
+      {!user && (
+        <p className="muted small-text">
+          <Link href="/login">Войдите в аккаунт</Link>, чтобы отправить решение
+          на серверную проверку и сохранить прогресс.
+        </p>
+      )}
     </div>
   );
 }

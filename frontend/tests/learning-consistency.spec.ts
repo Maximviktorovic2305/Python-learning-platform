@@ -18,7 +18,7 @@ const user = {
 
 async function learning(context: BrowserContext) {
   const exercises = await (
-    await context.request.get("/api/exercises?topic_id=first-program")
+    await context.request.get("/api/exercises?topic_id=academy-introduction")
   ).json();
   const state: Progress = {
     user: { ...user },
@@ -28,7 +28,7 @@ async function learning(context: BrowserContext) {
       .map((exercise: { id: string }) => exercise.id),
     quiz_ids: [],
     completed_topics: [],
-    continue_topic: "first-program",
+    continue_topic: "academy-introduction",
     course_percent: 0,
     level_percent: {},
     module_percent: {},
@@ -43,7 +43,7 @@ async function learning(context: BrowserContext) {
   let attemptNumber = 0;
   const question = {
     id: "repeat-question",
-    topic_id: "first-program",
+    topic_id: "academy-introduction",
     difficulty: "easy",
     kind: "single_choice",
     prompt: "Выберите правильный ответ",
@@ -71,24 +71,24 @@ async function learning(context: BrowserContext) {
         return route.fulfill({ status: 503, json: { detail: "unavailable" } });
       if (
         state.lesson_ids.length &&
-        state.exercise_ids.length === 8 &&
+        state.exercise_ids.length === 2 &&
         state.quiz_ids.length
       ) {
-        state.completed_topics = ["first-program"];
-        state.continue_topic = "variables-types";
-        state.course_percent = 7;
+        state.completed_topics = ["academy-introduction"];
+        state.continue_topic = "academy-variables";
+        state.course_percent = 2;
       }
       return route.fulfill({ json: state });
     }
     if (path === "/api/exercises") return route.fulfill({ json: exercises });
-    if (path === "/api/lessons/first-program/complete") {
+    if (path === "/api/lessons/academy-introduction/complete") {
       theoryRequests++;
-      const xp = award(state.lesson_ids, "first-program", 20);
+      const xp = award(state.lesson_ids, "academy-introduction", 20);
       if (lostResponse) return route.abort("failed");
       return route.fulfill({ json: { message: `Урок завершён. +${xp} XP` } });
     }
-    if (path === "/api/exercises/first-program-e1/submit") {
-      const xp = award(state.exercise_ids, "first-program-e1", 30);
+    if (path === "/api/exercises/academy-introduction-e1/submit") {
+      const xp = award(state.exercise_ids, "academy-introduction-e1", 30);
       return route.fulfill({
         json: {
           status: "passed",
@@ -100,17 +100,17 @@ async function learning(context: BrowserContext) {
         },
       });
     }
-    if (path === "/api/quizzes/first-program/attempts")
+    if (path === "/api/quizzes/academy-introduction/attempts")
       return route.fulfill({
         json: {
           id: `attempt-${++attemptNumber}`,
-          quiz_id: "first-program-quiz",
+          quiz_id: "academy-introduction-quiz",
           created_at: user.created_at,
           questions: [question],
         },
       });
     if (/\/api\/attempts\/.*\/submit$/.test(path)) {
-      const xp = award(state.quiz_ids, "first-program-quiz", 50);
+      const xp = award(state.quiz_ids, "academy-introduction-quiz", 50);
       return route.fulfill({
         json: {
           id: `attempt-${attemptNumber}`,
@@ -165,7 +165,7 @@ test("completion and rewards refresh across all learning views without reloading
 }) => {
   const app = await learning(context);
   await open(page, "/curriculum"); // Prime the curriculum and progress caches.
-  await page.locator('.topic-row[href="/learn/first-program"]').click();
+  await page.locator('.topic-row[href="/learn/academy-introduction"]').click();
   await page.getByRole("button", { name: "Перейти к примерам" }).click();
   await expect(
     page.getByRole("tab", { name: "Примеры", exact: true }),
@@ -204,7 +204,7 @@ test("completion and rewards refresh across all learning views without reloading
   await expect(page.locator(".lesson-heading .topic-status")).toHaveText(
     "Завершена",
   );
-  await expect(page.locator(".lesson-heading")).toContainText("Практика: 8/8");
+  await expect(page.locator(".lesson-heading")).toContainText("Практика: 2/2");
   await page.getByRole("button", { name: "Новая попытка" }).click();
   await passQuiz(page);
   await expect(page.locator(".result-summary")).toContainText(
@@ -220,7 +220,7 @@ test("completion and rewards refresh across all learning views without reloading
       .getByRole("link", { name, exact: true })
       .click();
     await expect(
-      page.locator(`${selector}[href^="/learn/first-program"]`),
+      page.locator(`${selector}[href^="/learn/academy-introduction"]`),
     ).toHaveAttribute("data-topic-status", "completed");
   }
   await page.getByRole("link", { name: "Мой прогресс", exact: true }).click();
@@ -237,7 +237,7 @@ for (const theme of ["light", "dark"]) {
       (value) => localStorage.setItem("theme", value),
       theme,
     );
-    await open(page, "/learn/first-program?tab=quiz");
+    await open(page, "/learn/academy-introduction?tab=quiz");
     await page.getByRole("button", { name: "Начать тест" }).click();
     const radio = page.getByRole("radio").first();
     await radio.check();
@@ -262,12 +262,14 @@ test("a completion in another tab immediately refreshes status and repeat reward
   page,
 }) => {
   const app = await learning(context);
-  app.state.lesson_ids = ["first-program"];
-  app.state.quiz_ids = ["first-program-quiz"];
-  await open(page, "/learn/first-program?tab=practice");
+  app.state.lesson_ids = ["academy-introduction"];
+  app.state.quiz_ids = ["academy-introduction-quiz"];
+  await open(page, "/learn/academy-introduction?tab=practice");
   const second = await context.newPage();
   await open(second, "/curriculum");
-  const topic = second.locator('.topic-row[href="/learn/first-program"]');
+  const topic = second.locator(
+    '.topic-row[href="/learn/academy-introduction"]',
+  );
   await expect(topic).toHaveAttribute("data-topic-status", "in-progress");
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(topic).toHaveAttribute("data-topic-status", "completed");
@@ -282,7 +284,7 @@ test("a committed completion with a lost response refreshes before retry", async
 }) => {
   const app = await learning(context);
   app.loseResponse();
-  await open(page, "/learn/first-program");
+  await open(page, "/learn/academy-introduction");
   await page.getByRole("button", { name: "Перейти к примерам" }).click();
   await expect(page.locator(".lesson-heading")).toContainText("Теория изучена");
   await expect(
@@ -301,7 +303,7 @@ test("editing a checked solution clears the result for the previous code", async
   page,
 }) => {
   await learning(context);
-  await open(page, "/learn/first-program?tab=practice");
+  await open(page, "/learn/academy-introduction?tab=practice");
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(page.locator(".execution-message")).toContainText(
     "Задание выполнено",
@@ -322,7 +324,7 @@ test("failed refresh labels cached progress and keeps a verified task free of re
   page,
 }) => {
   const app = await learning(context);
-  await open(page, "/learn/first-program?tab=practice");
+  await open(page, "/learn/academy-introduction?tab=practice");
   const verify = page.getByRole("button", {
     name: "Проверить",
     exact: true,

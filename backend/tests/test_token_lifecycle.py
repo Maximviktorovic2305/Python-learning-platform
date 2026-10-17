@@ -88,7 +88,7 @@ async def test_updating_profile_preserves_active_session_and_rejected_update_rol
     # Account/project deletion is not an implemented API operation.
     assert (await client.delete("/api/users/me", headers=student)).status_code == 405
     assert (
-        await client.delete("/api/projects/01-cli/submissions", headers=student)
+        await client.delete("/api/projects/academy-task-manager/submissions", headers=student)
     ).status_code == 405
     assert (await client.get("/api/users/me", headers=student)).status_code == 200
 

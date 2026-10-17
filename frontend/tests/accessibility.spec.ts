@@ -11,7 +11,7 @@ test("public pages meet automated WCAG checks in both themes", async ({
     for (const route of [
       "/",
       "/curriculum",
-      "/learn/first-program",
+      "/learn/academy-introduction",
       "/login",
       "/projects",
       "/private-policy",

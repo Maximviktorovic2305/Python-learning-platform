@@ -26,7 +26,7 @@ async def test_project_rejects_an_empty_description(
     client: httpx.AsyncClient, student: dict[str, str]
 ) -> None:
     response = await client.post(
-        "/api/projects/01-cli/submissions",
+        "/api/projects/academy-task-manager/submissions",
         headers=student,
         json={"repository_url": "https://example.com/repo", "notes": " " * 25},
     )
@@ -44,7 +44,9 @@ async def test_admin_approval_awards_project_xp_once_and_locks_edits(
         "repository_url": "https://example.com/repo",
         "notes": "CLI project, run python main.py.",
     }
-    response = await client.post("/api/projects/01-cli/submissions", headers=student, json=payload)
+    response = await client.post(
+        "/api/projects/academy-task-manager/submissions", headers=student, json=payload
+    )
     assert response.status_code == 200
     submission = response.json()
     admin = await client.post(
@@ -73,5 +75,7 @@ async def test_admin_approval_awards_project_xp_once_and_locks_edits(
     stored = (await client.get("/api/projects/submissions", headers=student)).json()
     assert len(stored) == 1 and stored[0]["status"] == "approved"
     assert (
-        await client.post("/api/projects/01-cli/submissions", headers=student, json=payload)
+        await client.post(
+            "/api/projects/academy-task-manager/submissions", headers=student, json=payload
+        )
     ).status_code == 409

@@ -47,7 +47,7 @@ if compose ps --status running --services | grep -qx postgres; then
 fi
 compose config --quiet
 compose build --pull
-compose up -d --wait --wait-timeout 180 backend frontend runner
+compose up -d --wait --wait-timeout 600 backend frontend runner
 for attempt in $(seq 1 30); do
   if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:3010/api/health >/dev/null; then
     break
@@ -57,8 +57,8 @@ for attempt in $(seq 1 30); do
 done
 curl --fail --silent --show-error --retry 15 --retry-all-errors --retry-delay 2 \
   --max-time 20 http://127.0.0.1:3010/ >/dev/null
-compose exec -T sandbox-daemon docker -H tcp://localhost:2375 run --rm --network none python:3.14-slim \
-  python -I -c 'print("sandbox ready")'
+compose exec -T sandbox-daemon docker -H tcp://localhost:2375 run --rm --network none python-lab-sandbox:2026-10 \
+  python -I -c 'import sqlalchemy, pytest; print("sandbox ready")'
 ln -sfn "$RELEASE" "$APP_DIR/current"
 trap - ERR
 compose ps

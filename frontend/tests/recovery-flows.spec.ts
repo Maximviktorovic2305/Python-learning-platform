@@ -132,7 +132,7 @@ for (const target of [
   },
   { path: "/projects", endpoint: "**/api/projects", ready: "Что построить" },
   {
-    path: "/learn/first-program?tab=practice",
+    path: "/learn/academy-introduction?tab=practice",
     endpoint: "**/api/exercises?*",
     ready: "Редактор Python",
   },
@@ -322,7 +322,7 @@ for (const result of [
         },
       }),
     );
-    await page.goto("/learn/first-program?tab=practice");
+    await page.goto("/learn/academy-introduction?tab=practice");
     await dismissNotice(page);
     await page
       .getByLabel("Редактор Python", { exact: true })
@@ -371,7 +371,7 @@ test("project submission can retry a temporary save failure without editing the 
         : {
             json: {
               id: "submission",
-              project_id: "01-cli",
+              project_id: "academy-task-manager",
               repository_url: "https://github.com/example/project",
               notes: "Implemented a project. Run python main.py.",
               status: "submitted",
@@ -427,7 +427,7 @@ test("Tab cannot change the submitted Python code while verification is pending"
       },
     });
   });
-  await page.goto("/learn/first-program?tab=practice");
+  await page.goto("/learn/academy-introduction?tab=practice");
   await dismissNotice(page);
   const editor = page.getByLabel("Редактор Python", { exact: true });
   const source = "print('Hello, Python!')";

@@ -28,9 +28,35 @@ async def course_catalog(session: AsyncSession, course_id: str = "python") -> Co
             .order_by(Topic.position)
         )
     )
+    difficulties: dict[str, dict[str, int]] = {}
+    for topic_id, difficulty, count in await session.execute(
+        select(Exercise.topic_id, Exercise.difficulty, func.count())
+        .where(Exercise.topic_id.in_([topic.id for topic in topics]))
+        .group_by(Exercise.topic_id, Exercise.difficulty)
+    ):
+        if topic_id is not None:
+            difficulties.setdefault(topic_id, {})[difficulty] = int(count)
+    question_counts = dict(
+        (
+            await session.execute(
+                select(Question.topic_id, func.count())
+                .where(Question.topic_id.in_([topic.id for topic in topics]))
+                .group_by(Question.topic_id)
+            )
+        ).all()
+    )
     topics_by_module: dict[str, list[TopicView]] = {}
     for topic in topics:
-        topics_by_module.setdefault(topic.module_id, []).append(TopicView.model_validate(topic))
+        distribution = difficulties.get(topic.id, {})
+        topics_by_module.setdefault(topic.module_id, []).append(
+            TopicView.model_validate(topic).model_copy(
+                update={
+                    "exercise_count": sum(distribution.values()),
+                    "question_count": int(question_counts.get(topic.id, 0)),
+                    "practice_difficulties": distribution,
+                }
+            )
+        )
     modules_by_level: dict[str, list[ModuleView]] = {}
     for module in modules:
         modules_by_level.setdefault(module.level_id, []).append(
@@ -58,16 +84,6 @@ async def course_catalog(session: AsyncSession, course_id: str = "python") -> Co
             for item in levels
         ],
         published_topics=sum(t.published for t in topics),
-        exercise_count=await session.scalar(
-            select(func.count())
-            .select_from(Exercise)
-            .where(Exercise.topic_id.in_([t.id for t in topics]))
-        )
-        or 0,
-        question_count=await session.scalar(
-            select(func.count())
-            .select_from(Question)
-            .where(Question.topic_id.in_([t.id for t in topics]))
-        )
-        or 0,
+        exercise_count=sum(sum(distribution.values()) for distribution in difficulties.values()),
+        question_count=sum(int(value) for value in question_counts.values()),
     )

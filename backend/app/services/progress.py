@@ -70,6 +70,7 @@ async def grant_achievements(session: AsyncSession, user: User) -> None:
         .group_by(Completion.kind)
     )
     metrics: dict[str, int] = {str(kind): int(count) for kind, count in grouped}
+    metrics["exercise"] = metrics.get("exercise", 0) + metrics.get("trainer", 0)
     metrics.update(xp=user.total_xp, streak=user.streak)
     metrics["perfect"] = (
         await session.scalar(
@@ -105,11 +106,12 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressView:
     exercise_ids = [c.resource_id for c in completions if c.kind == "exercise"]
     quiz_ids = [c.resource_id for c in completions if c.kind == "quiz"]
     done = {(c.kind, c.resource_id) for c in completions}
-    exercises = list(await session.scalars(select(Exercise)))
+    exercises = list(await session.scalars(select(Exercise).where(Exercise.catalog == "lesson")))
     quizzes = list(await session.scalars(select(Quiz)))
     requirements: dict[str, set[tuple[str, str]]] = {}
     for e in exercises:
-        requirements.setdefault(e.topic_id, set()).add(("exercise", e.id))
+        if e.topic_id is not None:
+            requirements.setdefault(e.topic_id, set()).add(("exercise", e.id))
     for q in quizzes:
         requirements.setdefault(q.topic_id, set()).add(("quiz", q.id))
     topics = (
@@ -167,6 +169,7 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressView:
         user=view_user,
         lesson_ids=lesson_ids,
         exercise_ids=exercise_ids,
+        trainer_exercise_ids=[c.resource_id for c in completions if c.kind == "trainer"],
         quiz_ids=quiz_ids,
         completed_topics=complete_topics,
         continue_topic=next((t.id for t in topics if t.id not in complete_topics), None),

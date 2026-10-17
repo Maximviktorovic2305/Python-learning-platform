@@ -119,9 +119,7 @@ test("cached navigation preserves the shell and never inserts skeletons or a sec
     { name: "Мой прогресс", path: "/dashboard", title: `Привет, ${username}.` },
   ];
   await page.getByRole("link", { name: "Начать первый урок" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Первая программа и инструменты" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Введение" })).toBeVisible();
   // SSR theory can appear before the client exercise query starts. Warm the
   // actual practice data before checking that revisits use the cache.
   await page.getByRole("tab", { name: "Практика", exact: true }).click();
@@ -192,10 +190,8 @@ test("cached navigation preserves the shell and never inserts skeletons or a sec
     );
   }
   await page.getByRole("link", { name: "Начать первый урок" }).click();
-  await expect(page).toHaveURL("/learn/first-program");
-  await expect(
-    page.getByRole("heading", { name: "Первая программа и инструменты" }),
-  ).toBeVisible();
+  await expect(page).toHaveURL("/learn/academy-introduction");
+  await expect(page.getByRole("heading", { name: "Введение" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute(
     "data-skeleton-seen",
     "no",

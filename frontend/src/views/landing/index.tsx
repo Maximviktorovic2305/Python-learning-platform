@@ -19,18 +19,10 @@ import { ActionLink, Tag } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 
 const stages = [
-  "Programming & Python Fundamentals",
-  "Control Flow & Collections",
-  "Functions & Modules",
-  "Object-Oriented Python",
-  "Advanced Python",
-  "Files, Data & Automation",
-  "SQL & PostgreSQL",
-  "SQLAlchemy",
-  "FastAPI",
-  "Testing & Quality",
-  "Professional Architecture",
-  "Production Python",
+  "Введение",
+  "Основы Python I",
+  "Основы Python II",
+  "Продвинутый Python",
 ];
 export function LandingPage() {
   return (
@@ -109,20 +101,20 @@ export function LandingPage() {
         <section className="metrics-strip" id="landing-metrics">
           <div className="container metrics-inner">
             <div>
-              <strong>12</strong>
-              <span>уровней развития</span>
+              <strong>4</strong>
+              <span>раздела курса</span>
             </div>
             <div>
-              <strong>120</strong>
-              <span>задач в первых 3 уровнях</span>
+              <strong>100</strong>
+              <span>практических заданий</span>
             </div>
             <div>
-              <strong>480</strong>
+              <strong>1000</strong>
               <span>вопросов для закрепления</span>
             </div>
             <div>
-              <strong>8</strong>
-              <span>проектов в портфолио</span>
+              <strong>50</strong>
+              <span>тем с примерами</span>
             </div>
           </div>
         </section>
@@ -202,7 +194,7 @@ export function LandingPage() {
                 {
                   icon: PythonLogo,
                   title: "Напиши решение",
-                  desc: "8 задач на тему: от первого уверенного шага до разбора сложных случаев.",
+                  desc: "Самостоятельные задания на разных входах: обычные значения, границы и пустые данные.",
                   tag: "PRACTICE",
                 },
                 {
@@ -289,7 +281,7 @@ export function LandingPage() {
                   Подсказки, когда нужен следующий шаг
                 </li>
               </ul>
-              <ActionLink href="/learn/first-program">
+              <ActionLink href="/learn/academy-introduction">
                 Открыть первый урок
               </ActionLink>
             </div>
@@ -325,29 +317,29 @@ export function LandingPage() {
               </h2>
             </div>
             <p>
-              Собери CLI-инструмент, API и итоговый продукт. У каждого проекта
-              есть требования и критерии проверки.
+              Собери анализатор текста, каталог SQLite и конвейер данных. У
+              каждого проекта есть требования и критерии проверки.
             </p>
           </div>
           <div className="project-preview-grid">
             {[
               {
                 icon: PythonLogo,
-                name: "CLI Task Manager",
-                tag: "FUNCTIONS / FILES",
+                name: "Анализатор текста",
+                tag: "СЛОВАРИ / ФУНКЦИИ",
                 number: "01",
               },
               {
                 icon: Server,
-                name: "REST API",
-                tag: "FASTAPI / POSTGRESQL",
+                name: "Каталог SQLite",
+                tag: "SQL / SQLALCHEMY",
                 number: "03",
               },
               {
                 icon: Layers3,
-                name: "Production Capstone",
-                tag: "ARCHITECTURE / DEPLOYMENT",
-                number: "08",
+                name: "Конвейер данных",
+                tag: "PYTEST / ASYNCIO",
+                number: "04",
               },
             ].map(({ icon: Icon, name, tag, number }) => (
               <Link href="/projects" key={name}>
@@ -418,7 +410,7 @@ export function LandingPage() {
               },
               {
                 q: "Весь курс уже доступен?",
-                a: "Уровни 0–2 наполнены и доступны. Для уровней 3–11 опубликована программа; материалы следующих этапов готовятся.",
+                a: "Все четыре раздела доступны: 50 тем с теорией, примерами, практикой и тестами.",
               },
               {
                 q: "Как проверяются практические задания?",

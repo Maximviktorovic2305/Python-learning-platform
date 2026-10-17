@@ -32,9 +32,7 @@ test("landing, responsive navigation, both themes and public curriculum", async 
     page.getByRole("heading", { name: "Твой маршрут в Python." }),
   ).toBeVisible();
   await page.getByRole("textbox", { name: "Поиск темы" }).fill("функции");
-  await expect(
-    page.getByRole("link", { name: /Функции и возвращаемые значения/ }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Функции/ })).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -72,9 +70,7 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   ).toBeVisible();
   await page.screenshot({ path: "../.local/dashboard.png", fullPage: true });
   await page.getByRole("link", { name: "Начать первый урок" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Первая программа и инструменты" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Введение" })).toBeVisible();
   await page.getByRole("button", { name: "Перейти к примерам" }).click();
   await expect(
     page.getByRole("tab", { name: "Примеры", exact: true }),
@@ -89,11 +85,14 @@ test("register, reload session, complete lesson, quiz review, persisted progress
     "Hello, Python!\n",
     { timeout: 50000 },
   );
+  await page
+    .getByLabel("Редактор Python")
+    .fill("name = input()\nprint('Привет, ' + name + '!')");
   await page.getByRole("button", { name: "Проверить" }).click();
   await expect(
     page
       .getByRole("status")
-      .filter({ hasText: "Пройдено 1/1 проверок. +30 XP" }),
+      .filter({ hasText: "Пройдено 3/3 проверок. +30 XP" }),
   ).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "Проверить повторно" }).click();
   await expect(
@@ -155,7 +154,7 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
     "/dashboard",
-    "/learn/first-program",
+    "/learn/academy-introduction",
     "/practice",
     "/profile",
   ]) {
@@ -168,7 +167,7 @@ test("register, reload session, complete lesson, quiz review, persisted progress
       route,
     ).toBe(true);
   }
-  await page.goto("/learn/first-program");
+  await page.goto("/learn/academy-introduction");
   await page.getByRole("tab", { name: "Практика", exact: true }).click();
   await expect(
     page.getByLabel("Редактор Python", { exact: true }),
