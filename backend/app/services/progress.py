@@ -1,46 +1,26 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel
-from sqlalchemy import Integer, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.learning import next_streak, percentage
 from app.models.tables import (
-    Achievement,
-    Answer,
     Completion,
-    Exercise,
-    Quiz,
-    QuizAttempt,
-    Topic,
     User,
     UserAchievement,
 )
+from app.repositories import progress as records
 from app.repositories.catalog import course_catalog
-from app.schemas.contracts import CompletionView, ProgressView, UserView, WeakTopic
-
-
-class TopicAccuracy(BaseModel):
-    id: str
-    title: str
-    answer_count: int
-    correct_count: int
+from app.repositories.users import lock_user
+from app.schemas.contracts import AchievementView, CompletionView, ProgressView, UserView, WeakTopic
 
 
 async def award(
     session: AsyncSession, user: User, kind: str, resource_id: str, topic_id: str | None, xp: int
 ) -> int:
     # All writers take the same row lock before checking uniqueness and modifying XP/streak.
-    await session.refresh(user, with_for_update=True)
-    existing = await session.scalar(
-        select(Completion.id).where(
-            Completion.user_id == user.id,
-            Completion.kind == kind,
-            Completion.resource_id == resource_id,
-        )
-    )
-    if existing is not None:
+    await lock_user(session, user)
+    if await records.completion_exists(session, user.id, kind, resource_id):
         return 0
     today = datetime.now(ZoneInfo(user.timezone)).date()
     user.total_xp += xp
@@ -64,28 +44,11 @@ async def award(
 
 
 async def grant_achievements(session: AsyncSession, user: User) -> None:
-    grouped = await session.execute(
-        select(Completion.kind, func.count())
-        .where(Completion.user_id == user.id)
-        .group_by(Completion.kind)
-    )
-    metrics: dict[str, int] = {str(kind): int(count) for kind, count in grouped}
+    metrics = await records.achievement_metrics(session, user.id)
     metrics["exercise"] = metrics.get("exercise", 0) + metrics.get("trainer", 0)
     metrics.update(xp=user.total_xp, streak=user.streak)
-    metrics["perfect"] = (
-        await session.scalar(
-            select(func.count())
-            .select_from(QuizAttempt)
-            .where(QuizAttempt.user_id == user.id, QuizAttempt.score == 100)
-        )
-        or 0
-    )
-    earned = set(
-        await session.scalars(
-            select(UserAchievement.achievement_id).where(UserAchievement.user_id == user.id)
-        )
-    )
-    for achievement in await session.scalars(select(Achievement)):
+    earned = {item.achievement_id for item in await records.earned_achievements(session, user.id)}
+    for achievement in await records.achievements(session):
         if (
             achievement.id not in earned
             and metrics.get(achievement.metric, 0) >= achievement.threshold
@@ -95,19 +58,13 @@ async def grant_achievements(session: AsyncSession, user: User) -> None:
 
 async def get_progress(session: AsyncSession, user: User) -> ProgressView:
     catalog = await course_catalog(session)
-    completions = list(
-        await session.scalars(
-            select(Completion)
-            .where(Completion.user_id == user.id)
-            .order_by(Completion.created_at.desc())
-        )
-    )
+    completions = await records.completions(session, user.id)
     lesson_ids = [c.resource_id for c in completions if c.kind == "lesson"]
     exercise_ids = [c.resource_id for c in completions if c.kind == "exercise"]
     quiz_ids = [c.resource_id for c in completions if c.kind == "quiz"]
     done = {(c.kind, c.resource_id) for c in completions}
-    exercises = list(await session.scalars(select(Exercise).where(Exercise.catalog == "lesson")))
-    quizzes = list(await session.scalars(select(Quiz)))
+    exercises = await records.course_exercises(session)
+    quizzes = await records.quizzes(session)
     requirements: dict[str, set[tuple[str, str]]] = {}
     for e in exercises:
         if e.topic_id is not None:
@@ -135,20 +92,7 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressView:
                 module_percent[module.id] = percentage(
                     sum(t.id in complete_topics for t in published), len(published)
                 )
-    weak_rows = await session.execute(
-        select(
-            Topic.id,
-            Topic.title,
-            func.count(Answer.id).label("answer_count"),
-            func.sum(Answer.correct.cast(Integer)).label("correct_count"),
-        )
-        .join(Quiz, Quiz.topic_id == Topic.id)
-        .join(QuizAttempt, QuizAttempt.quiz_id == Quiz.id)
-        .join(Answer, Answer.attempt_id == QuizAttempt.id)
-        .where(QuizAttempt.user_id == user.id)
-        .group_by(Topic.id, Topic.title)
-    )
-    aggregates = [TopicAccuracy.model_validate(dict(row._mapping)) for row in weak_rows]
+    aggregates = await records.topic_accuracy(session, user.id)
     weak = [
         WeakTopic(
             id=row.id,
@@ -184,3 +128,20 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressView:
             for i in range(7)
         ],
     )
+
+
+async def list_achievements(session: AsyncSession, user: User) -> list[AchievementView]:
+    earned = {
+        item.achievement_id: item.earned_at
+        for item in await records.earned_achievements(session, user.id)
+    }
+    return [
+        AchievementView(
+            id=item.id,
+            title=item.title,
+            description=item.description,
+            threshold=item.threshold,
+            earned_at=earned.get(item.id),
+        )
+        for item in await records.achievements(session)
+    ]

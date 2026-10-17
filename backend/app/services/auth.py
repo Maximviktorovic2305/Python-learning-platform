@@ -2,19 +2,21 @@ from asyncio import to_thread
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from fastapi import HTTPException
-from sqlalchemy import select, update
+from jwt import InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
     access_token,
+    decode_access,
     hash_password,
     new_refresh_token,
     token_digest,
     verify_password,
 )
+from app.domain.errors import AuthenticationRequired, InvalidRequest
 from app.models.tables import AuthSession, UsedRefreshToken, User
-from app.schemas.contracts import AuthView, Login, Register, UserView
+from app.repositories import users as records
+from app.schemas.contracts import AuthView, Login, PasswordChange, ProfileUpdate, Register, UserView
 
 DUMMY_HASH = hash_password("timing-equalization-not-an-account-password")
 
@@ -48,24 +50,17 @@ async def register(session: AsyncSession, payload: Register) -> tuple[AuthView, 
 
 
 async def login(session: AsyncSession, payload: Login) -> tuple[AuthView, str]:
-    user = await session.scalar(
-        select(User).where(User.email == str(payload.email).lower()).with_for_update()
-    )
+    user = await records.user_by_email_for_update(session, str(payload.email).lower())
     valid = await to_thread(
         verify_password, payload.password, user.password_hash if user else DUMMY_HASH
     )
     if user is None or not valid:
-        raise HTTPException(401, "Неверный email или пароль")
+        raise AuthenticationRequired("Неверный email или пароль")
     return await create_session(session, user)
 
 
 async def refresh_session_id(session: AsyncSession, token: str) -> UUID | None:
-    digest = token_digest(token)
-    return await session.scalar(
-        select(AuthSession.id)
-        .where(AuthSession.token_hash == digest)
-        .union(select(UsedRefreshToken.session_id).where(UsedRefreshToken.token_hash == digest))
-    )
+    return await records.refresh_session_id(session, token_digest(token))
 
 
 async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str] | None:
@@ -73,9 +68,7 @@ async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str] | N
     if session_id is None:
         return None
     # Lock by the stable ID: concurrent rotation must still find the session.
-    auth_session = await session.scalar(
-        select(AuthSession).where(AuthSession.id == session_id).with_for_update()
-    )
+    auth_session = await records.auth_session(session, session_id, lock=True)
     now = datetime.now(UTC)
     if (
         auth_session is None
@@ -88,7 +81,7 @@ async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str] | N
         # Raising HTTPException here would roll it back in get_session().
         auth_session.revoked = True
         return None
-    user = await session.get(User, auth_session.user_id)
+    user = await records.user_by_id(session, auth_session.user_id)
     if user is None:
         return None
     new_token = new_refresh_token()
@@ -100,6 +93,61 @@ async def refresh(session: AsyncSession, token: str) -> tuple[AuthView, str] | N
 
 
 async def revoke_sessions(session: AsyncSession, user: User) -> None:
-    await session.execute(
-        update(AuthSession).where(AuthSession.user_id == user.id).values(revoked=True)
+    await records.revoke_sessions(session, user.id)
+
+
+async def current_user(session: AsyncSession, token: str | None) -> User:
+    try:
+        if token is None:
+            raise ValueError("Missing token")
+        uid, sid = decode_access(token)
+        current = await records.auth_session(session, sid)
+        if (
+            current is None
+            or current.user_id != uid
+            or current.revoked
+            or current.expires_at.replace(tzinfo=UTC) <= datetime.now(UTC)
+        ):
+            raise ValueError("Expired session")
+        user = await records.user_by_id(session, uid)
+        if user is None:
+            raise ValueError("Missing user")
+        return user
+    except (InvalidTokenError, ValueError) as error:
+        raise AuthenticationRequired("Войдите в аккаунт") from error
+
+
+async def logout(session: AsyncSession, access: str | None, refresh_token: str | None) -> None:
+    current: AuthSession | None = None
+    if access:
+        try:
+            user_id, session_id = decode_access(access)
+            candidate = await records.auth_session(session, session_id, lock=True)
+            if candidate and candidate.user_id == user_id:
+                current = candidate
+        except InvalidTokenError, ValueError:
+            pass
+    if current is None and refresh_token:
+        refresh_id = await refresh_session_id(session, refresh_token)
+        if refresh_id is not None:
+            current = await records.auth_session(session, refresh_id, lock=True)
+    if current:
+        current.revoked = True
+
+
+async def update_profile(session: AsyncSession, user: User, payload: ProfileUpdate) -> UserView:
+    user.username, user.daily_goal, user.timezone = (
+        payload.username,
+        payload.daily_goal,
+        payload.timezone,
     )
+    await session.flush()
+    return UserView.model_validate(user)
+
+
+async def change_password(session: AsyncSession, user: User, payload: PasswordChange) -> None:
+    await records.lock_user(session, user)
+    if not await to_thread(verify_password, payload.current_password, user.password_hash):
+        raise InvalidRequest("Текущий пароль неверен")
+    user.password_hash = await to_thread(hash_password, payload.new_password)
+    await revoke_sessions(session, user)

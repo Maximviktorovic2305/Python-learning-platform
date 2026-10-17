@@ -10,11 +10,12 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.api.dependencies import get_runner
 from app.core.database import get_session
-from app.main import app, requests_by_ip
+from app.infrastructure.execution import DisabledRunner
+from app.main import app
 from app.models import Base
 from app.seed import seed
-from app.services.execution import DisabledRunner, get_runner
 
 
 @pytest.fixture
@@ -47,7 +48,7 @@ async def client(
 
     app.dependency_overrides[get_session] = test_session
     app.dependency_overrides[get_runner] = DisabledRunner
-    requests_by_ip.clear()
+    app.state.auth_limiter.clear()
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app),
         base_url="http://localhost:3010",

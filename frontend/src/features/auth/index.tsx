@@ -172,7 +172,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   };
   return (
     <form
-      className="auth-form"
+      className="auth-form ym-hide-content ym-disable-submit"
       {...validation.formProps}
       onSubmit={submit}
       onChange={(event) => {

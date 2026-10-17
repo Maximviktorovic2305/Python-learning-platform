@@ -49,17 +49,28 @@ TanStack Query хранит API-данные и снимок сессии. `shar
 ## Backend
 
 ```text
-api/routes + dependencies  HTTP, auth/role guards, transaction scope
+main + bootstrap           сборка приложения и lifespan ресурсов
+api/routers                HTTP по функциям, cookies, auth/role guards
 schemas                    валидация запросов и формы ответов
-services                   auth, grading, execution, progress
-domain                     чистые правила выбора вопросов, XP/streak/percent
-repositories               SQL-запросы каталога
+services                   сценарии auth, каталога, практики, тестов, проектов, прогресса
+domain                     ошибки приложения и чистые правила обучения
+ports                      узкий Protocol исполнителя Python
+infrastructure             HTTP-адаптер и отключённый исполнитель
+repositories               чтение, SQL-запросы и блокировки базы
 models                     SQLAlchemy persistence
 core                       settings, database, security
 content                    авторский учебный материал и построение банка
 ```
 
-Типы включают SQLAlchemy `Mapped[T]`, строгие Pydantic-схемы, `Annotated` dependencies, точные типы коллекций и `Protocol` исполнителя. Mypy работает в strict mode с плагином Pydantic. Зависимость от конкретного runner внедряется через FastAPI Depends; tests заменяют её на отключённый исполнитель.
+Это модульный монолит с явными зависимостями. Восемь HTTP-модулей объединяет `api/routes.py`; обработчики делегируют сценарии сервисам. Сервисы не импортируют FastAPI, HTTPX или инфраструктурные адаптеры. Репозитории не знают об HTTP и сервисах. Чистый domain использует стандартную библиотеку. Ошибки приложения превращаются в HTTP-коды только в `api/errors.py`.
+
+SOLID применяется к конкретным границам: HTTP, сценарий, хранение и транспорт имеют отдельные обязанности; сменяемый исполнитель реализует небольшой `ExecutionRunner` Protocol. Общие правила XP, блокировки и форматирование учебных ответов переиспользуются. Для KISS не вводятся generic CRUD, контейнер DI, интерфейсы для каждого SQL-запроса или отдельные микросервисы. Сервисы сознательно используют типизированные ORM-записи и AsyncSession как unit of work (`add`/`flush`); это не обещание полной независимости application layer от SQLAlchemy. SQL, чтение и блокировки находятся в репозиториях; commit/rollback принадлежат dependency запроса.
+
+Типы включают SQLAlchemy `Mapped[T]`, строгие Pydantic-схемы, `Annotated` dependencies и точные типы коллекций. Mypy работает в strict mode с плагином Pydantic. `create_app()` собирает зависимости, а lifespan создаёт один HTTPX-клиент с пулом соединений для процесса и внедряет runner через состояние приложения. При завершении, в том числе с исключением, HTTP-клиент закрывается, engine освобождает пул. Таймаут подключения/ожидания пула — 5 секунд, ответа runner — 150 секунд. Отдельный запрос не создаёт новый HTTP-клиент.
+
+Решения основаны на официальных рекомендациях: [APIRouter и разделение приложения](https://fastapi.tiangolo.com/tutorial/bigger-applications/), [lifespan ресурсов](https://fastapi.tiangolo.com/advanced/events/), [yield dependencies и scope](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/), [AsyncSession и конкурентные задачи](https://docs.sqlalchemy.org/en/21/orm/extensions/asyncio.html). Каждый запрос получает свою сессию; одна AsyncSession не разделяется между параллельными задачами.
+
+`tests/test_architecture.py` проверяет направления импортов, отсутствие циклов, отсутствие SQL и управления транзакциями в сервисах, совпадение OpenAPI, освобождение ресурсов и независимость лимитеров приложений. Интеграционные тесты дополнительно проверяют rollback частично записанных ответов, запрет исполнения неопубликованного материала, независимость XP от ответа runner и конкурентное одобрение/повторную отправку проекта. Это проверяемые правила проекта, а не сертификат соответствия всем возможным архитектурным стандартам.
 
 База используется асинхронно через asyncpg и SQLAlchemy AsyncSession. Дорогая проверка и хеширование пароля вынесены из event loop в поток. Вход и смена пароля сериализуются блокировкой строки пользователя, чтобы вход со старым паролем не пересёк отзыв сессий.
 
@@ -93,7 +104,13 @@ Web Locks сериализуют refresh и logout между вкладками
 
 Cookie-операции проверяют точный Origin; CORS разрешает только заданный origin. Header Bearer API не использует cookies как самостоятельную авторизацию. В production конфигурация требует HTTPS origin и Secure cookies, отключает Swagger/ReDoc/OpenAPI endpoints и проверяет Host. Документация генерируется отдельно для контракта.
 
-Локальный лимитер авторизации ограничивает 30 операций в минуту на адрес процесса и ограничивает память 10 000 ключами. Это вспомогательный предел. Публичный gateway должен ограничивать запросы независимо от числа API workers и правильно определять IP клиента; настройки приведены в [deploy/nginx.conf.example](deploy/nginx.conf.example).
+Лимитер development/test ограничивает 30 операций авторизации в минуту на IP и память 10 000 ключами; его состояние принадлежит приложению. В production он отключён: после Next.js proxy адрес backend-соединения общий для пользователей. Production Nginx ограничивает запросы по реальному адресу соединения клиента в общей memory zone; backend не публикует порт наружу. Конфигурации: [домен](deploy/python-learning.tech.conf), [шаблон](deploy/nginx.conf.example). При смене gateway эта защита обязательна.
+
+## Аналитика
+
+`NEXT_PUBLIC_YANDEX_METRIKA_ID` валидируется как положительный безопасный integer; пустое или некорректное значение отключает интеграцию. Это public build-time setting, передаваемый Docker build argument, не серверный секрет. Один `Analytics` в корневом provider наблюдает за `usePathname` и сохранённым выбором cookie. SDK и его очередь создаются только после согласия; StrictMode и повторное наблюдение маршрута не дублируют init/hit. SPA использует `defer: true` и явные `hit`, согласно [документации Метрики](https://yandex.ru/support/metrica/en/code/counter-spa-setup).
+
+Из передаваемых URL/referrer удаляются query/hash. Код, stdin/stdout и формы аккаунта помечены `ym-hide-content`, формы также `ym-disable-submit`; [настройки Вебвизора](https://yandex.ru/support/metrica/ru/webvisor/settings) описывают эти исключения. Отзыв согласия вызывает destruct и перезагрузку; событие storage останавливает счётчик в другой вкладке. Безусловного noscript beacon нет. Сбой SDK очищает очередь и не блокирует навигацию. Браузерные тесты подменяют только внешний SDK, проверяя consent, SPA, отзыв, несколько вкладок и недоступность сети без отправки тестовых просмотров реальному счётчику.
 
 ## Выполнение Python
 

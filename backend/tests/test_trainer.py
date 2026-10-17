@@ -4,11 +4,11 @@ from collections import Counter
 
 import pytest
 
+from app.api.dependencies import get_runner
 from app.content.exercises import exercise_starter
 from app.content.trainer import TASKS
 from app.main import app
 from app.schemas.contracts import ExecutionResult
-from app.services.execution import get_runner
 
 
 @pytest.mark.parametrize("item", TASKS, ids=lambda item: item.id)

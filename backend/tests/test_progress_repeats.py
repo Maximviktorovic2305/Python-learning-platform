@@ -5,10 +5,11 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from app.api.dependencies import get_runner
 from app.main import app
 from app.models.tables import Completion, Question, User
+from app.ports.execution import ExecutionRequest
 from app.schemas.contracts import ExecutionResult
-from app.services.execution import ExecutionRequest, get_runner
 
 
 class CheckingRunner:

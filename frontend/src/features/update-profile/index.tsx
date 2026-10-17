@@ -87,7 +87,7 @@ export function ProfileForm({
     <form
       {...validation.formProps}
       onSubmit={submit}
-      className="profile-form"
+      className="profile-form ym-hide-content ym-disable-submit"
       onChange={(event) => {
         validation.onChange(event);
         if (!mutation.isPending) mutation.reset();
@@ -206,7 +206,7 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
     <form
       {...validation.formProps}
       onSubmit={submit}
-      className="profile-form"
+      className="profile-form ym-hide-content ym-disable-submit"
       onChange={(event) => {
         validation.onChange(event);
         if (!mutation.isPending) mutation.reset();

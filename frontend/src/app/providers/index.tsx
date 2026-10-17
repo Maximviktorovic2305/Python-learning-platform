@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { MotionConfig } from "motion/react";
 import { AuthProvider } from "@/features/auth";
+import { Analytics } from "@/features/analytics";
 import { createQueryClient, subscribeLearningUpdates } from "@/shared/api";
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(createQueryClient);
@@ -17,7 +18,10 @@ export function Providers({ children }: { children: ReactNode }) {
     >
       <MotionConfig reducedMotion="user">
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <Analytics />
+            {children}
+          </AuthProvider>
         </QueryClientProvider>
       </MotionConfig>
     </ThemeProvider>

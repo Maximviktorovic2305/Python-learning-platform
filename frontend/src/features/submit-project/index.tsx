@@ -52,7 +52,7 @@ export function ProjectForm({
   return (
     <form
       {...validation.formProps}
-      className="profile-form project-form"
+      className="profile-form project-form ym-hide-content ym-disable-submit"
       onSubmit={submit}
       onChange={(event) => {
         validation.onChange(event);

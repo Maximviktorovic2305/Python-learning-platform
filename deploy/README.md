@@ -14,6 +14,11 @@ mode 0600. Generate independent random values for `POSTGRES_PASSWORD`,
 `EXECUTION_RUNNER=remote` and `FRONTEND_PORT=3010`. Never copy development secrets
 into production or commit this file.
 
+Set `NEXT_PUBLIC_YANDEX_METRIKA_ID=113659993` to enable the project's analytics
+counter after user consent. This public identifier is passed as a frontend build
+argument; changing it requires rebuilding the frontend image. Leave it empty to
+disable analytics. It must not contain a secret.
+
 The quality workflow deploys successful pushes to `main` through the Production
 environment. Configure its `SSH_HOST`, `SSH_USERNAME`, `SSH_PRIVATE_KEY` and
 `SSH_FINGERPRINT` secrets. The account must be able to run Docker. Use a trusted
@@ -31,3 +36,7 @@ Install `python-learning.tech.conf` in Nginx after obtaining the certificate for
 the apex and `www` names with Certbot's webroot `/var/www/letsencrypt`.
 `certbot.timer` schedules renewal; a deploy hook runs `nginx -t` and reloads Nginx.
 Validate renewal with `certbot renew --cert-name python-learning.tech --dry-run`.
+
+Keep Nginx's per-client-IP rate limits enabled. Production deliberately disables
+the API's in-memory development limiter: Next.js proxies all requests from a
+shared address. The backend must remain private when replacing this gateway.

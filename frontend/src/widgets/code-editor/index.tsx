@@ -199,7 +199,7 @@ export function CodeEditor({
           </p>
         ))}
       </div>
-      <div className="editor">
+      <div className="editor ym-hide-content">
         <div className="code-title">
           <span>
             <i />

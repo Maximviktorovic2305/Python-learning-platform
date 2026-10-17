@@ -45,6 +45,7 @@ services:
       context: ./frontend
       args:
         WEB_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3010}
+        NEXT_PUBLIC_YANDEX_METRIKA_ID: ${NEXT_PUBLIC_YANDEX_METRIKA_ID:-}
     ports: ["127.0.0.1:${FRONTEND_PORT:-3010}:3010"]
     depends_on:
       backend: {condition: service_healthy}

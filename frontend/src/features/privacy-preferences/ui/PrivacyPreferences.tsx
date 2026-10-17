@@ -8,6 +8,7 @@ import {
   type PrivacyChoice,
 } from "@/shared/lib/privacy-choice";
 import styles from "@/shared/ui/legal/Legal.module.css";
+import { stopMetrika } from "@/shared/lib/metrika";
 
 export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
   const choice = usePrivacyChoice();
@@ -34,7 +35,10 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
     const revoke = choice === "analytics" && next === "essential";
     savePrivacyChoice(next);
     setEditing(false);
-    if (revoke) window.location.reload();
+    if (revoke) {
+      stopMetrika();
+      window.location.reload();
+    }
   };
   return (
     <aside

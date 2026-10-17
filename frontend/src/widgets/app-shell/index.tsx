@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </SkeletonRegion>
           ) : user ? (
             <>
-              <div className="user-chip">
+              <div className="user-chip ym-hide-content">
                 <span>{user.username.slice(0, 2).toUpperCase()}</span>
                 <div>
                   <strong>{user.username}</strong>
