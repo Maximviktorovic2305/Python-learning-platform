@@ -95,6 +95,7 @@ export function CodeEditor({
     controller.current = new AbortController();
     setRunning(true);
     setMessage("");
+    setMessageKind("error");
     try {
       setOutput(await runPython(code, controller.current.signal, stdin));
     } catch (error) {
