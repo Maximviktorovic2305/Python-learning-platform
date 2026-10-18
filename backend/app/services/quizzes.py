@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.errors import Conflict, ResourceNotFound, UnprocessableInput
-from app.domain.learning import percentage, select_questions
+from app.domain.learning import THEORY_ONLY_TOPICS, percentage, select_questions
 from app.models.tables import Answer, QuestionMemory, QuizAttempt, User
 from app.repositories import learning as records
 from app.repositories.users import lock_user
@@ -21,7 +21,7 @@ from app.services.progress import award, grant_achievements
 async def start_attempt(session: AsyncSession, user: User, topic_id: str) -> AttemptView:
     topic = await records.topic(session, topic_id)
     quiz = await records.quiz(session, f"{topic_id}-quiz")
-    if topic is None or not topic.published or quiz is None:
+    if topic is None or not topic.published or quiz is None or topic_id in THEORY_ONLY_TOPICS:
         raise ResourceNotFound("Тест не опубликован")
     pool = await records.questions(session, topic_id)
     selected = select_questions(
@@ -48,6 +48,9 @@ async def submit_attempt(
     attempt = await records.attempt_for_user(session, attempt_id, user.id, lock=True)
     if attempt is None:
         raise ResourceNotFound("Попытка не найдена")
+    quiz = await records.quiz(session, attempt.quiz_id)
+    if quiz is None or quiz.topic_id in THEORY_ONLY_TOPICS:
+        raise ResourceNotFound("В этой теме тест не предусмотрен")
     if attempt.finished_at is not None:
         return await attempt_result(session, attempt)
     ids = [a.question_id for a in payload.answers]
@@ -92,7 +95,6 @@ async def submit_attempt(
     attempt.score = percentage(correct_count, len(ids))
     attempt.finished_at = now
     await session.flush()
-    quiz = await records.quiz(session, attempt.quiz_id)
     if attempt.score >= 70 and quiz is not None:
         attempt.xp_awarded = await award(session, user, "quiz", quiz.id, quiz.topic_id, 50)
     await grant_achievements(session, user)

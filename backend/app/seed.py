@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.content.bank import build_bank
 from app.content.curriculum import LEVELS, TOPICS, TopicContent
 from app.content.exercises import exercise_description, exercise_starter, with_given_data
-from app.content.theory import THEORY
+from app.content.theory import THEORY, THEORY_ONLY_REVIEWS
 from app.content.trainer import TASKS
 from app.core.database import SessionFactory, engine
 from app.models.tables import (
@@ -50,7 +50,8 @@ async def seed_topic(
             id=content.slug,
             theory=[{"title": title, "body": body} for title, body in THEORY[content.slug]],
             examples=[],
-            review=[
+            review=THEORY_ONLY_REVIEWS.get(content.slug)
+            or [
                 f"{statement} {reason}"
                 if truth
                 else f"Частая ошибка: «{statement}» Это неверно. {reason}"

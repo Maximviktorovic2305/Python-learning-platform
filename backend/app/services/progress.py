@@ -60,11 +60,19 @@ async def get_progress(session: AsyncSession, user: User) -> ProgressView:
     catalog = await course_catalog(session)
     completions = await records.completions(session, user.id)
     lesson_ids = [c.resource_id for c in completions if c.kind == "lesson"]
-    exercise_ids = [c.resource_id for c in completions if c.kind == "exercise"]
-    quiz_ids = [c.resource_id for c in completions if c.kind == "quiz"]
     done = {(c.kind, c.resource_id) for c in completions}
     exercises = await records.course_exercises(session)
     quizzes = await records.quizzes(session)
+    active_exercises = {exercise.id for exercise in exercises}
+    active_quizzes = {quiz.id for quiz in quizzes}
+    exercise_ids = [
+        c.resource_id
+        for c in completions
+        if c.kind == "exercise" and c.resource_id in active_exercises
+    ]
+    quiz_ids = [
+        c.resource_id for c in completions if c.kind == "quiz" and c.resource_id in active_quizzes
+    ]
     requirements: dict[str, set[tuple[str, str]]] = {}
     for e in exercises:
         if e.topic_id is not None:

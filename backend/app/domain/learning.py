@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from typing import Protocol
 
 QUESTION_BANK_REVISION = "qv2"
+THEORY_ONLY_TOPICS = frozenset({"academy-course-structure", "academy-community"})
 
 
 class QuestionIdentity(Protocol):

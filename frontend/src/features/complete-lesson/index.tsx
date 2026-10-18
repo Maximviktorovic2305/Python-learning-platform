@@ -8,11 +8,13 @@ export function CompleteLesson({
   userId,
   completed,
   onComplete,
+  actionLabel = "Перейти к практике",
 }: {
   id: string;
   userId: string;
   completed: boolean;
   onComplete: () => void;
+  actionLabel?: string;
 }) {
   const client = useQueryClient();
   const mutation = useMutation({
@@ -35,7 +37,7 @@ export function CompleteLesson({
         pending={mutation.isPending}
       >
         {completed ? <Check size={16} /> : <ArrowRight size={16} />}
-        Перейти к практике
+        {actionLabel}
       </Button>
       {mutation.error && !completed && (
         <p className="form-error" role="alert">

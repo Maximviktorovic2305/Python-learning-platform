@@ -54,7 +54,7 @@ export function LessonPage({
     clientSnapshot,
     serverSnapshot,
   );
-  const [tab, setTab] = useState(
+  const [selectedTab, setTab] = useState(
     lessonSteps.some((step) => step.id === initialTab) ? initialTab : "theory",
   );
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -64,8 +64,17 @@ export function LessonPage({
   const [quizNavigationVisible, setQuizNavigationVisible] = useState(true);
   const { user, loading } = useAuth();
   const lesson = useQuery({ ...lessonQuery(id), initialData: initialLesson });
+  const hasPractice = (lesson.data?.exercise_count ?? 0) > 0;
+  const hasQuiz = (lesson.data?.question_count ?? 0) > 0;
+  const isStepEnabled = (step: string) =>
+    (step !== "practice" || hasPractice) && (step !== "quiz" || hasQuiz);
+  const availableSteps = lessonSteps.filter((step) => isStepEnabled(step.id));
+  const tab = availableSteps.some((step) => step.id === selectedTab)
+    ? selectedTab
+    : "theory";
+  const theoryNextStep = availableSteps[1]!;
   const course = useQuery({ ...courseQuery, initialData: initialCourse });
-  const exercises = useQuery(exerciseQuery(id));
+  const exercises = useQuery({ ...exerciseQuery(id), enabled: hasPractice });
   const progress = useQuery(progressQuery(user?.id));
   const completed = progress.data?.lesson_ids.includes(id) ?? false;
   const currentExercise = exercises.data?.[exerciseIndex];
@@ -74,10 +83,11 @@ export function LessonPage({
     ? allTopics(course.data).filter((t) => t.published)
     : [];
   const next = topics[topics.findIndex((t) => t.id === id) + 1];
-  const stepIndex = lessonSteps.findIndex((step) => step.id === tab);
-  const previousStep = lessonSteps[stepIndex - 1];
-  const nextStep = lessonSteps[stepIndex + 1];
+  const stepIndex = availableSteps.findIndex((step) => step.id === tab);
+  const previousStep = availableSteps[stepIndex - 1];
+  const nextStep = availableSteps[stepIndex + 1];
   const goToStep = (target: string) => {
+    if (!isStepEnabled(target)) return;
     setTab(target);
     tabsRef.current?.scrollIntoView({ block: "start" });
     document.getElementById(`tab-${target}`)?.focus({ preventScroll: true });
@@ -153,8 +163,13 @@ export function LessonPage({
                   <Clock3 size={14} />
                   {lesson.data.topic.minutes} мин
                 </span>
-                <Tag>ПРАКТИКА: {lesson.data.exercise_count}</Tag>
-                <Tag>ВОПРОСОВ В БАНКЕ: {lesson.data.question_count}</Tag>
+                {hasPractice && (
+                  <Tag>ПРАКТИКА: {lesson.data.exercise_count}</Tag>
+                )}
+                {hasQuiz && (
+                  <Tag>ВОПРОСОВ В БАНКЕ: {lesson.data.question_count}</Tag>
+                )}
+                {!hasPractice && !hasQuiz && <Tag>Теория и закрепление</Tag>}
                 <TopicStatusBadge
                   status={getTopicStatus(id, progress.data, id)}
                 />
@@ -165,22 +180,36 @@ export function LessonPage({
                   </Tag>
                 )}
               </div>
-              {user && progress.data && exercises.data && (
+              {user && progress.data && (!hasPractice || exercises.data) && (
                 <p className="muted small-text" aria-live="polite">
-                  Теория: {completed ? "изучена" : "не изучена"} · Практика:{" "}
-                  {
-                    exercises.data.filter((exercise) =>
-                      progress.data.exercise_ids.includes(exercise.id),
-                    ).length
-                  }
-                  /{exercises.data.length} · Тест:{" "}
-                  {progress.data.quiz_ids.includes(`${id}-quiz`)
-                    ? "зачтён"
-                    : "не зачтён"}
+                  Теория: {completed ? "изучена" : "не изучена"}
+                  {hasPractice && exercises.data && (
+                    <>
+                      {" "}
+                      · Практика:{" "}
+                      {
+                        exercises.data.filter((exercise) =>
+                          progress.data.exercise_ids.includes(exercise.id),
+                        ).length
+                      }
+                      /{exercises.data.length}
+                    </>
+                  )}
+                  {hasQuiz && (
+                    <>
+                      {" "}
+                      · Тест:{" "}
+                      {progress.data.quiz_ids.includes(`${id}-quiz`)
+                        ? "зачтён"
+                        : "не зачтён"}
+                    </>
+                  )}
                   .
                   {progress.data.completed_topics.includes(id)
                     ? " Тема завершена."
-                    : " Для завершения темы изучите теорию, решите все задания и сдайте тест на 70% или выше."}
+                    : hasPractice || hasQuiz
+                      ? " Для завершения темы изучите теорию, решите все задания и сдайте тест на 70% или выше."
+                      : " Для завершения этой темы достаточно отметить теорию изученной."}
                 </p>
               )}
             </div>
@@ -193,7 +222,13 @@ export function LessonPage({
               {lessonSteps.map((t) => (
                 <button
                   role="tab"
-                  disabled={!interactive}
+                  disabled={!interactive || !isStepEnabled(t.id)}
+                  aria-disabled={!isStepEnabled(t.id)}
+                  title={
+                    !isStepEnabled(t.id)
+                      ? "В этой теме этап не предусмотрен"
+                      : undefined
+                  }
                   aria-selected={tab === t.id}
                   aria-controls={`panel-${t.id}`}
                   id={`tab-${t.id}`}
@@ -203,7 +238,7 @@ export function LessonPage({
                   onKeyDown={(e) => {
                     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
                       e.preventDefault();
-                      const tabs = lessonSteps.map((step) => step.id);
+                      const tabs = availableSteps.map((step) => step.id);
                       const index = tabs.indexOf(t.id);
                       const target =
                         tabs[
@@ -238,7 +273,11 @@ export function LessonPage({
                     </section>
                   ))}
                   <div className="lesson-bottom">
-                    <p>Теперь применим изученное в практике.</p>
+                    <p>
+                      {hasPractice
+                        ? "Теперь применим изученное в практике."
+                        : "Закрепим основные мысли этой темы."}
+                    </p>
                     {loading || (user && progress.isPending) ? (
                       <Skeleton className="skeleton-button" />
                     ) : user ? (
@@ -246,12 +285,13 @@ export function LessonPage({
                         id={id}
                         userId={user.id}
                         completed={completed}
-                        onComplete={() => goToStep("practice")}
+                        actionLabel={theoryNextStep.action}
+                        onComplete={() => goToStep(theoryNextStep.id)}
                       />
                     ) : (
                       <div className="lesson-guest-actions">
-                        <Button onClick={() => goToStep("practice")}>
-                          Перейти к практике <ArrowRight size={16} />
+                        <Button onClick={() => goToStep(theoryNextStep.id)}>
+                          {theoryNextStep.action} <ArrowRight size={16} />
                         </Button>
                         <Link href="/register" className="button secondary">
                           Создать аккаунт и сохранить прогресс
@@ -336,9 +376,9 @@ export function LessonPage({
                   </ul>
                   <p>
                     Вернитесь к теории, объясните разобранный код своими словами
-                    и пройдите ещё одну попытку теста. Повторение помогает
-                    заметить границы, которые легко пропустить при первом
-                    чтении.
+                    {hasQuiz ? " и пройдите ещё одну попытку теста." : "."}{" "}
+                    Повторение помогает заметить границы, которые легко
+                    пропустить при первом чтении.
                   </p>
                   {next && (
                     <Link className="button" href={`/learn/${next.id}`}>

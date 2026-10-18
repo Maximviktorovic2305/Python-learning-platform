@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.errors import ResourceNotFound
+from app.domain.learning import THEORY_ONLY_TOPICS
 from app.repositories import learning as records
 from app.repositories.catalog import course_catalog
 from app.schemas.contracts import (
@@ -87,6 +88,8 @@ async def questions(
     topic = await records.topic(session, topic_id)
     if topic is None or not topic.published:
         raise ResourceNotFound("Опубликованная тема не найдена")
+    if topic_id in THEORY_ONLY_TOPICS:
+        return []
     return [
         QuestionView.model_validate(q)
         for q in await records.questions(session, topic_id, limit=limit, offset=offset)

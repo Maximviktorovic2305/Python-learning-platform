@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.content.exercises import exercise_starter, local_supported, uses_input
 from app.domain.errors import ResourceNotFound
+from app.domain.learning import THEORY_ONLY_TOPICS
 from app.models.tables import Exercise, User
 from app.ports.execution import ExecutionRequest, ExecutionRunner, TestCase
 from app.repositories import learning as records
@@ -33,6 +34,8 @@ async def exercises(session: AsyncSession, topic_id: str) -> list[ExerciseView]:
     topic = await get_topic(session, topic_id)
     if not topic.published:
         raise ResourceNotFound("Урок ещё не опубликован")
+    if topic_id in THEORY_ONLY_TOPICS:
+        return []
     return await exercise_views(await records.exercises(session, topic_id=topic_id), session)
 
 
@@ -51,6 +54,8 @@ async def submit_exercise(
     exercise = await records.exercise(session, exercise_id)
     if exercise is None:
         raise ResourceNotFound("Задание не найдено")
+    if exercise.topic_id in THEORY_ONLY_TOPICS:
+        raise ResourceNotFound("В этой теме практика не предусмотрена")
     if exercise.topic_id is not None:
         await get_lesson(session, exercise.topic_id)
     tests = [

@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.core.config import get_settings
+from app.domain.learning import THEORY_ONLY_TOPICS
 from app.models.tables import Completion, Question, User
 from app.seed import seed
 from app.services import auth
@@ -29,16 +30,24 @@ async def test_catalog_and_idempotent_seed(
         "Продвинутый Python",
     ]
     assert course["published_topics"] == 50
-    assert course["exercise_count"] == 100
-    assert course["question_count"] == 1000
+    assert course["exercise_count"] == 96
+    assert course["question_count"] == 960
     topics = [
         topic
         for level in course["levels"]
         for module in level["modules"]
         for topic in module["topics"]
     ]
-    assert all(topic["exercise_count"] == 2 and topic["question_count"] == 20 for topic in topics)
-    assert all(sum(topic["practice_difficulties"].values()) == 2 for topic in topics)
+    assert all(
+        (topic["exercise_count"], topic["question_count"])
+        == ((0, 0) if topic["id"] in THEORY_ONLY_TOPICS else (2, 20))
+        for topic in topics
+    )
+    assert all(
+        sum(topic["practice_difficulties"].values())
+        == (0 if topic["id"] in THEORY_ONLY_TOPICS else 2)
+        for topic in topics
+    )
     assert (await client.get("/api/lessons/classes")).status_code == 404
     assert (await client.get("/api/lessons/academy-introduction")).status_code == 200
     questions = (await client.get("/api/questions?topic_id=academy-introduction&limit=5")).json()

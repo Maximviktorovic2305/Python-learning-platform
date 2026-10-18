@@ -107,7 +107,7 @@ export function LandingPage() {
               <span>практических заданий</span>
             </div>
             <div>
-              <strong>1000</strong>
+              <strong>960</strong>
               <span>вопросов для закрепления</span>
             </div>
             <div>

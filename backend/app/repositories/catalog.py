@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.learning import QUESTION_BANK_REVISION
+from app.domain.learning import QUESTION_BANK_REVISION, THEORY_ONLY_TOPICS
 from app.models.tables import Course, Exercise, Level, Module, Question, Topic
 from app.schemas.contracts import CourseView, LevelView, ModuleView, TopicView
 
@@ -32,7 +32,10 @@ async def course_catalog(session: AsyncSession, course_id: str = "python") -> Co
     difficulties: dict[str, dict[str, int]] = {}
     for topic_id, difficulty, count in await session.execute(
         select(Exercise.topic_id, Exercise.difficulty, func.count())
-        .where(Exercise.topic_id.in_([topic.id for topic in topics]))
+        .where(
+            Exercise.topic_id.in_([topic.id for topic in topics]),
+            Exercise.topic_id.not_in(THEORY_ONLY_TOPICS),
+        )
         .group_by(Exercise.topic_id, Exercise.difficulty)
     ):
         if topic_id is not None:
@@ -43,6 +46,7 @@ async def course_catalog(session: AsyncSession, course_id: str = "python") -> Co
                 select(Question.topic_id, func.count())
                 .where(
                     Question.topic_id.in_([topic.id for topic in topics]),
+                    Question.topic_id.not_in(THEORY_ONLY_TOPICS),
                     Question.id.like(Question.topic_id + f"-{QUESTION_BANK_REVISION}-%"),
                 )
                 .group_by(Question.topic_id)

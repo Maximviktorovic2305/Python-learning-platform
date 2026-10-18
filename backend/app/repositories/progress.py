@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import Integer, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.learning import THEORY_ONLY_TOPICS
 from app.models.tables import (
     Achievement,
     Answer,
@@ -82,11 +83,17 @@ async def completions(session: AsyncSession, user_id: UUID) -> list[Completion]:
 
 
 async def course_exercises(session: AsyncSession) -> list[Exercise]:
-    return list(await session.scalars(select(Exercise).where(Exercise.catalog == "lesson")))
+    return list(
+        await session.scalars(
+            select(Exercise).where(
+                Exercise.catalog == "lesson", Exercise.topic_id.not_in(THEORY_ONLY_TOPICS)
+            )
+        )
+    )
 
 
 async def quizzes(session: AsyncSession) -> list[Quiz]:
-    return list(await session.scalars(select(Quiz)))
+    return list(await session.scalars(select(Quiz).where(Quiz.topic_id.not_in(THEORY_ONLY_TOPICS))))
 
 
 async def topic_accuracy(session: AsyncSession, user_id: UUID) -> list[TopicAccuracy]:
@@ -95,7 +102,7 @@ async def topic_accuracy(session: AsyncSession, user_id: UUID) -> list[TopicAccu
         .join(Quiz, Quiz.topic_id == Topic.id)
         .join(QuizAttempt, QuizAttempt.quiz_id == Quiz.id)
         .join(Answer, Answer.attempt_id == QuizAttempt.id)
-        .where(QuizAttempt.user_id == user_id)
+        .where(QuizAttempt.user_id == user_id, Topic.id.not_in(THEORY_ONLY_TOPICS))
         .group_by(Topic.id, Topic.title)
     )
     return [TopicAccuracy(row[0], row[1], int(row[2]), int(row[3] or 0)) for row in rows]

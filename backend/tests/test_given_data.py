@@ -175,7 +175,7 @@ async def test_old_question_revision_is_preserved_but_not_offered(client, studen
             )
         )
     course = (await client.get("/api/courses/python")).json()
-    assert course["question_count"] == 1000
+    assert course["question_count"] == 960
     questions = (await client.get("/api/questions?topic_id=academy-introduction&limit=100")).json()
     assert len(questions) == 20
     assert all("-qv2-" in item["id"] for item in questions)

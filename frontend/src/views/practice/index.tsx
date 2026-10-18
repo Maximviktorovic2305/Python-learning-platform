@@ -29,7 +29,10 @@ export function PracticePage() {
   const weak = new Set(progress.data?.weak_topics.map((t) => t.id));
   const topics = course.data
     ? allTopics(course.data).filter(
-        (t) => t.published && (filter !== "weak" || weak.has(t.id)),
+        (t) =>
+          t.published &&
+          (t.exercise_count ?? 0) > 0 &&
+          (filter !== "weak" || weak.has(t.id)),
       )
     : [];
   return (

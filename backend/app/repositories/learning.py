@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.learning import QUESTION_BANK_REVISION
+from app.domain.learning import QUESTION_BANK_REVISION, THEORY_ONLY_TOPICS
 from app.models.tables import (
     Answer,
     Exercise,
@@ -24,6 +24,8 @@ async def topic(session: AsyncSession, topic_id: str) -> Topic | None:
 
 
 async def topic_counts(session: AsyncSession, topic_id: str) -> tuple[dict[str, int], int]:
+    if topic_id in THEORY_ONLY_TOPICS:
+        return {}, 0
     distribution = {
         difficulty: int(count)
         for difficulty, count in await session.execute(
