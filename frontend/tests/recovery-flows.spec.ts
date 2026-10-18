@@ -289,8 +289,8 @@ for (const result of [
   {
     status: "failed",
     title: "Проверка не пройдена",
-    message: "Попробуйте ещё раз",
-    badge: "ERROR",
+    message: "Вывод отличается от ожидаемого для примера из условия.",
+    badge: "ВЫВОД НЕ СОВПАЛ",
   },
   {
     status: "error",

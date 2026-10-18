@@ -36,8 +36,9 @@ test("every published lesson follows the five stages using footer buttons", asyn
     };
     await assertStage("Теория");
     const theory = page.locator(".theory-content");
-    await expect(theory.locator("section")).toHaveCount(5);
-    await expect(theory.locator("section p")).toHaveCount(5);
+    await expect(theory.locator("section")).toHaveCount(4);
+    for (const section of await theory.locator("section").all())
+      await expect(section.locator(".learning-text p").first()).not.toBeEmpty();
     await expect(theory.locator(".code-block")).toHaveCount(1);
     for (const paragraph of await theory.locator("section p").all())
       expect(await paragraph.textContent()).not.toContain("`");
