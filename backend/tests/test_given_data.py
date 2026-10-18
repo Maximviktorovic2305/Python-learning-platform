@@ -1,5 +1,6 @@
 import ast
 import random
+import re
 import subprocess
 import sys
 from dataclasses import replace
@@ -14,7 +15,46 @@ from app.content.exercises import exercise_starter, uses_input, with_given_data
 from app.content.trainer import TASKS
 from app.domain.learning import question_concepts, select_questions
 from app.models.tables import Exercise, ExerciseTest, Question, QuizAttempt
+from app.schemas.contracts import QuestionView
 from app.seed import seed
+
+
+def test_question_wording_preserves_existing_grading_contracts():
+    for topic in TOPICS:
+        old_cases = tuple(
+            replace(case, task=f"{case.task} — пример {index % 2 + 1}")
+            for index, case in enumerate(topic.cases)
+        )
+        previous = build_bank(replace(topic, cases=old_cases))
+        current = build_bank(topic)
+        for old, new in zip(previous, current, strict=True):
+            assert replace(old, prompt="") == replace(new, prompt="")
+            assert not re.search(r"пример\s+\d+", new.prompt, re.IGNORECASE)
+            assert "показанный результат" not in new.prompt
+
+
+@pytest.mark.parametrize("separator", ["—", "–", "-"])
+def test_historical_question_labels_are_cleaned_in_shared_response_model(separator):
+    question = build_bank(TOPICS[0])[8]
+    legacy_prompt = (
+        f"Первый файл {separator} пример 2: почему программа получает показанный результат?"
+    )
+    view = QuestionView.model_validate(
+        replace(question, prompt=legacy_prompt), from_attributes=True
+    )
+    assert view.prompt == "Первый файл: какое объяснение правильно описывает работу программы?"
+    assert (
+        view.id == question.id and view.options == question.options and view.code == question.code
+    )
+
+
+async def test_published_questions_have_no_numbered_example_references(client):
+    for topic in TOPICS:
+        response = await client.get(f"/api/questions?topic_id={topic.slug}&limit=100")
+        assert response.status_code == 200
+        for question in response.json():
+            assert not re.search(r"пример\s+\d+", question["prompt"], re.IGNORECASE)
+            assert "показанный результат" not in question["prompt"]
 
 
 def test_factual_question_prompts_do_not_repeat_across_course():

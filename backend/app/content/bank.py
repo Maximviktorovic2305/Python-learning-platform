@@ -84,7 +84,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
         ]
         add(
             "code_review",
-            f"{scenario.task}: почему программа получает показанный результат?",
+            f"{scenario.task}: какое объяснение правильно описывает работу программы?",
             scenario.code,
             reasons,
             [0],

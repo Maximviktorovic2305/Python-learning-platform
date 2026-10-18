@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Literal
 from uuid import UUID
@@ -165,6 +166,16 @@ class QuestionView(Contract):
     options: list[str]
     hint: str
     tags: list[str]
+
+    @field_validator("prompt")
+    @classmethod
+    def remove_obsolete_example_references(cls, value: str) -> str:
+        # Present historical attempts with current labels; grading records stay intact.
+        value = re.sub(r"\s+[—–-]\s+пример\s+\d+(?=:|$)", "", value, flags=re.IGNORECASE)
+        return value.replace(
+            "почему программа получает показанный результат?",
+            "какое объяснение правильно описывает работу программы?",
+        )
 
 
 class AttemptView(Contract):

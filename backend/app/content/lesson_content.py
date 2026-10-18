@@ -72,13 +72,13 @@ def lesson(
 ) -> TopicContent:
     examples = tuple(
         Case(
-            f"{exercise.title} — пример {index + 1}",
+            exercise.title,
             with_given_data(exercise.solution, stdin.rstrip("\n")),
             output,
             exercise.hint.replace("строку input()", "строку из заготовки"),
         )
         for exercise in practice
-        for index, (stdin, output) in enumerate(exercise.tests[:2])
+        for stdin, output in exercise.tests[:2]
     )
     return TopicContent(
         slug,
