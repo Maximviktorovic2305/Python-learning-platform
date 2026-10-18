@@ -16,3 +16,6 @@
 **/.mypy_cache/
 frontend/public/python-runtime/
 .vite/
+VERIFICATION.md
+ARCHITECTURE.md
+AGENTS.md
