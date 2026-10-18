@@ -70,15 +70,10 @@ def lesson(
 ) -> TopicContent:
     examples = tuple(
         Case(
-            f"{exercise.title}: {'основной случай' if index == 0 else 'граничный случай'}",
+            f"{exercise.title} — пример {index + 1}",
             exercise.solution.replace("input()", repr(stdin.rstrip("\n"))),
             output,
-            exercise.hint
-            + (
-                " Проследите, почему результат меняется на этой границе."
-                if index
-                else " Проследите путь данных от входа до результата."
-            ),
+            exercise.hint + f" Результат этого примера: {output!r}.",
         )
         for exercise in practice
         for index, (stdin, output) in enumerate(exercise.tests[:2])

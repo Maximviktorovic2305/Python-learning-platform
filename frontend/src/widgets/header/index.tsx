@@ -43,9 +43,6 @@ export function Header() {
           <Link href="/projects" onClick={() => setOpen(false)}>
             Проекты
           </Link>
-          <Link href="/#method" onClick={() => setOpen(false)}>
-            Как это работает
-          </Link>
         </nav>
         <div className="header-actions">
           <ThemeToggle />

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.content.bank import build_bank
 from app.content.curriculum import LEVELS, TOPICS, TopicContent
 from app.content.exercises import exercise_starter
+from app.content.theory import THEORY
 from app.content.trainer import TASKS
 from app.core.database import SessionFactory, engine
 from app.models.tables import (
@@ -47,16 +48,7 @@ async def seed_topic(
     await session.merge(
         Lesson(
             id=content.slug,
-            theory=[
-                {"title": title, "body": body}
-                for title, body in (
-                    ("Что это и зачем", content.summary),
-                    ("Как это работает", content.mechanics),
-                    ("Когда применять", content.use),
-                    ("Границы применения", content.caution),
-                    ("Ошибки и лучшие практики", content.mistake),
-                )
-            ],
+            theory=[{"title": title, "body": body} for title, body in THEORY[content.slug]],
             examples=[
                 {"title": c.task, "code": c.code, "output": c.output, "explanation": c.explanation}
                 for c in content.cases
@@ -85,7 +77,7 @@ async def seed_topic(
                 + (scenario.tests[0][0] or "(пустая строка)")
                 + "\nОжидаемый вывод:\n"
                 + (scenario.tests[0][1] or "(пустой вывод)")
-                + "\n\nРешение проверяется на нескольких наборах данных. Не печатайте приглашение ко вводу.",
+                + "\n\nПроверяется только пример ввода выше. Не печатайте приглашение ко вводу.",
                 difficulty=scenario.difficulty,
                 kind=kind,
                 starter_code=starter,
@@ -94,13 +86,13 @@ async def seed_topic(
             )
         )
         await session.flush()
-        test_ids = [f"{eid}-t{index + 1}" for index in range(len(scenario.tests))]
+        test_ids = [f"{eid}-t1"]
         await session.execute(
             delete(ExerciseTest).where(
                 ExerciseTest.exercise_id == eid, ExerciseTest.id.not_in(test_ids)
             )
         )
-        for index, (stdin, stdout) in enumerate(scenario.tests):
+        for index, (stdin, stdout) in enumerate(scenario.tests[:1]):
             await session.merge(
                 ExerciseTest(
                     id=test_ids[index], exercise_id=eid, stdin=stdin + "\n", expected_stdout=stdout
@@ -303,9 +295,9 @@ async def seed_trainer(session: AsyncSession) -> None:
     await session.execute(delete(Exercise).where(Exercise.id.in_(obsolete)))
     for item in TASKS:
         content = item.practice
-        examples = "\n\n".join(
-            f"Пример {index + 1}\nВвод:\n{stdin or '(пустая строка)'}\nВывод:\n{stdout or '(пустой вывод)'}"
-            for index, (stdin, stdout) in enumerate(content.tests[:2])
+        stdin, stdout = content.tests[0]
+        examples = (
+            f"Пример\nВвод:\n{stdin or '(пустая строка)'}\nВывод:\n{stdout or '(пустой вывод)'}"
         )
         await session.merge(
             Exercise(
@@ -317,7 +309,7 @@ async def seed_trainer(session: AsyncSession) -> None:
                 description=content.description
                 + "\n\n"
                 + examples
-                + "\n\nНе печатайте приглашение ко вводу. Проверяются несколько наборов данных.",
+                + "\n\nПроверяется только пример ввода выше. Не печатайте приглашение ко вводу.",
                 difficulty=content.difficulty,
                 kind="code_writing",
                 starter_code=exercise_starter(content.solution),
@@ -327,7 +319,7 @@ async def seed_trainer(session: AsyncSession) -> None:
         )
         await session.flush()
         await session.execute(delete(ExerciseTest).where(ExerciseTest.exercise_id == item.id))
-        for index, (stdin, stdout) in enumerate(content.tests):
+        for index, (stdin, stdout) in enumerate(content.tests[:1]):
             await session.merge(
                 ExerciseTest(
                     id=f"{item.id}-t{index + 1}",

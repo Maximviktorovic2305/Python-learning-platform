@@ -12,6 +12,12 @@ test("landing, responsive navigation, both themes and public curriculum", async 
       exact: true,
     }),
   ).toBeVisible();
+  await expect(page.locator('a[href="/#method"]')).toHaveCount(0);
+  await expect(
+    page.getByText(
+      /УЧИСЬ ЧЕРЕЗ ДЕЙСТВИЕ|КОД С РЕАЛЬНОЙ ЗАДАЧЕЙ|ВИДЕТЬ СВОЙ РОСТ/,
+    ),
+  ).toHaveCount(0);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.screenshot({
     path: "../.local/landing-light.png",
@@ -30,6 +36,10 @@ test("landing, responsive navigation, both themes and public curriculum", async 
     .click();
   await expect(
     page.getByRole("heading", { name: "Твой маршрут в Python." }),
+  ).toBeVisible();
+  await expect(page.getByText("Основы Python", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Python на практике", { exact: true }),
   ).toBeVisible();
   await page.getByRole("textbox", { name: "Поиск темы" }).fill("функции");
   await expect(page.getByRole("link", { name: /Функции/ })).toBeVisible();
@@ -71,14 +81,28 @@ test("register, reload session, complete lesson, quiz review, persisted progress
   await page.screenshot({ path: "../.local/dashboard.png", fullPage: true });
   await page.getByRole("link", { name: "Начать первый урок" }).click();
   await expect(page.getByRole("heading", { name: "Введение" })).toBeVisible();
+  await expect(page.locator(".theory-content .learning-text")).toHaveCount(4);
+  await expect(page.locator(".theory-content .code-block")).toBeVisible();
   await page.getByRole("button", { name: "Перейти к примерам" }).click();
   await expect(
     page.getByRole("tab", { name: "Примеры", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(".examples-content section")).toHaveCount(4);
+  await expect(
+    page
+      .locator(".examples-content")
+      .getByText(/основной случай|граничный случай/),
+  ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Перейти к практике", exact: true })
     .click();
   await expect(page.getByLabel("Редактор Python")).toBeVisible();
+  await expect(
+    page.locator(".exercise-text-label", { hasText: "Пример ввода:" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".exercise-text-label", { hasText: "Ожидаемый вывод:" }),
+  ).toBeVisible();
   await page.getByLabel("Редактор Python").fill("print('Hello, Python!')");
   await page.getByRole("button", { name: "Запустить локально" }).click();
   await expect(page.locator(".editor-output pre").first()).toHaveText(
@@ -90,9 +114,9 @@ test("register, reload session, complete lesson, quiz review, persisted progress
     .fill("name = input()\nprint('Привет, ' + name + '!')");
   await page.getByRole("button", { name: "Проверить" }).click();
   await expect(
-    page
-      .getByRole("status")
-      .filter({ hasText: "Пройдено 3/3 проверок. +30 XP" }),
+    page.getByRole("status").filter({
+      hasText: "Вывод совпал с ожидаемым для примера из условия. +30 XP",
+    }),
   ).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "Проверить повторно" }).click();
   await expect(

@@ -468,7 +468,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     "Проверка не пройдена",
   );
   await expect(page.locator(".execution-message.error")).toContainText(
-    "Пройдено 0/1 проверок",
+    "Вывод отличается от ожидаемого для примера из условия.",
   );
   await expect(page.locator(".execution-message.error")).toHaveCSS(
     "color",
@@ -492,7 +492,7 @@ test("code editor focuses from the gutter, shows a caret without a frame, and hi
     "Задание выполнено",
   );
   await expect(page.locator(".execution-message.success")).toContainText(
-    "Пройдено 1/1 проверок",
+    "Вывод совпал с ожидаемым для примера из условия.",
   );
   await editor.focus();
   await editor.evaluate((element: HTMLTextAreaElement) =>

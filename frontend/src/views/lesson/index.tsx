@@ -25,6 +25,7 @@ import {
   CachedDataNotice,
 } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
+import { LearningText } from "@/shared/ui/learning-text";
 import { errorMessage } from "@/shared/api";
 
 const lessonSteps = [
@@ -237,10 +238,7 @@ export function LessonPage({
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <h2>{section.title}</h2>
-                      <p>{section.body}</p>
-                      {i === 1 && lesson.data.examples[0] && (
-                        <CodeBlock code={lesson.data.examples[0].code} />
-                      )}
+                      <LearningText text={section.body} />
                     </section>
                   ))}
                   <div className="lesson-bottom">

@@ -19,6 +19,23 @@ test("task catalogue filters, direct links and layout work on phone, tablet and 
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/tasks");
     await expect(page.locator(".trainer-list li")).toHaveCount(24);
+    const search = page.getByLabel("Поиск задачи");
+    await expect(search).toHaveCSS("border-width", "0px");
+    await expect(search).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await search.focus();
+    await expect(search).toHaveCSS("box-shadow", "none");
+    const field = await page
+      .locator(".trainer-filters .search-field")
+      .boundingBox();
+    const input = await search.boundingBox();
+    expect(field).not.toBeNull();
+    expect(input).not.toBeNull();
+    expect(input!.x + input!.width).toBeLessThanOrEqual(
+      field!.x + field!.width,
+    );
+    await expect(
+      page.locator(".exercise-text-label", { hasText: "Ввод:" }).first(),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Сложные 8", exact: true }).click();
     await expect(page.locator(".trainer-list li")).toHaveCount(8);
     await page.getByLabel("Поиск задачи").fill("Кеш");
@@ -126,7 +143,7 @@ test("standalone solving awards once, updates filters and does not complete cour
   );
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
   await expect(page.locator(".execution-message")).toContainText(
-    "Пройдено 5/5 проверок. +30 XP",
+    "Вывод совпал с ожидаемым для примера из условия. +30 XP",
     { timeout: 30000 },
   );
   const progress = await (await progressResponse).json();

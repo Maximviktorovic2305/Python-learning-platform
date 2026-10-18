@@ -24,6 +24,7 @@ import { Button, Tag, SkeletonRegion, SkeletonCode } from "@/shared/ui";
 import { Highlight } from "@/shared/ui/code";
 import { errorMessage, refreshLearningData } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
+import { ExerciseDescription } from "./description";
 
 function readDraft(key?: string): { code: string; stdin: string } | null {
   if (!key || typeof window === "undefined") return null;
@@ -130,9 +131,9 @@ export function CodeEditor({
       });
       setMessage(
         result.status === "passed"
-          ? `Пройдено ${result.passed}/${result.total} проверок. ${result.xp > 0 ? `+${result.xp} XP` : "Баллы за это задание уже получены. Повторная проверка без XP."}`
+          ? `Вывод совпал с ожидаемым для примера из условия. ${result.xp > 0 ? `+${result.xp} XP` : "Баллы за это задание уже получены. Повторная проверка без XP."}`
           : result.status === "failed"
-            ? `Пройдено ${result.passed}/${result.total} проверок. Попробуйте ещё раз.`
+            ? "Вывод отличается от ожидаемого для примера из условия. Проверьте текст, пробелы и переносы строк. Не добавляйте приглашение ко вводу."
             : result.status === "timeout"
               ? "Проверка остановлена по лимиту времени. XP не начислен. Проверьте циклы и повторите запуск."
               : "Не удалось выполнить Python-код. XP не начислен. Подробности — в выводе программы.",
@@ -185,7 +186,7 @@ export function CodeEditor({
             </Tag>
           )}
         </div>
-        <p className="exercise-text">{exercise.description}</p>
+        <ExerciseDescription text={exercise.description} />
         <button
           className="hint-button"
           onClick={() => setHint(Math.min(hint + 1, exercise.hints.length))}
@@ -316,8 +317,8 @@ export function CodeEditor({
             }}
           />
           <small>
-            Меняйте ввод для экспериментов. Сервер проверит решение на{" "}
-            {exercise.test_count} наборах данных.
+            Это поле используется кнопкой «Запустить локально». Кнопка
+            «Проверить» использует только пример ввода из условия.
           </small>
         </label>
         {exercise.local_supported === false && (
@@ -373,7 +374,9 @@ export function CodeEditor({
                 ? "RUNNING"
                 : verifying
                   ? "CHECKING"
-                  : (output?.status.toUpperCase() ?? "READY")}
+                  : output?.status === "error" && messageKind === "failed"
+                    ? "ВЫВОД НЕ СОВПАЛ"
+                    : (output?.status.toUpperCase() ?? "READY")}
             </Tag>
           </div>
           {running || verifying ? (

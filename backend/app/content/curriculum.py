@@ -14,12 +14,12 @@ LEVELS = (
         (("Первые шаги", tuple(t.slug for t in INTRODUCTION)),),
     ),
     (
-        "Основы Python I",
+        "Основы Python",
         "Переменные, функции, типы данных, условия, циклы и коллекции.",
         (("Язык и данные", tuple(t.slug for t in FUNDAMENTALS)),),
     ),
     (
-        "Основы Python II",
+        "Python на практике",
         "Библиотеки, файлы, ООП и инструменты языка.",
         (
             ("Библиотеки и файлы", tuple(t.slug for t in APPLIED[:7])),

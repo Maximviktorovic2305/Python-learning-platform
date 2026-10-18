@@ -5,7 +5,6 @@ import {
   ArrowUpRight,
   Braces,
   Database,
-  Layers3,
   Server,
   Workflow,
   Check,
@@ -13,15 +12,14 @@ import {
 } from "lucide-react";
 import { Header } from "@/widgets/header";
 import { HeroPythonGif, LandingSnake } from "@/widgets/landing-snake";
-import { PythonLogo } from "@/shared/ui/python-logo";
 import { LegalLinks } from "@/shared/ui/legal";
 import { ActionLink, Tag } from "@/shared/ui";
 import { CodeBlock } from "@/shared/ui/code";
 
 const stages = [
   "Введение",
-  "Основы Python I",
-  "Основы Python II",
+  "Основы Python",
+  "Python на практике",
   "Продвинутый Python",
 ];
 export function LandingPage() {
@@ -167,60 +165,10 @@ export function LandingPage() {
             ))}
           </div>
         </section>
-        <section className="section method-section" id="method">
-          <div className="container">
-            <div className="section-heading">
-              <div>
-                <div className="eyebrow">02 / УЧИСЬ ЧЕРЕЗ ДЕЙСТВИЕ</div>
-                <h2>
-                  Знания, которые
-                  <br />
-                  остаются с тобой.
-                </h2>
-              </div>
-              <p>
-                Читать недостаточно. Здесь каждая тема превращается в цикл:
-                понять, попробовать, проверить, закрепить.
-              </p>
-            </div>
-            <div className="method-grid">
-              {[
-                {
-                  icon: Layers3,
-                  title: "Разберись в идее",
-                  desc: "Короткая теория, точные примеры и объяснение того, что происходит под капотом.",
-                  tag: "THEORY",
-                },
-                {
-                  icon: PythonLogo,
-                  title: "Напиши решение",
-                  desc: "Самостоятельные задания на разных входах: обычные значения, границы и пустые данные.",
-                  tag: "PRACTICE",
-                },
-                {
-                  icon: Check,
-                  title: "Проверь понимание",
-                  desc: "Случайные вопросы, подробный разбор ошибок и рекомендации для повторения.",
-                  tag: "REVIEW",
-                },
-              ].map(({ icon: Icon, title, desc, tag }, i) => (
-                <article key={tag}>
-                  <div className="method-top">
-                    <Icon size={24} />
-                    <span>0{i + 1}</span>
-                  </div>
-                  <Tag>{tag}</Tag>
-                  <h3>{title}</h3>
-                  <p>{desc}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
         <section className="container section">
           <div className="section-heading">
             <div>
-              <div className="eyebrow">03 / ПРОГРАММА ОБУЧЕНИЯ</div>
+              <div className="eyebrow">02 / ПРОГРАММА ОБУЧЕНИЯ</div>
               <h2>
                 От «что такое переменная?»
                 <br />
@@ -257,7 +205,7 @@ export function LandingPage() {
         <section className="lab-section section">
           <div className="container lab-grid">
             <div>
-              <div className="eyebrow">04 / ТВОЯ PYTHON-ЛАБОРАТОРИЯ</div>
+              <div className="eyebrow">03 / ТВОЯ PYTHON-ЛАБОРАТОРИЯ</div>
               <h2>
                 Меньше переключений.
                 <br />
@@ -307,87 +255,9 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-        <section className="container section projects-teaser">
-          <div className="section-heading">
-            <div>
-              <div className="eyebrow">05 / КОД С РЕАЛЬНОЙ ЗАДАЧЕЙ</div>
-              <h2>
-                В портфолио — проекты.
-                <br />В голове — система.
-              </h2>
-            </div>
-            <p>
-              Собери анализатор текста, каталог SQLite и конвейер данных. У
-              каждого проекта есть требования и критерии проверки.
-            </p>
-          </div>
-          <div className="project-preview-grid">
-            {[
-              {
-                icon: PythonLogo,
-                name: "Анализатор текста",
-                tag: "СЛОВАРИ / ФУНКЦИИ",
-                number: "01",
-              },
-              {
-                icon: Server,
-                name: "Каталог SQLite",
-                tag: "SQL / SQLALCHEMY",
-                number: "03",
-              },
-              {
-                icon: Layers3,
-                name: "Конвейер данных",
-                tag: "PYTEST / ASYNCIO",
-                number: "04",
-              },
-            ].map(({ icon: Icon, name, tag, number }) => (
-              <Link href="/projects" key={name}>
-                <span className="project-number">PROJECT {number}</span>
-                <Icon size={37} />
-                <h3>{name}</h3>
-                <span>{tag}</span>
-                <ArrowUpRight size={20} />
-              </Link>
-            ))}
-          </div>
-        </section>
-        <section className="container section progress-pitch">
-          <div>
-            <div className="eyebrow">06 / ВИДЕТЬ СВОЙ РОСТ</div>
-            <h2>
-              Прогресс — это
-              <br />
-              каждый новый шаг.
-            </h2>
-            <p>
-              XP, серии занятий и достижения помогают сохранять ритм. А
-              результаты тестов подскажут, какие темы стоит повторить.
-            </p>
-          </div>
-          <div className="progress-note">
-            <span>LEARNING LOG</span>
-            <div>
-              <Check size={18} />
-              <strong>Урок разобран</strong>
-              <b>+20 XP</b>
-            </div>
-            <div>
-              <PythonLogo size={18} />
-              <strong>Задача решена</strong>
-              <b>+30 XP</b>
-            </div>
-            <div>
-              <Check size={18} />
-              <strong>Тест пройден</strong>
-              <b>+50 XP</b>
-            </div>
-            <p>Твой результат сохраняется в личном кабинете.</p>
-          </div>
-        </section>
         <section className="container section faq-section">
           <div>
-            <div className="eyebrow">07 / ПЕРЕД ПЕРВЫМ ШАГОМ</div>
+            <div className="eyebrow">04 / ПЕРЕД ПЕРВЫМ ШАГОМ</div>
             <h2>Хорошие вопросы.</h2>
             <p>
               Отзывы появятся после первого набора учащихся. Сейчас лучшее
@@ -450,7 +320,6 @@ export function LandingPage() {
         <div>
           <Link href="/curriculum">Программа</Link>
           <Link href="/projects">Проекты</Link>
-          <Link href="/#method">Методика</Link>
         </div>
         <small>© {new Date().getFullYear()} Python Lab</small>
         <AuthorSupport />

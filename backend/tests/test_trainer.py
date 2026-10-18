@@ -46,7 +46,7 @@ async def test_trainer_catalog_is_separate_public_and_hides_solutions(client):
         task["topic_id"] is None and task["catalog"] == "trainer" and "solution" not in task
         for task in tasks
     )
-    assert all(task["test_count"] >= 4 and task["tags"] for task in tasks)
+    assert all(task["test_count"] == 1 and task["tags"] for task in tasks)
     course = (await client.get("/api/courses/python")).json()
     assert course["exercise_count"] == 100 and course["published_topics"] == 50
 

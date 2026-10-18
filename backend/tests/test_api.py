@@ -22,6 +22,12 @@ async def test_catalog_and_idempotent_seed(
     assert response.status_code == 200
     course = response.json()
     assert len(course["levels"]) == 4
+    assert [level["title"] for level in course["levels"]] == [
+        "Введение",
+        "Основы Python",
+        "Python на практике",
+        "Продвинутый Python",
+    ]
     assert course["published_topics"] == 50
     assert course["exercise_count"] == 100
     assert course["question_count"] == 1000

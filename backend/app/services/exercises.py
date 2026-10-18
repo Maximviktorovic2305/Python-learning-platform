@@ -20,7 +20,7 @@ async def exercise_views(items: list[Exercise], session: AsyncSession) -> list[E
                 "sample_stdin": next(
                     (test.stdin.rstrip("\n") for test in tests if test.exercise_id == item.id), ""
                 ),
-                "test_count": sum(test.exercise_id == item.id for test in tests),
+                "test_count": int(any(test.exercise_id == item.id for test in tests)),
                 "local_supported": local_supported(item.solution),
             }
         )
@@ -54,7 +54,7 @@ async def submit_exercise(
         await get_lesson(session, exercise.topic_id)
     tests = [
         TestCase(stdin=t.stdin, expected_stdout=t.expected_stdout)
-        for t in await records.exercise_tests(session, [exercise_id])
+        for t in (await records.exercise_tests(session, [exercise_id]))[:1]
     ]
     result = await runner.execute(ExecutionRequest(code=code, tests=tests))
     result.xp = 0  # Only this application can grant XP; the runner is an execution port.
