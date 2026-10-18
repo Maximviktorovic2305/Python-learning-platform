@@ -3009,14 +3009,14 @@ details[open] > summary > svg:last-child {
   line-height: 1.5;
 }
 .exercise-text .exercise-footnote {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--subtle);
   margin-top: 18px;
 }
 .lesson-main,
 .exercise-workspace {
-  --learning-font-size: 18px;
+  --learning-font-size: 14px;
   font-size: var(--learning-font-size);
   line-height: 1.5;
 }
@@ -3032,12 +3032,6 @@ details[open] > summary > svg:last-child {
   font-size: var(--learning-font-size);
   line-height: 1.5;
 }
-@media (max-width: 1098px) {
-  .lesson-main,
-  .exercise-workspace {
-    --learning-font-size: 15px;
-  }
-}
 .learning-text > p + p,
 .learning-text > .code-block + p {
   margin-top: 16px;
@@ -3047,7 +3041,7 @@ details[open] > summary > svg:last-child {
   border-radius: 4px;
   background: var(--code);
   color: var(--python-blue);
-  font-size: 0.825em;
+  font-size: 0.93em;
   font-family: var(--font-mono), monospace;
 }
 .hint-button {
@@ -4367,7 +4361,7 @@ input[type="radio"]:focus-visible {
     align-items: center;
   }
   .exercise-description h2 {
-    font-size: 22px;
+    font-size: calc(var(--learning-font-size) * 1.4);
   }
   .quiz-intro {
     padding: 25px 5px;
