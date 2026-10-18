@@ -1,6 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.learning import QUESTION_BANK_REVISION
 from app.models.tables import Course, Exercise, Level, Module, Question, Topic
 from app.schemas.contracts import CourseView, LevelView, ModuleView, TopicView
 
@@ -40,7 +41,10 @@ async def course_catalog(session: AsyncSession, course_id: str = "python") -> Co
         (
             await session.execute(
                 select(Question.topic_id, func.count())
-                .where(Question.topic_id.in_([topic.id for topic in topics]))
+                .where(
+                    Question.topic_id.in_([topic.id for topic in topics]),
+                    Question.id.like(Question.topic_id + f"-{QUESTION_BANK_REVISION}-%"),
+                )
                 .group_by(Question.topic_id)
             )
         ).all()

@@ -651,6 +651,11 @@ export interface components {
        * @default true
        */
       local_supported: boolean;
+      /**
+       * Requires Stdin
+       * @default false
+       */
+      requires_stdin: boolean;
     };
     /** HTTPValidationError */
     HTTPValidationError: {

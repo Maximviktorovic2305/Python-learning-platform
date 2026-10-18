@@ -1590,6 +1590,9 @@ details[open] > summary > svg:last-child {
   padding: 27px 16px 18px;
   z-index: 40;
   overflow: auto;
+  transition:
+    transform 240ms ease,
+    visibility 240ms;
 }
 .sidebar-brand {
   display: flex;
@@ -1692,6 +1695,9 @@ details[open] > summary > svg:last-child {
   min-width: 0;
   width: calc(100% - 232px);
   margin-left: 232px;
+  transition:
+    margin-left 240ms ease,
+    width 240ms ease;
 }
 .app-topbar {
   height: 66px;
@@ -1731,7 +1737,27 @@ details[open] > summary > svg:last-child {
   border-radius: 50%;
 }
 .sidebar-toggle {
-  display: none;
+  display: inline-flex;
+}
+.app-topbar > .breadcrumb {
+  margin-right: auto;
+}
+.sidebar-backdrop {
+  position: fixed;
+  inset: 66px 0 0;
+  z-index: 35;
+  border: 0;
+  background: rgb(0 0 0 / 0.3);
+}
+@media (min-width: 641px) {
+  .app-shell.sidebar-collapsed .app-sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+  .app-shell.sidebar-collapsed .app-body {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 .app-content {
   max-width: 1260px;
@@ -4187,6 +4213,7 @@ input[type="radio"]:focus-visible {
   }
   .app-sidebar {
     transform: translateX(-100%);
+    visibility: hidden;
     width: 232px;
     box-shadow: 20px 0 50px rgb(0 0 0 / 0.2);
     top: 66px;
@@ -4194,6 +4221,7 @@ input[type="radio"]:focus-visible {
   }
   .app-sidebar.open {
     transform: translateX(0);
+    visibility: visible;
   }
   .app-body {
     width: 100%;

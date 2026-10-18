@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -51,7 +51,13 @@ function QuizSkeleton() {
   );
 }
 
-export function QuizPanel({ topicId }: { topicId: string }) {
+export function QuizPanel({
+  topicId,
+  onNavigationChange,
+}: {
+  topicId: string;
+  onNavigationChange?: (visible: boolean) => void;
+}) {
   const { user, loading } = useAuth();
   const client = useQueryClient();
   const progress = useQuery(progressQuery(user?.id));
@@ -63,6 +69,11 @@ export function QuizPanel({ topicId }: { topicId: string }) {
   const [current, setCurrent] = useState(0);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [hint, setHint] = useState(false);
+  const showLessonNavigation =
+    !attempt || !!result || current === attempt.questions.length - 1;
+  useEffect(() => {
+    onNavigationChange?.(showLessonNavigation);
+  }, [onNavigationChange, showLessonNavigation]);
   const startMutation = useMutation({
     mutationKey: ["start-quiz", topicId],
     mutationFn: () => startQuiz(topicId),

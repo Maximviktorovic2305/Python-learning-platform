@@ -334,7 +334,7 @@ TOPICS = (
         (
             task(
                 "Проверка через TestCase",
-                "Ввод: целое. Используйте TestCase().assertEqual для проверки n+n == 2*n, затем выведите «ok».",
+                "Ввод: целое. Используйте TestCase().assertEqual для проверки number + number == 2 * number, затем выведите «ok».",
                 "import unittest\nnumber = int(input())\nunittest.TestCase().assertEqual(number + number, 2 * number)\nprint('ok')",
                 (("5", "ok"), ("0", "ok"), ("-4", "ok")),
                 "Утверждение ничего не выводит при успехе.",
@@ -527,7 +527,7 @@ TOPICS = (
             ),
             task(
                 "Защищённый счётчик",
-                "Ввод: n от 0 до 30. Запустите n корутин, каждая читает общий счётчик, делает await sleep(0) и увеличивает на 1. Защитите чтение и запись asyncio.Lock; выведите итог.",
+                "Ввод: n от 0 до 30. Запустите count корутин, каждая читает общий счётчик, делает await sleep(0) и увеличивает на 1. Защитите чтение и запись asyncio.Lock; выведите итог.",
                 "import asyncio\ncount = int(input())\nasync def main():\n    counter = 0\n    lock = asyncio.Lock()\n    async def increment():\n        nonlocal counter\n        async with lock:\n            previous = counter\n            await asyncio.sleep(0)\n            counter = previous + 1\n    await asyncio.gather(*(increment() for _ in range(count)))\n    print(counter)\nasyncio.run(main())",
                 (("7", "7"), ("0", "0"), ("30", "30")),
                 "Lock удерживается и во время await, чтобы другая корутина не прочитала старое значение.",

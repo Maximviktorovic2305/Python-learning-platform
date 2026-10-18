@@ -2,6 +2,7 @@ import random
 from dataclasses import dataclass
 
 from app.content.curriculum import TopicContent
+from app.domain.learning import QUESTION_BANK_REVISION
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
         rng.shuffle(order)
         questions.append(
             BankQuestion(
-                id=f"{topic.slug}-q{len(questions) + 1}",
+                id=f"{topic.slug}-{QUESTION_BANK_REVISION}-{len(questions) + 1}",
                 difficulty=difficulty,
                 kind=kind,
                 prompt=prompt,
@@ -67,7 +68,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
         distractors = other_outputs[:2] + ["Возникнет исключение до вывода"]
         add(
             "output_prediction",
-            "Какой точный вывод произведёт программа?",
+            f"{scenario.task}: что появится в выводе этой программы?",
             scenario.code,
             [output or "(пустой вывод)" for output in [scenario.output, *distractors]],
             [0],
@@ -83,7 +84,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
         ]
         add(
             "code_review",
-            "Выберите корректное объяснение поведения этого кода.",
+            f"{scenario.task}: почему программа получает показанный результат?",
             scenario.code,
             reasons,
             [0],
@@ -91,10 +92,10 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
             "hard",
         )
     for i in range(4):
-        selected = [topic.facts[(i * 2 + j) % 8] for j in range(4)]
+        selected = [topic.facts[(i * 2 + j) % 8] for j in range(3)]
         add(
             "multiple_select",
-            "Отметьте все верные утверждения о контракте и поведении.",
+            f"Какие утверждения по теме «{topic.title}» верны?",
             None,
             [s for s, _, _ in selected],
             [j for j, (_, truth, _) in enumerate(selected) if truth],

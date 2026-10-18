@@ -84,6 +84,8 @@ export function CodeEditor({
   const [copied, setCopied] = useState(false);
   const [verified, setVerified] = useState(false);
   const solved = completed || verified;
+  const needsInput =
+    exercise.requires_stdin === true || /\binput\s*\(/.test(code);
   const controller = useRef<AbortController | null>(null);
   const overlay = useRef<HTMLPreElement | null>(null);
   const numbers = useRef<HTMLDivElement | null>(null);
@@ -132,9 +134,9 @@ export function CodeEditor({
       });
       setMessage(
         result.status === "passed"
-          ? `Вывод совпал с ожидаемым для примера из условия. ${result.xp > 0 ? `+${result.xp} XP` : "Баллы за это задание уже получены. Повторная проверка без XP."}`
+          ? `Вывод совпал с ожидаемым. ${result.xp > 0 ? `+${result.xp} XP` : "Баллы за это задание уже получены. Повторная проверка без XP."}`
           : result.status === "failed"
-            ? "Вывод отличается от ожидаемого для примера из условия. Проверьте текст, пробелы и переносы строк. Не добавляйте приглашение ко вводу."
+            ? "Вывод отличается от ожидаемого. Используйте данные из заготовки и проверьте текст, пробелы и переносы строк."
             : result.status === "timeout"
               ? "Проверка остановлена по лимиту времени. XP не начислен. Проверьте циклы и повторите запуск."
               : "Не удалось выполнить Python-код. XP не начислен. Подробности — в выводе программы.",
@@ -303,25 +305,27 @@ export function CodeEditor({
         <small className="editor-keyboard-note">
           Tab — отступ · Shift+Tab — выход из редактора
         </small>
-        <label className="editor-stdin">
-          <span>Входные данные для input()</span>
-          <textarea
-            value={stdin}
-            maxLength={4000}
-            rows={3}
-            spellCheck={false}
-            autoCapitalize="off"
-            readOnly={running || verifying}
-            onChange={(event) => {
-              setStdin(event.target.value);
-              saveDraft(code, event.target.value);
-            }}
-          />
-          <small>
-            Это поле используется кнопкой «Запустить локально». Кнопка
-            «Проверить» использует только пример ввода из условия.
-          </small>
-        </label>
+        {needsInput && (
+          <label className="editor-stdin">
+            <span>Входные данные для input()</span>
+            <textarea
+              value={stdin}
+              maxLength={4000}
+              rows={3}
+              spellCheck={false}
+              autoCapitalize="off"
+              readOnly={running || verifying}
+              onChange={(event) => {
+                setStdin(event.target.value);
+                saveDraft(code, event.target.value);
+              }}
+            />
+            <small>
+              Это поле используется кнопкой «Запустить локально». Кнопка
+              «Проверить» использует исходные данные задания.
+            </small>
+          </label>
+        )}
         {exercise.local_supported === false && (
           <p className="hint-box">
             Для потоков и процессов используйте кнопку «Проверить» после входа:
@@ -428,7 +432,10 @@ export function CodeEditor({
       )}
       <p className="muted small-text">
         Локальный запуск выполняется на вашем устройстве. XP выдаётся после
-        серверной проверки. input() читает строки из поля «Входные данные».
+        серверной проверки.{" "}
+        {needsInput
+          ? "input() читает строки из поля «Входные данные»."
+          : "Исходные данные находятся в начале solution.py."}{" "}
         Сетевые запросы из локального Python недоступны.
         {solved &&
           " Баллы за это задание уже получены. Можно практиковаться без повторного начисления XP."}

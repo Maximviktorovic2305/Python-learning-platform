@@ -24,7 +24,11 @@ async def start_attempt(session: AsyncSession, user: User, topic_id: str) -> Att
     if topic is None or not topic.published or quiz is None:
         raise ResourceNotFound("Тест не опубликован")
     pool = await records.questions(session, topic_id)
-    selected = select_questions(pool, quiz.distribution)
+    selected = select_questions(
+        pool,
+        quiz.distribution,
+        avoid_ids=await records.recent_question_ids(session, user.id, quiz.id),
+    )
     attempt = QuizAttempt(user_id=user.id, quiz_id=quiz.id, question_ids=[q.id for q in selected])
     session.add(attempt)
     await session.flush()

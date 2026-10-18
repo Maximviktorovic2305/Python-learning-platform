@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.content.exercises import exercise_starter, local_supported
+from app.content.exercises import exercise_starter, local_supported, uses_input
 from app.domain.errors import ResourceNotFound
 from app.models.tables import Exercise, User
 from app.ports.execution import ExecutionRequest, ExecutionRunner, TestCase
@@ -22,6 +22,7 @@ async def exercise_views(items: list[Exercise], session: AsyncSession) -> list[E
                 ),
                 "test_count": int(any(test.exercise_id == item.id for test in tests)),
                 "local_supported": local_supported(item.solution),
+                "requires_stdin": uses_input(item.solution),
             }
         )
         for item in items

@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from app.content.exercises import with_given_data
+
 
 @dataclass(frozen=True)
 class Case:
@@ -71,9 +73,9 @@ def lesson(
     examples = tuple(
         Case(
             f"{exercise.title} — пример {index + 1}",
-            exercise.solution.replace("input()", repr(stdin.rstrip("\n"))),
+            with_given_data(exercise.solution, stdin.rstrip("\n")),
             output,
-            exercise.hint + f" Результат этого примера: {output!r}.",
+            exercise.hint.replace("строку input()", "строку из заготовки"),
         )
         for exercise in practice
         for index, (stdin, output) in enumerate(exercise.tests[:2])

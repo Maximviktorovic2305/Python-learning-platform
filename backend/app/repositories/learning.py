@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.learning import QUESTION_BANK_REVISION
 from app.models.tables import (
     Answer,
     Exercise,
@@ -33,7 +34,12 @@ async def topic_counts(session: AsyncSession, topic_id: str) -> tuple[dict[str, 
     }
     question_count = (
         await session.scalar(
-            select(func.count()).select_from(Question).where(Question.topic_id == topic_id)
+            select(func.count())
+            .select_from(Question)
+            .where(
+                Question.topic_id == topic_id,
+                Question.id.like(Question.topic_id + f"-{QUESTION_BANK_REVISION}-%"),
+            )
         )
         or 0
     )
@@ -69,7 +75,13 @@ async def questions(
     session: AsyncSession, topic_id: str, *, limit: int | None = None, offset: int = 0
 ) -> list[Question]:
     query = (
-        select(Question).where(Question.topic_id == topic_id).order_by(Question.id).offset(offset)
+        select(Question)
+        .where(
+            Question.topic_id == topic_id,
+            Question.id.like(Question.topic_id + f"-{QUESTION_BANK_REVISION}-%"),
+        )
+        .order_by(Question.id)
+        .offset(offset)
     )
     if limit is not None:
         query = query.limit(limit)
@@ -82,6 +94,16 @@ async def questions_by_ids(session: AsyncSession, ids: list[str]) -> dict[str, Q
 
 async def quiz(session: AsyncSession, quiz_id: str) -> Quiz | None:
     return await session.get(Quiz, quiz_id)
+
+
+async def recent_question_ids(session: AsyncSession, user_id: UUID, quiz_id: str) -> set[str]:
+    ids = await session.scalar(
+        select(QuizAttempt.question_ids)
+        .where(QuizAttempt.user_id == user_id, QuizAttempt.quiz_id == quiz_id)
+        .order_by(QuizAttempt.created_at.desc())
+        .limit(1)
+    )
+    return set(ids or [])
 
 
 async def attempt_for_user(

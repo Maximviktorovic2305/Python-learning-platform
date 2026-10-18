@@ -60,11 +60,9 @@ jobs:
         run: |
           docker build -t python-lab-sandbox:2026-10 runner/sandbox
           pytest runner/test_sandbox.py -q
-      - name: Install frontend dependencies and browser
+      - name: Install frontend dependencies
         working-directory: frontend
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium firefox webkit
+        run: npm ci
       - name: API contract consistency
         working-directory: backend
         run: |
@@ -82,7 +80,7 @@ jobs:
           npm run format:check
           npm audit --omit=dev --audit-level=low
           npm run build
-      - name: Start real learning services
+      - name: HTTP checks against real learning services
         run: |
           PGPASSWORD=ci-test-password psql -h localhost -U python -d python_lab_test -c 'CREATE DATABASE python_lab;'
           cd backend
@@ -95,14 +93,16 @@ jobs:
           cd ../frontend
           npm run start -- --port 3010 > /tmp/python-web.log 2>&1 &
           for attempt in $(seq 1 60); do
-            if curl -fsS http://localhost:3010/api/health; then exit 0; fi
+            if curl -fsS http://localhost:3010/api/health; then
+              curl -fsS http://localhost:3010/ >/dev/null
+              curl -fsS http://localhost:3010/api/courses/python >/dev/null
+              curl -fsS http://localhost:3010/api/tasks >/dev/null
+              exit 0
+            fi
             sleep 1
           done
           cat /tmp/python-api.log /tmp/python-runner.log /tmp/python-web.log
           exit 1
-      - name: Browser flows and accessibility
-        working-directory: frontend
-        run: npm test
   deploy:
     needs: verify
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

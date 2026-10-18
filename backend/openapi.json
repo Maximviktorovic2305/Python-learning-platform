@@ -1626,6 +1626,11 @@
             "type": "boolean",
             "title": "Local Supported",
             "default": true
+          },
+          "requires_stdin": {
+            "type": "boolean",
+            "title": "Requires Stdin",
+            "default": false
           }
         },
         "additionalProperties": false,

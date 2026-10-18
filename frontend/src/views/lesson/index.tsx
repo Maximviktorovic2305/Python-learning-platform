@@ -63,6 +63,7 @@ export function LessonPage({
   const exerciseSelectorRef = useRef<HTMLDivElement>(null);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [navOpen, setNavOpen] = useState(false);
+  const [quizNavigationVisible, setQuizNavigationVisible] = useState(true);
   const { user, loading } = useAuth();
   const lesson = useQuery({ ...lessonQuery(id), initialData: initialLesson });
   const course = useQuery({ ...courseQuery, initialData: initialCourse });
@@ -342,7 +343,11 @@ export function LessonPage({
                 </div>
               )}
               {tab === "quiz" && (
-                <QuizPanel key={`${id}-${user?.id ?? "guest"}`} topicId={id} />
+                <QuizPanel
+                  key={`${id}-${user?.id ?? "guest"}`}
+                  topicId={id}
+                  onNavigationChange={setQuizNavigationVisible}
+                />
               )}
               {tab === "review" && (
                 <div className="review-content">
@@ -369,7 +374,7 @@ export function LessonPage({
                   )}
                 </div>
               )}
-              {previousStep && (
+              {previousStep && (tab !== "quiz" || quizNavigationVisible) && (
                 <nav
                   className="lesson-bottom"
                   aria-label="Переходы между этапами"

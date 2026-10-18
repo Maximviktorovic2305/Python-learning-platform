@@ -89,7 +89,7 @@ async def test_reseed_keeps_one_visible_check_per_exercise(client, database):
     for exercise in exercises:
         check = next(item for item in checks if item.exercise_id == exercise.id)
         assert check.id == f"{exercise.id}-t1"
-        assert check.stdin.rstrip("\n") in exercise.description
+        assert check.stdin == ""
         assert check.expected_stdout in exercise.description
 
 

@@ -1,6 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -36,6 +36,13 @@ const items = [
   { href: "/stack", title: "Стек", icon: Layers3 },
   { href: "/legal-documents", title: "Правовые документы", icon: FileText },
 ];
+const desktopSnapshot = () => window.matchMedia("(min-width: 641px)").matches;
+const serverDesktopSnapshot = () => true;
+const subscribeToViewport = (notify: () => void) => {
+  const media = window.matchMedia("(min-width: 641px)");
+  media.addEventListener("change", notify);
+  return () => media.removeEventListener("change", notify);
+};
 function skeletonVariant(path: string): PageSkeletonVariant {
   if (path.startsWith("/learn/")) return "lesson";
   const variants: Record<string, PageSkeletonVariant> = {
@@ -61,14 +68,34 @@ export function AppShell({ children }: { children: ReactNode }) {
     "/profile",
   ].includes(path);
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const desktop = useSyncExternalStore(
+    subscribeToViewport,
+    desktopSnapshot,
+    serverDesktopSnapshot,
+  );
+  const sidebarVisible = desktop ? !collapsed : open;
+  const toggle = useRef<HTMLButtonElement>(null);
+  const hideSidebar = () => {
+    if (desktop) setCollapsed(true);
+    else setOpen(false);
+    toggle.current?.focus();
+  };
   const [error, setError] = useState("");
   useEffect(() => {
     if (protectedPage && !loading && !loggingOut && !user)
       router.replace("/login");
   }, [protectedPage, loading, loggingOut, user, router]);
   return (
-    <div className="app-shell">
-      <aside className={`app-sidebar ${open ? "open" : ""}`}>
+    <div className={`app-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
+      <aside
+        id="main-sidebar"
+        inert={!sidebarVisible}
+        className={`app-sidebar ${open ? "open" : ""}`}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") hideSidebar();
+        }}
+      >
         <Link className="sidebar-brand" href="/">
           <span className="brand-icon">
             <PythonLogo size={23} />
@@ -136,15 +163,36 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         </div>
       </aside>
+      {!desktop && open && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Закрыть навигацию"
+          onClick={hideSidebar}
+        />
+      )}
       <div className="app-body">
         <header className="app-topbar">
           <button
             className="icon-button sidebar-toggle"
-            aria-label="Навигация курса"
-            aria-expanded={open}
-            onClick={() => setOpen(!open)}
+            ref={toggle}
+            type="button"
+            aria-label={
+              sidebarVisible
+                ? "Скрыть боковую панель"
+                : "Открыть боковую панель"
+            }
+            aria-controls="main-sidebar"
+            aria-expanded={sidebarVisible}
+            onClick={() =>
+              desktop ? setCollapsed(!collapsed) : setOpen(!open)
+            }
           >
-            {open ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+            {sidebarVisible ? (
+              <PanelLeftClose size={20} />
+            ) : (
+              <PanelLeftOpen size={20} />
+            )}
           </button>
           <span className="breadcrumb">
             ЛАБОРАТОРИЯ <span>/</span>{" "}

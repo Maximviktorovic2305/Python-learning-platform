@@ -153,6 +153,7 @@ class ExerciseView(Contract):
     sample_stdin: str = ""
     test_count: int = 0
     local_supported: bool = True
+    requires_stdin: bool = False
 
 
 class QuestionView(Contract):
