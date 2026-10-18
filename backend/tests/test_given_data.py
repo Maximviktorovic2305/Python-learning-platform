@@ -109,6 +109,9 @@ async def test_published_practice_has_no_unnecessary_input_fields(client, databa
             assert item["sample_stdin"] == ""
             assert "Пример ввода" not in item["description"]
             assert "Ожидаемый вывод:" in item["description"]
+            assert item["description"].index("Ожидаемый вывод:") < item["description"].index(
+                "Исходные данные уже записаны"
+            )
     tasks = (await client.get("/api/tasks")).json()
     assert all(not item["requires_stdin"] and item["sample_stdin"] == "" for item in tasks)
 

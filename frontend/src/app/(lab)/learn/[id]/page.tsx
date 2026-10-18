@@ -43,7 +43,7 @@ export default async function Page({
       initialLesson={lesson}
       initialCourse={course}
       initialTab={
-        ["theory", "examples", "practice", "quiz", "review"].includes(tab ?? "")
+        ["theory", "practice", "quiz", "review"].includes(tab ?? "")
           ? tab
           : "theory"
       }

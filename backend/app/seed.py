@@ -49,10 +49,7 @@ async def seed_topic(
         Lesson(
             id=content.slug,
             theory=[{"title": title, "body": body} for title, body in THEORY[content.slug]],
-            examples=[
-                {"title": c.task, "code": c.code, "output": c.output, "explanation": c.explanation}
-                for c in content.cases
-            ],
+            examples=[],
             review=[
                 f"{statement} {reason}"
                 if truth

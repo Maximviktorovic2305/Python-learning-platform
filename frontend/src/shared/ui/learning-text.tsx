@@ -16,8 +16,13 @@ function InlineText({ text }: { text: string }) {
 export function LearningText({ text }: { text: string }) {
   return (
     <div className="learning-text">
-      {text.split(/(```(?:python)?\n[\s\S]*?\n```)/).map((block, index) =>
-        block.startsWith("```") ? (
+      {text.split(/(```(?:python|text)?\n[\s\S]*?\n```)/).map((block, index) =>
+        block.startsWith("```text\n") ? (
+          <figure className="learning-output" key={index}>
+            <figcaption>Результат</figcaption>
+            <pre>{block.replace(/^```text\n|\n```$/g, "")}</pre>
+          </figure>
+        ) : block.startsWith("```") ? (
           <CodeBlock
             key={index}
             code={block.replace(/^```(?:python)?\n|\n```$/g, "")}

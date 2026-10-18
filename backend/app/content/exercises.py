@@ -103,7 +103,9 @@ def exercise_description(description: str, expected: str, starter: str) -> str:
         f"Исходные данные уже записаны в начале solution.py: {data}. Используйте их в решении."
     )
     if "source_text" in names:
-        preface += "\n\nСодержимое source_text: " + context.removeprefix("Ввод: ") + "."
+        instruction = (
+            "Содержимое source_text: " + context.removeprefix("Ввод: ") + ".\n\n" + instruction
+        )
     instruction = (
         instruction.replace("Пустой ввод", "Пустые данные")
         .replace("пустого ввода", "пустых данных")
@@ -115,12 +117,12 @@ def exercise_description(description: str, expected: str, starter: str) -> str:
         .replace(" без приглашения ко вводу", "")
     )
     return (
-        preface
-        + "\n\n"
-        + instruction
+        instruction
         + "\n\nОжидаемый вывод:\n"
         + (expected or "(пустой вывод)")
-        + "\n\nПроверяется результат программы с этими данными."
+        + "\n\n"
+        + preface
+        + " Проверяется результат программы с этими данными."
     )
 
 

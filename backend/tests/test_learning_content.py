@@ -18,7 +18,10 @@ from app.seed import seed
 def test_theory_examples_execute(topic):
     # Only repository-authored teaching examples, never submitted learner code.
     for _, body in THEORY[topic.slug]:
-        for code in re.findall(r"```python\n(.*?)\n```", body, re.DOTALL):
+        for match in re.finditer(
+            r"```python\n(.*?)\n```(?:\n\n```text\n(.*?)\n```)?", body, re.DOTALL
+        ):
+            code, expected = match.groups()
             result = subprocess.run(
                 [sys.executable, "-X", "utf8", "-I", "-c", code],
                 capture_output=True,
@@ -27,6 +30,12 @@ def test_theory_examples_execute(topic):
                 timeout=15,
             )
             assert result.returncode == 0, (topic.slug, result.stderr)
+            if expected is not None:
+                assert result.stdout.rstrip("\r\n") == expected.rstrip("\r\n"), (
+                    topic.slug,
+                    result.stdout,
+                    expected,
+                )
 
 
 @pytest.mark.parametrize("exercise_id", ["academy-introduction-e1", "trainer-01"])
@@ -93,17 +102,14 @@ async def test_reseed_keeps_one_visible_check_per_exercise(client, database):
         assert check.expected_stdout in exercise.description
 
 
-async def test_all_lessons_publish_readable_theory_and_different_examples(client):
+async def test_all_lessons_embed_examples_in_expanded_theory(client):
     for topic in TOPICS:
         response = await client.get(f"/api/lessons/{topic.slug}")
         assert response.status_code == 200
         lesson = response.json()
-        assert len(lesson["theory"]) == 4
+        assert len(lesson["theory"]) >= 7
         assert all(section["body"].strip() for section in lesson["theory"])
-        examples = lesson["examples"]
-        assert len(examples) >= 2
-        assert len({example["code"] for example in examples}) >= 2
-        assert all(
-            "основной случай" not in example["title"] and "граничный случай" not in example["title"]
-            for example in examples
-        )
+        assert lesson["examples"] == []
+        bodies = "\n\n".join(section["body"] for section in lesson["theory"])
+        assert bodies.count("```python\n") >= 2
+        assert "```text\n" in bodies

@@ -24,13 +24,11 @@ import {
   Skeleton,
   CachedDataNotice,
 } from "@/shared/ui";
-import { CodeBlock } from "@/shared/ui/code";
 import { LearningText } from "@/shared/ui/learning-text";
 import { errorMessage } from "@/shared/api";
 
 const lessonSteps = [
   { id: "theory", name: "Теория", action: "Вернуться к теории" },
-  { id: "examples", name: "Примеры", action: "Перейти к примерам" },
   { id: "practice", name: "Практика", action: "Перейти к практике" },
   { id: "quiz", name: "Тест", action: "Перейти к тесту" },
   { id: "review", name: "Закрепление", action: "Перейти к закреплению" },
@@ -233,17 +231,14 @@ export function LessonPage({
             >
               {tab === "theory" && (
                 <div className="theory-content">
-                  {lesson.data.theory.map((section, i) => (
+                  {lesson.data.theory.map((section) => (
                     <section key={section.title}>
-                      <span className="section-count">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
                       <h2>{section.title}</h2>
                       <LearningText text={section.body} />
                     </section>
                   ))}
                   <div className="lesson-bottom">
-                    <p>Дальше — примеры: посмотрим, как работает изученное.</p>
+                    <p>Теперь применим изученное в практике.</p>
                     {loading || (user && progress.isPending) ? (
                       <Skeleton className="skeleton-button" />
                     ) : user ? (
@@ -251,12 +246,12 @@ export function LessonPage({
                         id={id}
                         userId={user.id}
                         completed={completed}
-                        onComplete={() => goToStep("examples")}
+                        onComplete={() => goToStep("practice")}
                       />
                     ) : (
                       <div className="lesson-guest-actions">
-                        <Button onClick={() => goToStep("examples")}>
-                          Перейти к примерам <ArrowRight size={16} />
+                        <Button onClick={() => goToStep("practice")}>
+                          Перейти к практике <ArrowRight size={16} />
                         </Button>
                         <Link href="/register" className="button secondary">
                           Создать аккаунт и сохранить прогресс
@@ -264,28 +259,6 @@ export function LessonPage({
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-              {tab === "examples" && (
-                <div className="examples-content">
-                  <p className="muted">
-                    Разберите каждый пример: сначала предскажите вывод, затем
-                    сравните с результатом.
-                  </p>
-                  {lesson.data.examples.map((example, i) => (
-                    <section key={i}>
-                      <h2>
-                        <small>{String(i + 1).padStart(2, "0")}</small>
-                        {example.title}
-                      </h2>
-                      <CodeBlock code={example.code} />
-                      <div className="example-output">
-                        <span>OUTPUT</span>
-                        <pre>{example.output || "(пустой вывод)"}</pre>
-                      </div>
-                      <p>{example.explanation}</p>
-                    </section>
-                  ))}
                 </div>
               )}
               {tab === "practice" && (

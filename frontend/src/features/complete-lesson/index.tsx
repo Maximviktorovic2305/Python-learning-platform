@@ -35,7 +35,7 @@ export function CompleteLesson({
         pending={mutation.isPending}
       >
         {completed ? <Check size={16} /> : <ArrowRight size={16} />}
-        Перейти к примерам
+        Перейти к практике
       </Button>
       {mutation.error && !completed && (
         <p className="form-error" role="alert">
