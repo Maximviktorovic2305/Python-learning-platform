@@ -1,6 +1,12 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import type { FormEvent } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useIsMutating,
+} from "@tanstack/react-query";
 import { userQuery, type User } from "@/entities/user";
 import { api, unwrap, ApiError, type Schema } from "@/shared/api";
 import { Button } from "@/shared/ui";
@@ -18,7 +24,11 @@ export function ProfileForm({
   user: User;
   onSaved: (user: User) => void;
 }) {
+  const { text: localize } = useI18n();
+
   const client = useQueryClient();
+  const languageChanging =
+    useIsMutating({ mutationKey: ["change-language", user.id] }) > 0;
   const validation = useFormValidation(
     {
       username: usernameRule,
@@ -72,6 +82,7 @@ export function ProfileForm({
     event.preventDefault();
     if (
       mutation.isPending ||
+      languageChanging ||
       (mutation.isError && !canRetryFormError(mutation.error)) ||
       !validation.validate(event.currentTarget)
     )
@@ -94,7 +105,7 @@ export function ProfileForm({
       }}
     >
       <label>
-        Имя пользователя
+        {localize(" Имя пользователя ")}
         <input
           name="username"
           {...validation.field("username")}
@@ -109,10 +120,10 @@ export function ProfileForm({
       <label>
         Email
         <input value={user.email} readOnly type="email" />
-        <small>Email используется для входа.</small>
+        <small>{localize("Email используется для входа.")}</small>
       </label>
       <label>
-        Ежедневная цель, XP
+        {localize(" Ежедневная цель, XP ")}
         <input
           name="goal"
           {...validation.field("goal")}
@@ -126,7 +137,7 @@ export function ProfileForm({
         {validation.error("goal")}
       </label>
       <label>
-        Часовой пояс
+        {localize(" Часовой пояс ")}
         <select
           name="timezone"
           defaultValue={user.timezone}
@@ -143,32 +154,39 @@ export function ProfileForm({
               "UTC",
             ]),
           ).map((t) => (
-            <option key={t}>{t}</option>
+            <option key={t}>{localize(t)}</option>
           ))}
         </select>
-        <small>Серия занятий и дневная цель учитывают ваш часовой пояс.</small>
+        <small>
+          {localize("Серия занятий и дневная цель учитывают ваш часовой пояс.")}
+        </small>
         {validation.error("timezone")}
       </label>
       <Button
         type="submit"
         pending={mutation.isPending}
         disabled={
+          languageChanging ||
           !validation.valid ||
           (mutation.isError && !canRetryFormError(mutation.error))
         }
       >
-        Сохранить изменения
+        {localize(" Сохранить изменения ")}
       </Button>
       {mutation.error && (
         <p className="form-error" role="alert">
-          {formErrorMessage(mutation.error)}
+          {localize(formErrorMessage(mutation.error))}
         </p>
       )}
-      {mutation.isSuccess && <p role="status">Профиль сохранён.</p>}
+      {mutation.isSuccess && (
+        <p role="status">{localize("Профиль сохранён.")}</p>
+      )}
     </form>
   );
 }
 export function PasswordForm({ onChanged }: { onChanged: () => void }) {
+  const { text: localize } = useI18n();
+
   const validation = useFormValidation({
     current: {
       ...passwordRule("Текущий пароль", 1, "current_password"),
@@ -213,7 +231,7 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
       }}
     >
       <label>
-        Текущий пароль
+        {localize(" Текущий пароль ")}
         <input
           name="current"
           {...validation.field("current")}
@@ -225,7 +243,7 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
         {validation.error("current")}
       </label>
       <label>
-        Новый пароль
+        {localize(" Новый пароль ")}
         <input
           name="next"
           {...validation.field("next")}
@@ -236,7 +254,9 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
           autoComplete="new-password"
         />
         <small>
-          Не менее 12 символов. После смены пароля потребуется войти снова.
+          {localize(
+            " Не менее 12 символов. После смены пароля потребуется войти снова. ",
+          )}
         </small>
         {validation.error("next")}
       </label>
@@ -249,11 +269,11 @@ export function PasswordForm({ onChanged }: { onChanged: () => void }) {
           (mutation.isError && !canRetryFormError(mutation.error))
         }
       >
-        Изменить пароль
+        {localize(" Изменить пароль ")}
       </Button>
       {mutation.error && (
         <p className="form-error" role="alert">
-          {formErrorMessage(mutation.error)}
+          {localize(formErrorMessage(mutation.error))}
         </p>
       )}
     </form>

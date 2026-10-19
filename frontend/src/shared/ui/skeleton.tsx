@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import type { CSSProperties, ReactNode } from "react";
 
 export function Skeleton({
@@ -29,10 +31,12 @@ export function SkeletonRegion({
   label?: string;
   className?: string;
 }) {
+  const { text: localize } = useI18n();
+
   return (
     <div className={`skeleton-region ${className}`} role="status">
-      <span className="sr-only">{label}</span>
-      <div aria-hidden="true">{children}</div>
+      <span className="sr-only">{localize(label)}</span>
+      <div aria-hidden="true">{localize(children)}</div>
     </div>
   );
 }

@@ -44,6 +44,7 @@ class User(Timestamped, Base):
     last_activity: Mapped[date | None]
     daily_goal: Mapped[int] = mapped_column(default=100)
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Vladivostok")
+    locale: Mapped[str] = mapped_column(String(10), default="ru", server_default="ru")
 
 
 class AuthSession(Base):

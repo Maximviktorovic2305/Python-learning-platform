@@ -3,6 +3,7 @@ from fastapi import APIRouter, Response
 from app.api.cookies import clear_refresh
 from app.api.dependencies import CurrentUser, Session
 from app.schemas.contracts import (
+    LocaleUpdate,
     Message,
     PasswordChange,
     ProfileUpdate,
@@ -30,3 +31,8 @@ async def change_password(
     await auth.change_password(session, user, payload)
     clear_refresh(response)
     return Message(message="Пароль изменён. Войдите снова на всех устройствах.")
+
+
+@router.patch("/users/me/locale", response_model=UserView, tags=["users"])
+async def update_locale(payload: LocaleUpdate, user: CurrentUser, session: Session) -> UserView:
+    return await auth.update_locale(session, user, payload.locale)

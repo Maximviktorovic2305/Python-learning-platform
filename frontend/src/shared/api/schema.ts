@@ -124,6 +124,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/users/me/locale": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update Locale */
+    patch: operations["update_locale_api_users_me_locale_patch"];
+    trace?: never;
+  };
   "/api/questions": {
     parameters: {
       query?: never;
@@ -699,6 +716,24 @@ export interface components {
       /** Modules */
       modules: components["schemas"]["ModuleView"][];
     };
+    /** LocaleUpdate */
+    LocaleUpdate: {
+      /**
+       * Locale
+       * @enum {string}
+       */
+      locale:
+        | "ru"
+        | "en"
+        | "zh-CN"
+        | "es"
+        | "pt-BR"
+        | "fr"
+        | "de"
+        | "ja"
+        | "hi"
+        | "ar";
+    };
     /** Login */
     Login: {
       /**
@@ -736,6 +771,21 @@ export interface components {
     };
     /** ProfileUpdate */
     ProfileUpdate: {
+      /** Locale */
+      locale?:
+        | (
+            | "ru"
+            | "en"
+            | "zh-CN"
+            | "es"
+            | "pt-BR"
+            | "fr"
+            | "de"
+            | "ja"
+            | "hi"
+            | "ar"
+          )
+        | null;
       /** Username */
       username: string;
       /** Daily Goal */
@@ -839,6 +889,22 @@ export interface components {
     };
     /** Register */
     Register: {
+      /**
+       * Locale
+       * @default ru
+       * @enum {string}
+       */
+      locale:
+        | "ru"
+        | "en"
+        | "zh-CN"
+        | "es"
+        | "pt-BR"
+        | "fr"
+        | "de"
+        | "ja"
+        | "hi"
+        | "ar";
       /** Accept Terms */
       accept_terms: boolean;
       /** Accept Data Processing */
@@ -932,6 +998,21 @@ export interface components {
       daily_goal: number;
       /** Timezone */
       timezone: string;
+      /**
+       * Locale
+       * @enum {string}
+       */
+      locale:
+        | "ru"
+        | "en"
+        | "zh-CN"
+        | "es"
+        | "pt-BR"
+        | "fr"
+        | "de"
+        | "ja"
+        | "hi"
+        | "ar";
       /**
        * Created At
        * Format: date-time
@@ -1192,6 +1273,39 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Message"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  update_locale_api_users_me_locale_patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LocaleUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UserView"];
         };
       };
       /** @description Validation Error */

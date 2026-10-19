@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import { PageHeading } from "@/shared/ui";
 import { ArrowUpRight } from "lucide-react";
 import { TechnologyIcon } from "@/shared/ui/technology-icon";
@@ -147,18 +149,22 @@ const groups: StackGroup[] = [
 ];
 
 export function StackPage() {
+  const { text: localize } = useI18n();
+
   return (
     <>
       <PageHeading
-        eyebrow="PYTHON LAB / TECHNOLOGIES"
-        title="Стек проекта"
-        description="Технологии, на которых работает эта учебная платформа, и роль каждой из них."
+        eyebrow={localize("Стек")}
+        title={localize("Стек проекта")}
+        description={localize(
+          "Технологии, на которых работает эта учебная платформа, и роль каждой из них.",
+        )}
       />
       <div className={styles.grid}>
         {groups.map((group) => (
           <section className={`panel ${styles.card}`} key={group.title}>
-            <h2>{group.title}</h2>
-            <p>{group.description}</p>
+            <h2>{localize(group.title)}</h2>
+            <p>{localize(group.description)}</p>
             <dl>
               {group.technologies.map(([name, description]) => (
                 <div key={name}>
@@ -176,10 +182,12 @@ export function StackPage() {
                           key={technology}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title={`Официальная документация ${technology} (откроется в новой вкладке)`}
+                          title={localize(
+                            `Официальная документация ${technology} (откроется в новой вкладке)`,
+                          )}
                         >
                           <TechnologyIcon name={docs.icon} />
-                          <span>{technology}</span>
+                          <span>{localize(technology)}</span>
                           <ArrowUpRight
                             className={styles.external}
                             size={13}
@@ -189,7 +197,7 @@ export function StackPage() {
                       );
                     })}
                   </dt>
-                  <dd>{description}</dd>
+                  <dd>{localize(description)}</dd>
                 </div>
               ))}
             </dl>

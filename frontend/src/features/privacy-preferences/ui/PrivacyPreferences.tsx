@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useEffect, useId, useRef, useState } from "react";
 import { HAS_ANALYTICS, LEGAL_ROUTES } from "@/shared/config";
 import {
@@ -11,6 +13,8 @@ import styles from "@/shared/ui/legal/Legal.module.css";
 import { stopMetrika } from "@/shared/lib/metrika";
 
 export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
+  const { text: localize } = useI18n();
+
   const choice = usePrivacyChoice();
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -44,13 +48,14 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
   return (
     <aside
       className={`${styles.privacyNotice} ${inline ? styles.privacyInline : ""}`}
-      aria-label="Информация о cookie"
+      aria-label={localize("Информация о cookie")}
     >
-      <h2>Мы используем cookie</h2>
+      <h2>{localize("Мы используем cookie")}</h2>
       <p>
-        Технические cookie и локальное хранилище помогают сайту работать
-        безопасно и сохранять ваши настройки.{" "}
-        <a href={LEGAL_ROUTES.cookies}>Подробнее о cookie</a>.
+        {localize(
+          " Технические cookie и локальное хранилище помогают сайту работать безопасно и сохранять ваши настройки.",
+        )}{" "}
+        <a href={LEGAL_ROUTES.cookies}>{localize("Подробнее о cookie")}</a>.
       </p>
       {HAS_ANALYTICS && (
         <label className={styles.analyticsConsent} htmlFor={id}>
@@ -62,8 +67,8 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
             defaultChecked={choice === "analytics"}
           />
           <span>
-            Разрешаю аналитику Яндекс Метрики{" "}
-            <small>Необязательно. Помогает улучшать сайт.</small>
+            {localize(" Разрешаю аналитику Яндекс Метрики")}{" "}
+            <small>{localize("Необязательно. Помогает улучшать сайт.")}</small>
           </span>
         </label>
       )}
@@ -72,7 +77,7 @@ export function PrivacyPreferences({ inline = false }: { inline?: boolean }) {
         className={styles.privacyChoice}
         onClick={acknowledge}
       >
-        Понятно
+        {localize(" Понятно ")}
       </button>
     </aside>
   );

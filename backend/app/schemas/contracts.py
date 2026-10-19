@@ -6,12 +6,15 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
 
+from app.domain.locales import Locale
+
 
 class Contract(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class Register(Contract):
+    locale: Locale = "ru"
     accept_terms: bool = Field(strict=True)
     accept_data_processing: bool = Field(strict=True)
     legal_version: Literal["2026-10-13"]
@@ -45,6 +48,7 @@ class UserView(Contract):
     longest_streak: int
     daily_goal: int
     timezone: str
+    locale: Locale
     created_at: datetime
 
 
@@ -54,6 +58,7 @@ class AuthView(Contract):
 
 
 class ProfileUpdate(Contract):
+    locale: Locale | None = None
     username: str = Field(min_length=3, max_length=40, pattern=r"^[a-zA-Z0-9_]+$")
     daily_goal: int = Field(ge=20, le=1000)
     timezone: str = Field(max_length=64)
@@ -71,6 +76,10 @@ class ProfileUpdate(Contract):
 class PasswordChange(Contract):
     current_password: str = Field(max_length=128)
     new_password: str = Field(min_length=12, max_length=128)
+
+
+class LocaleUpdate(Contract):
+    locale: Locale
 
 
 class Message(Contract):

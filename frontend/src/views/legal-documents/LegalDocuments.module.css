@@ -37,7 +37,7 @@
   color: var(--muted);
 }
 .card > svg:last-child {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--muted);
 }
 @media (max-width: 900px) {

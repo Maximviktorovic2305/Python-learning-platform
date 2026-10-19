@@ -1,11 +1,12 @@
+import { getLanguage, localizeMetadata } from "@/shared/i18n/server";
 import { LandingPage } from "@/views/landing";
 import { publicMetadata, SITE_DESCRIPTION, SITE_URL } from "@/shared/config";
-export const metadata = publicMetadata(
-  "Бесплатный курс Python с практикой",
-  SITE_DESCRIPTION,
-  "/",
-);
-export default function Page() {
+export const generateMetadata = () =>
+  localizeMetadata(
+    publicMetadata("Бесплатный курс Python с практикой", SITE_DESCRIPTION, "/"),
+  );
+export default async function Page() {
+  const { locale, t } = await getLanguage();
   const data = {
     "@context": "https://schema.org",
     "@graph": [
@@ -14,14 +15,14 @@ export default function Page() {
         "@id": `${SITE_URL}/#website`,
         name: "Python Lab",
         url: SITE_URL,
-        inLanguage: "ru-RU",
+        inLanguage: locale,
       },
       {
         "@type": "Course",
-        name: "Бесплатный курс Python",
-        description: SITE_DESCRIPTION,
+        name: t("Бесплатный курс Python"),
+        description: t(SITE_DESCRIPTION),
         url: SITE_URL,
-        inLanguage: "ru-RU",
+        inLanguage: locale,
         isAccessibleForFree: true,
         provider: {
           "@type": "Person",

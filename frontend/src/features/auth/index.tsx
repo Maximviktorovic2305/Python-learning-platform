@@ -1,16 +1,23 @@
 "use client";
+
 import { LEGAL_VERSION } from "@/shared/config";
 import { ConsentFields, LegalLinks } from "@/shared/ui/legal";
 import {
   createContext,
   useContext,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type ReactNode,
   type FormEvent,
 } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useIsMutating,
+} from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { userQuery, type User } from "@/entities/user";
@@ -25,6 +32,7 @@ import {
   type Schema,
 } from "@/shared/api";
 import { Button } from "@/shared/ui";
+import { useI18n, isLocale } from "@/shared/i18n";
 import { useFormValidation } from "@/shared/ui/use-form-validation";
 import {
   usernameRule,
@@ -44,11 +52,19 @@ type AuthState = {
 };
 const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { setLocale } = useI18n();
   const queryClient = useQueryClient();
   const revision = useRef(0);
   const [sessionRevision, setSessionRevision] = useState(0);
   const [loggingOut, setLoggingOut] = useState(false);
   const session = useQuery(sessionQuery(sessionRevision));
+  const syncLanguage = useEffectEvent(() => {
+    if (isLocale(session.data?.locale))
+      void setLocale(session.data.locale).catch(() => {});
+  });
+  useEffect(() => {
+    syncLanguage();
+  }, [session.data?.id, session.data?.locale]);
   useEffect(
     () =>
       subscribeSessionEnd(() => {
@@ -112,6 +128,9 @@ export function useAuth() {
   return value;
 }
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
+  const { text: localize, locale } = useI18n();
+  const languageChanging =
+    useIsMutating({ mutationKey: ["change-language"] }) > 0;
   const router = useRouter();
   const { accept, loggingOut } = useAuth();
   const validation = useFormValidation({
@@ -134,6 +153,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
                 accept_terms: true,
                 accept_data_processing: true,
                 legal_version: LEGAL_VERSION,
+                locale,
               },
             }),
           )
@@ -153,6 +173,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     if (
       mutation.isPending ||
       loggingOut ||
+      languageChanging ||
       (mutation.isError && !canRetryFormError(mutation.error)) ||
       !validation.validate(event.currentTarget)
     )
@@ -182,7 +203,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     >
       {mode === "register" && (
         <label>
-          Имя пользователя
+          {localize(" Имя пользователя ")}
           <input
             name="username"
             {...validation.field("username")}
@@ -193,7 +214,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             autoComplete="username"
             placeholder="python_explorer"
           />
-          <small>Латинские буквы, цифры и подчёркивание.</small>
+          <small>{localize("Латинские буквы, цифры и подчёркивание.")}</small>
           {validation.error("username")}
         </label>
       )}
@@ -211,7 +232,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         {validation.error("email")}
       </label>
       <label>
-        Пароль
+        {localize(" Пароль ")}
         <input
           name="password"
           {...validation.field("password")}
@@ -222,9 +243,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           autoComplete={
             mode === "register" ? "new-password" : "current-password"
           }
-          placeholder={
-            mode === "register" ? "Не менее 12 символов" : "Ваш пароль"
-          }
+          placeholder={localize(
+            mode === "register" ? "Не менее 12 символов" : "Ваш пароль",
+          )}
         />
         {validation.error("password")}
       </label>
@@ -232,23 +253,27 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       <LegalLinks />
       {mutation.error && (
         <p className="form-error" role="alert">
-          {formErrorMessage(mutation.error, mode)}
+          {localize(formErrorMessage(mutation.error, mode))}
         </p>
       )}
       <Button
         type="submit"
-        pending={mutation.isPending || loggingOut}
+        pending={mutation.isPending || loggingOut || languageChanging}
         disabled={
           !validation.valid ||
           (mutation.isError && !canRetryFormError(mutation.error))
         }
       >
-        {mode === "register" ? "Создать аккаунт" : "Войти в лабораторию"}
+        {localize(
+          mode === "register" ? "Создать аккаунт" : "Войти в лабораторию",
+        )}
       </Button>
       <p className="form-foot">
-        {mode === "register" ? "Уже учитесь с нами?" : "Пока нет аккаунта?"}{" "}
+        {localize(
+          mode === "register" ? "Уже учитесь с нами?" : "Пока нет аккаунта?",
+        )}{" "}
         <Link href={mode === "register" ? "/login" : "/register"}>
-          {mode === "register" ? "Войти" : "Начать обучение"}
+          {localize(mode === "register" ? "Войти" : "Начать обучение")}
         </Link>
       </p>
     </form>

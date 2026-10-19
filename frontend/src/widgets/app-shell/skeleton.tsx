@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import {
   Skeleton,
   SkeletonRegion,
@@ -60,9 +62,11 @@ function FormSkeleton({ fields = 4 }: { fields?: number }) {
 }
 
 export function LessonNavigationSkeleton() {
+  const { text: localize } = useI18n();
+
   return (
     <SkeletonRegion
-      label="Загружаем навигацию по урокам…"
+      label={localize("Загружаем навигацию по урокам…")}
       className="skeleton-lesson-nav"
     >
       <div className="skeleton-card">
@@ -111,15 +115,17 @@ export function PageSkeleton({
   variant?: PageSkeletonVariant;
   heading?: boolean;
 }) {
+  const { text: localize } = useI18n();
+
   return (
     <SkeletonRegion
-      label={
+      label={localize(
         variant === "lesson"
           ? "Загружаем урок…"
           : variant === "exercise"
             ? "Загружаем задание…"
-            : "Загружаем страницу…"
-      }
+            : "Загружаем страницу…",
+      )}
       className={`page-skeleton skeleton-${variant}`}
     >
       {heading && variant !== "lesson" && <HeadingSkeleton />}

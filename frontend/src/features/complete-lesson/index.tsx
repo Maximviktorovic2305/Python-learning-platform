@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap, errorMessage, refreshLearningData } from "@/shared/api";
 import { Button } from "@/shared/ui";
@@ -16,6 +18,8 @@ export function CompleteLesson({
   onComplete: () => void;
   actionLabel?: string;
 }) {
+  const { text: localize } = useI18n();
+
   const client = useQueryClient();
   const mutation = useMutation({
     mutationFn: async () =>
@@ -37,11 +41,11 @@ export function CompleteLesson({
         pending={mutation.isPending}
       >
         {completed ? <Check size={16} /> : <ArrowRight size={16} />}
-        {actionLabel}
+        {localize(actionLabel)}
       </Button>
       {mutation.error && !completed && (
         <p className="form-error" role="alert">
-          {errorMessage(mutation.error)}
+          {localize(errorMessage(mutation.error))}
         </p>
       )}
     </div>

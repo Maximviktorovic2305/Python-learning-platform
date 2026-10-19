@@ -11,6 +11,8 @@
     "predev": "node scripts/prepare-python.mjs",
     "prebuild": "node scripts/prepare-python.mjs",
     "typecheck": "tsc --noEmit",
+    "i18n:extract": "node scripts/extract-translations.mjs",
+    "i18n:check": "node --test scripts/i18n.test.mjs",
     "lint:fsd": "node scripts/check-fsd.mjs",
     "test": "playwright test",
     "format": "prettier --write src tests scripts public/python-worker.js *.ts *.mjs *.json",

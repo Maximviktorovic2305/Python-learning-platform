@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -22,6 +24,8 @@ import {
 import { errorMessage } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 export function PracticePage() {
+  const { text: localize } = useI18n();
+
   const { user } = useAuth();
   const [filter, setFilter] = useState("all");
   const course = useQuery(courseQuery);
@@ -40,9 +44,11 @@ export function PracticePage() {
       <CachedDataNotice query={progress} />
       <CachedDataNotice query={course} />
       <PageHeading
-        eyebrow="PRACTICE / EXPERIMENT / REPEAT"
-        title="Территория практики."
-        description="Пиши, запускай, разбирай ошибки. Именно так формируется уверенность."
+        eyebrow={localize("Практика")}
+        title={localize("Территория практики.")}
+        description={localize(
+          "Пиши, запускай, разбирай ошибки. Именно так формируется уверенность.",
+        )}
       />
       <div className="curriculum-toolbar">
         <p>
@@ -50,8 +56,9 @@ export function PracticePage() {
             <Skeleton width={170} height={16} />
           ) : (
             <>
-              {progress.data?.exercise_ids.length ?? "—"} /{" "}
-              {course.data?.exercise_count ?? "—"} заданий решено
+              {localize(progress.data?.exercise_ids.length ?? "—")} /{" "}
+              {localize(course.data?.exercise_count ?? "—")}
+              {localize(" заданий решено ")}
             </>
           )}
         </p>
@@ -60,13 +67,13 @@ export function PracticePage() {
             className={filter === "all" ? "active" : ""}
             onClick={() => setFilter("all")}
           >
-            Все темы
+            {localize(" Все темы ")}
           </button>
           <button
             className={filter === "weak" ? "active" : ""}
             onClick={() => setFilter("weak")}
           >
-            Стоит повторить
+            {localize(" Стоит повторить ")}
           </button>
         </div>
       </div>
@@ -75,14 +82,14 @@ export function PracticePage() {
         <PageSkeleton variant="practice" />
       ) : course.error && !course.data ? (
         <ErrorState
-          message={errorMessage(course.error)}
+          message={localize(errorMessage(course.error))}
           retry={() => {
             void course.refetch();
           }}
         />
       ) : progress.error && !progress.data ? (
         <ErrorState
-          message={errorMessage(progress.error)}
+          message={localize(errorMessage(progress.error))}
           retry={() => {
             void progress.refetch();
           }}
@@ -90,8 +97,9 @@ export function PracticePage() {
       ) : !topics.length ? (
         <div className="state">
           <p>
-            Пока нет тем для повторения. Пройдите тест, чтобы получить
-            рекомендации.
+            {localize(
+              " Пока нет тем для повторения. Пройдите тест, чтобы получить рекомендации. ",
+            )}
           </p>
         </div>
       ) : (
@@ -104,21 +112,30 @@ export function PracticePage() {
               data-topic-status={getTopicStatus(topic.id, progress.data)}
             >
               <div>
-                <span>{String(i + 1).padStart(2, "0")}</span>
+                <span>{localize(String(i + 1).padStart(2, "0"))}</span>
                 <PythonLogo size={21} />
               </div>
-              <h2>{topic.title}</h2>
+              <h2>{localize(topic.title)}</h2>
               {user && (
                 <TopicStatusBadge
                   status={getTopicStatus(topic.id, progress.data)}
                 />
               )}
-              <p>{topic.summary}</p>
+              <p>{localize(topic.summary)}</p>
               <div>
                 {Object.entries(topic.practice_difficulties ?? {}).map(
                   ([difficulty, count]) => (
                     <Tag key={difficulty}>
-                      {count} {difficulty.toUpperCase()}
+                      {count}{" "}
+                      {localize(
+                        (
+                          {
+                            easy: "Лёгкие",
+                            medium: "Средние",
+                            hard: "Сложные",
+                          } as Record<string, string>
+                        )[difficulty] ?? difficulty,
+                      )}
                     </Tag>
                   ),
                 )}
@@ -128,7 +145,8 @@ export function PracticePage() {
                   {progress.data?.exercise_ids.filter((id) =>
                     id.startsWith(`${topic.id}-e`),
                   ).length ?? 0}{" "}
-                  / {topic.exercise_count ?? "—"} решено
+                  / {topic.exercise_count ?? "—"}
+                  {localize(" решено ")}
                 </span>
                 <ArrowUpRight size={18} />
               </footer>

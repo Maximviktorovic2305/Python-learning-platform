@@ -7,8 +7,10 @@ import {
   useSpring,
 } from "motion/react";
 import { PythonLogo } from "@/shared/ui/python-logo";
+import { useI18n } from "@/shared/i18n";
 
 export function PythonMark({ animated = false }: { animated?: boolean }) {
+  const { t } = useI18n();
   const reduced = useReducedMotion();
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -34,7 +36,9 @@ export function PythonMark({ animated = false }: { animated?: boolean }) {
           <div className="orbit orbit-one" />
           <div className="orbit orbit-two" />
           <span className="coord coord-top">PY / 03.14</span>
-          <span className="coord coord-bottom">BUILD. BREAK. UNDERSTAND.</span>
+          <span className="coord coord-bottom">
+            {t("Понимание вместо зубрёжки.")}
+          </span>
           <div className="mark-cross">+</div>
         </>
       )}

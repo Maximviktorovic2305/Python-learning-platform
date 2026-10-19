@@ -1,4 +1,7 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+import { translateExerciseHint } from "@/shared/i18n/learning";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -56,6 +59,8 @@ export function CodeEditor({
   completed: boolean;
   draftKey?: string;
 }) {
+  const { text: localize } = useI18n();
+
   const [draft] = useState(() => readDraft(draftKey));
   const [code, setCode] = useState(draft?.code ?? exercise.starter_code);
   const [stdin, setStdin] = useState(
@@ -159,11 +164,13 @@ export function CodeEditor({
     <div className="exercise-workspace">
       <div className="exercise-description">
         <div className="eyebrow">
-          {exercise.catalog === "trainer"
-            ? `ЗАДАЧА / ${exercise.id.replace("trainer-", "")}`
-            : `CHALLENGE / ${exercise.id.split("-e").at(-1)}`}
+          {localize(
+            exercise.catalog === "trainer"
+              ? `ЗАДАЧА / ${exercise.id.replace("trainer-", "")}`
+              : `CHALLENGE / ${exercise.id.split("-e").at(-1)}`,
+          )}
         </div>
-        <h2>{exercise.title}</h2>
+        <h2>{localize(exercise.title)}</h2>
         <div className="meta-row">
           <Tag
             tone={
@@ -174,18 +181,21 @@ export function CodeEditor({
                   : "yellow"
             }
           >
-            {(
-              { easy: "Лёгкая", medium: "Средняя", hard: "Сложная" } as Record<
-                string,
-                string
-              >
-            )[exercise.difficulty] ?? exercise.difficulty}
+            {localize(
+              (
+                {
+                  easy: "Лёгкая",
+                  medium: "Средняя",
+                  hard: "Сложная",
+                } as Record<string, string>
+              )[exercise.difficulty] ?? exercise.difficulty,
+            )}
           </Tag>
-          <Tag>Самостоятельная практика</Tag>
+          <Tag>{localize("Самостоятельная практика")}</Tag>
           {solved && (
             <Tag tone="green">
               <Check size={12} />
-              Решено
+              {localize(" Решено ")}
             </Tag>
           )}
         </div>
@@ -195,15 +205,15 @@ export function CodeEditor({
           onClick={() => setHint(Math.min(hint + 1, exercise.hints.length))}
         >
           <Lightbulb size={16} />
-          {hint ? "Следующая подсказка" : "Нужна подсказка?"}
+          {localize(hint ? "Следующая подсказка" : "Нужна подсказка?")}
         </button>
         {exercise.hints.slice(0, hint).map((h) => (
           <p className="hint-box" key={h}>
-            {h}
+            {translateExerciseHint(h, exercise.description, localize)}
           </p>
         ))}
       </div>
-      <div className="editor ym-hide-content">
+      <div className="editor ym-hide-content" dir="ltr" translate="no">
         <div className="code-title">
           <span>
             <i />
@@ -212,7 +222,7 @@ export function CodeEditor({
           <div>
             <Tag>PYTHON 3</Tag>
             <button
-              aria-label="Сбросить код"
+              aria-label={localize("Сбросить код")}
               disabled={running || verifying}
               onClick={() => {
                 setCode(exercise.starter_code);
@@ -225,7 +235,7 @@ export function CodeEditor({
               <RotateCcw size={14} />
             </button>
             <button
-              aria-label="Копировать решение"
+              aria-label={localize("Копировать решение")}
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(code);
@@ -253,7 +263,7 @@ export function CodeEditor({
             </pre>
             <textarea
               ref={input}
-              aria-label="Редактор Python"
+              aria-label={localize("Редактор Python")}
               spellCheck={false}
               autoCapitalize="off"
               autoCorrect="off"
@@ -303,11 +313,11 @@ export function CodeEditor({
           </div>
         </div>
         <small className="editor-keyboard-note">
-          Tab — отступ · Shift+Tab — выход из редактора
+          {localize(" Tab — отступ · Shift+Tab — выход из редактора ")}
         </small>
         {needsInput && (
           <label className="editor-stdin">
-            <span>Входные данные для input()</span>
+            <span>{localize("Входные данные для input()")}</span>
             <textarea
               value={stdin}
               maxLength={4000}
@@ -321,15 +331,17 @@ export function CodeEditor({
               }}
             />
             <small>
-              Это поле используется кнопкой «Запустить локально». Кнопка
-              «Проверить» использует исходные данные задания.
+              {localize(
+                " Это поле используется кнопкой «Запустить локально». Кнопка «Проверить» использует исходные данные задания. ",
+              )}
             </small>
           </label>
         )}
         {exercise.local_supported === false && (
           <p className="hint-box">
-            Для потоков и процессов используйте кнопку «Проверить» после входа:
-            браузерный Python не поддерживает системные потоки и процессы.
+            {localize(
+              " Для потоков и процессов используйте кнопку «Проверить» после входа: браузерный Python не поддерживает системные потоки и процессы. ",
+            )}
           </p>
         )}
         <div className="editor-controls">
@@ -339,7 +351,7 @@ export function CodeEditor({
               className="secondary"
             >
               <Square size={14} />
-              Остановить
+              {localize(" Остановить ")}
             </Button>
           ) : (
             <Button
@@ -349,7 +361,7 @@ export function CodeEditor({
               }
             >
               <Play size={15} />
-              Запустить локально
+              {localize(" Запустить локально ")}
             </Button>
           )}
           <Button
@@ -359,7 +371,7 @@ export function CodeEditor({
             pending={verifying}
           >
             <ShieldCheck size={15} />
-            {solved ? "Проверить повторно" : "Проверить"}
+            {localize(solved ? "Проверить повторно" : "Проверить")}
           </Button>
         </div>
         <div
@@ -370,23 +382,29 @@ export function CodeEditor({
           <div className="output-heading">
             <span>
               <PythonLogo size={16} />
-              OUTPUT
+              {localize("Результат")}
             </span>
             <Tag
               tone={output?.status === "ok" ? "green" : output ? "yellow" : ""}
             >
-              {running
-                ? "RUNNING"
-                : verifying
-                  ? "CHECKING"
-                  : output?.status === "error" && messageKind === "failed"
-                    ? "ВЫВОД НЕ СОВПАЛ"
-                    : (output?.status.toUpperCase() ?? "READY")}
+              {localize(
+                running
+                  ? "Выполняем Python-код…"
+                  : verifying
+                    ? "Проверяем решение…"
+                    : output?.status === "error" && messageKind === "failed"
+                      ? "ВЫВОД НЕ СОВПАЛ"
+                      : output?.status === "error"
+                        ? "Ошибка"
+                        : "готово",
+              )}
             </Tag>
           </div>
           {running || verifying ? (
             <SkeletonRegion
-              label={running ? "Выполняем Python-код…" : "Проверяем решение…"}
+              label={localize(
+                running ? "Выполняем Python-код…" : "Проверяем решение…",
+              )}
               className="skeleton-output"
             >
               <SkeletonCode count={3} />
@@ -395,14 +413,18 @@ export function CodeEditor({
             <>
               <pre>
                 {output?.stdout ||
-                  (!output
-                    ? exercise.local_supported === false
-                      ? "Для этого задания используйте серверную проверку."
-                      : "Нажмите «Запустить локально», чтобы увидеть результат."
-                    : "Программа завершилась без вывода.")}
+                  localize(
+                    !output
+                      ? exercise.local_supported === false
+                        ? "Для этого задания используйте серверную проверку."
+                        : "Нажмите «Запустить локально», чтобы увидеть результат."
+                      : "Программа завершилась без вывода.",
+                  )}
               </pre>
               {output?.stderr && (
-                <pre className="execution-error">{output.stderr}</pre>
+                <pre className="execution-error" dir="ltr" translate="no">
+                  {output.stderr}
+                </pre>
               )}
             </>
           )}
@@ -420,41 +442,52 @@ export function CodeEditor({
           )}
           <div>
             <strong>
-              {messageKind === "passed"
-                ? "Задание выполнено"
-                : messageKind === "failed"
-                  ? "Проверка не пройдена"
-                  : "Не удалось выполнить действие"}
+              {localize(
+                messageKind === "passed"
+                  ? "Задание выполнено"
+                  : messageKind === "failed"
+                    ? "Проверка не пройдена"
+                    : "Не удалось выполнить действие",
+              )}
             </strong>
-            <p>{message}</p>
+            <p>{localize(message)}</p>
           </div>
         </div>
       )}
       <p className="muted small-text">
-        Локальный запуск выполняется на вашем устройстве. XP выдаётся после
-        серверной проверки.{" "}
-        {needsInput
-          ? "input() читает строки из поля «Входные данные»."
-          : "Исходные данные находятся в начале solution.py."}{" "}
-        Сетевые запросы из локального Python недоступны.
-        {solved &&
-          " Баллы за это задание уже получены. Можно практиковаться без повторного начисления XP."}
+        {localize(
+          " Локальный запуск выполняется на вашем устройстве. XP выдаётся после серверной проверки.",
+        )}{" "}
+        {localize(
+          needsInput
+            ? "input() читает строки из поля «Входные данные»."
+            : "Исходные данные находятся в начале solution.py.",
+        )}{" "}
+        {localize(" Сетевые запросы из локального Python недоступны. ")}
+        {localize(
+          solved &&
+            " Баллы за это задание уже получены. Можно практиковаться без повторного начисления XP.",
+        )}
       </p>
       {draftKey && (
         <p className="muted small-text" role="status">
-          {draftStatus === "saved"
-            ? "Черновик сохранён в этом браузере."
-            : draftStatus === "restored"
-              ? "Черновик восстановлен из этого браузера."
-              : draftStatus === "unavailable"
-                ? "Браузер не разрешает сохранить черновик. Скопируйте код перед уходом со страницы."
-                : "Во время работы черновик сохраняется в этом браузере."}
+          {localize(
+            draftStatus === "saved"
+              ? "Черновик сохранён в этом браузере."
+              : draftStatus === "restored"
+                ? "Черновик восстановлен из этого браузера."
+                : draftStatus === "unavailable"
+                  ? "Браузер не разрешает сохранить черновик. Скопируйте код перед уходом со страницы."
+                  : "Во время работы черновик сохраняется в этом браузере.",
+          )}
         </p>
       )}
       {!user && (
         <p className="muted small-text">
-          <Link href="/login">Войдите в аккаунт</Link>, чтобы отправить решение
-          на серверную проверку и сохранить прогресс.
+          <Link href="/login">{localize("Войдите в аккаунт")}</Link>
+          {localize(
+            ", чтобы отправить решение на серверную проверку и сохранить прогресс. ",
+          )}
         </p>
       )}
     </div>

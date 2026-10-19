@@ -1,7 +1,11 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useEffect, useId, useRef, useState } from "react";
 import styles from "@/shared/ui/legal/Legal.module.css";
 export function AuthorSupportButton() {
+  const { text: localize } = useI18n();
+
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -64,20 +68,21 @@ export function AuthorSupportButton() {
         <section
           className={styles.supportPanel}
           id={id}
-          aria-label="Поддержать автора"
+          aria-label={localize("Поддержать автора")}
         >
           <button
             type="button"
             className={styles.closeSupport}
             onClick={close}
-            aria-label="Закрыть информацию о поддержке"
+            aria-label={localize("Закрыть информацию о поддержке")}
           >
             ×
           </button>
-          <h2>Помогите музыке появиться</h2>
+          <h2>{localize("Помогите музыке появиться")}</h2>
           <p>
-            Вы можете поддержать автора добровольным донатом на создание и
-            запись музыкального альбома.
+            {localize(
+              " Вы можете поддержать автора добровольным донатом на создание и запись музыкального альбома. ",
+            )}
           </p>
           <a
             className={styles.donate}
@@ -85,7 +90,7 @@ export function AuthorSupportButton() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Поддержать донатом ↗
+            {localize(" Поддержать донатом ↗ ")}
           </a>
         </section>
       )}
@@ -93,7 +98,7 @@ export function AuthorSupportButton() {
         ref={button}
         type="button"
         className={styles.supportButton}
-        aria-label="Поддержать автора"
+        aria-label={localize("Поддержать автора")}
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => {

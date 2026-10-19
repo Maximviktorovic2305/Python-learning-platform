@@ -1,0 +1,9 @@
+The source language is Russian. Catalog keys are complete source strings; all nine target catalogs ship with the app. They were prepared using machine translation and should receive native speaker review before making editorial claims about translation quality. No translation service is called by the running application.
+
+Use `useI18n().t` for strings or `useI18n().text` for optional text/React children at presentation boundaries. Keep API caches and learning records canonical. Translate a whole lesson body before parsing its Markdown, so sentences and protected examples stay together. Never translate executable code, input, program output, IDs, URLs, selected answer indices or user submissions. Question options representing program output use `translateOption`.
+
+To refresh the source inventory, run `python scripts/export_translation_sources.py` from `backend` in its development environment, then `npm run i18n:extract` from `frontend`. The exporter seeds a fresh in-memory database and never reads an account database. Add translations for the new source keys to every catalog. Run `npm run i18n:check` to check coverage, interpolation and code preservation without a browser.
+
+The language cookie is a public functional preference. Account language is stored separately in the database and restored during session recovery. Switching language refreshes server metadata without replacing client state or invalidating learning caches. Arabic uses RTL, while editors, executable examples and exact outputs stay LTR.
+
+Exercise descriptions use `translateExerciseText`: quoted program values are inserted after translation, so an instruction to print «гость» still matches the server's expected output in every language. Hints preserve quoted values found in the exercise description; ordinary quoted phrases are translated. The exporter includes the corresponding parameterized messages in the inventory.

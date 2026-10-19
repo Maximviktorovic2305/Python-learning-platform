@@ -13,6 +13,7 @@ const user = {
   longest_streak: 1,
   daily_goal: 100,
   timezone: "Asia/Vladivostok",
+  locale: "ru" as const,
   created_at: "2026-10-14T00:00:00Z",
 };
 

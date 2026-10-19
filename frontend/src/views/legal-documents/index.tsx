@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -41,20 +43,24 @@ const documents = [
 ];
 
 export function LegalDocumentsPage() {
+  const { text: localize } = useI18n();
+
   return (
     <>
       <PageHeading
-        eyebrow="PYTHON LAB / DOCUMENTS"
-        title="Правовые документы"
-        description="Условия использования платформы и информация о ваших данных."
+        eyebrow={localize("Правовые документы")}
+        title={localize("Правовые документы")}
+        description={localize(
+          "Условия использования платформы и информация о ваших данных.",
+        )}
       />
-      <nav className={styles.grid} aria-label="Документы платформы">
+      <nav className={styles.grid} aria-label={localize("Документы платформы")}>
         {documents.map(({ title, href, icon: Icon, description }) => (
           <Link className={styles.card} href={href} key={href}>
             <Icon className={styles.icon} size={24} aria-hidden="true" />
             <div>
-              <h2>{title}</h2>
-              <p>{description}</p>
+              <h2>{localize(title)}</h2>
+              <p>{localize(description)}</p>
             </div>
             <ArrowUpRight size={18} aria-hidden="true" />
           </Link>

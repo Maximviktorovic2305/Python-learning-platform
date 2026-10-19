@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useQuery } from "@tanstack/react-query";
 import { PageSkeleton } from "@/widgets/app-shell";
 import { DashboardOverview } from "@/widgets/dashboard-overview";
@@ -8,6 +10,8 @@ import { useAuth } from "@/features/auth";
 import { ErrorState, CachedDataNotice } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function DashboardPage() {
+  const { text: localize } = useI18n();
+
   const { user } = useAuth();
   const course = useQuery(courseQuery);
   const progress = useQuery(progressQuery(user?.id));
@@ -17,7 +21,7 @@ export function DashboardPage() {
       <CachedDataNotice query={course} />
       {(course.error && !course.data) || (progress.error && !progress.data) ? (
         <ErrorState
-          message={errorMessage(course.error ?? progress.error)}
+          message={localize(errorMessage(course.error ?? progress.error))}
           retry={() => {
             void course.refetch();
             void progress.refetch();

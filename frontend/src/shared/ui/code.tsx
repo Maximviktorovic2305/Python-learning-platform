@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 export function Highlight({ code }: { code: string }) {
@@ -37,6 +39,8 @@ export function CodeBlock({
   code: string;
   title?: string;
 }) {
+  const { text: localize } = useI18n();
+
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(false);
   const copy = async () => {
@@ -53,13 +57,17 @@ export function CodeBlock({
       <div className="code-title">
         <span>
           <i />
-          {title}
+          {localize(title)}
         </span>
-        <button type="button" aria-label="Копировать код" onClick={copy}>
+        <button
+          type="button"
+          aria-label={localize("Копировать код")}
+          onClick={copy}
+        >
           {copied ? <Check size={15} /> : <Copy size={15} />}
         </button>
       </div>
-      <pre>
+      <pre dir="ltr" translate="no">
         <code>
           {code.split("\n").map((line, i) => (
             <span className="code-line" key={i}>
@@ -74,7 +82,7 @@ export function CodeBlock({
       </pre>
       {error && (
         <small role="alert">
-          Не удалось скопировать. Выделите код вручную.
+          {localize(" Не удалось скопировать. Выделите код вручную. ")}
         </small>
       )}
     </div>

@@ -327,6 +327,52 @@
         ]
       }
     },
+    "/api/users/me/locale": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Update Locale",
+        "operationId": "update_locale_api_users_me_locale_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocaleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/questions": {
       "get": {
         "tags": [
@@ -1754,6 +1800,32 @@
         ],
         "title": "LevelView"
       },
+      "LocaleUpdate": {
+        "properties": {
+          "locale": {
+            "type": "string",
+            "enum": [
+              "ru",
+              "en",
+              "zh-CN",
+              "es",
+              "pt-BR",
+              "fr",
+              "de",
+              "ja",
+              "hi",
+              "ar"
+            ],
+            "title": "Locale"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "locale"
+        ],
+        "title": "LocaleUpdate"
+      },
       "Login": {
         "properties": {
           "email": {
@@ -1851,6 +1923,29 @@
       },
       "ProfileUpdate": {
         "properties": {
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ru",
+                  "en",
+                  "zh-CN",
+                  "es",
+                  "pt-BR",
+                  "fr",
+                  "de",
+                  "ja",
+                  "hi",
+                  "ar"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
           "username": {
             "type": "string",
             "maxLength": 40,
@@ -2161,6 +2256,23 @@
       },
       "Register": {
         "properties": {
+          "locale": {
+            "type": "string",
+            "enum": [
+              "ru",
+              "en",
+              "zh-CN",
+              "es",
+              "pt-BR",
+              "fr",
+              "de",
+              "ja",
+              "hi",
+              "ar"
+            ],
+            "title": "Locale",
+            "default": "ru"
+          },
           "accept_terms": {
             "type": "boolean",
             "title": "Accept Terms"
@@ -2370,6 +2482,22 @@
             "type": "string",
             "title": "Timezone"
           },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "ru",
+              "en",
+              "zh-CN",
+              "es",
+              "pt-BR",
+              "fr",
+              "de",
+              "ja",
+              "hi",
+              "ar"
+            ],
+            "title": "Locale"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -2390,6 +2518,7 @@
           "longest_streak",
           "daily_goal",
           "timezone",
+          "locale",
           "created_at"
         ],
         "title": "UserView"

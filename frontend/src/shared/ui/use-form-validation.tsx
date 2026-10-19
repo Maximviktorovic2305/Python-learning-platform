@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import {
   useId,
   useEffect,
@@ -14,6 +16,8 @@ export function useFormValidation(
   rules: FormRules,
   initial: Record<string, string | boolean> = {},
 ) {
+  const { text: localize } = useI18n();
+
   const id = useId();
   const ref = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>(() =>
@@ -85,12 +89,12 @@ export function useFormValidation(
       !Object.values(serverErrors).some(Boolean),
     field: (name: string) => ({
       id: `${id}-${name}`,
-      "aria-label": rules[name]?.label,
+      "aria-label": localize(rules[name]?.label),
       "aria-invalid": error(name) ? (true as const) : undefined,
       "aria-describedby": error(name) ? `${id}-${name}-error` : undefined,
     }),
     error: (name: string) => (
-      <FieldError id={`${id}-${name}-error`} message={error(name)} />
+      <FieldError id={`${id}-${name}-error`} message={localize(error(name))} />
     ),
     acceptServerError: (requestError: Error) =>
       setServerErrors(serverFieldErrors(requestError, rules)),
@@ -110,9 +114,11 @@ export function useFormValidation(
 export type FormValidation = ReturnType<typeof useFormValidation>;
 
 function FieldError({ id, message }: { id: string; message: string }) {
+  const { text: localize } = useI18n();
+
   return message ? (
     <span id={id} className="field-error" aria-live="polite">
-      {message}
+      {localize(message)}
     </span>
   ) : null;
 }

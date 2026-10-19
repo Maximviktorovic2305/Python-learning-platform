@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -31,6 +33,8 @@ const difficultyTones = {
 } as const;
 
 export function TasksPage() {
+  const { text: localize } = useI18n();
+
   const taskId = usePathname().split("/")[2];
   const { user, loading } = useAuth();
   const catalog = useQuery(taskCatalogQuery);
@@ -49,7 +53,7 @@ export function TasksPage() {
       (difficulty === "all" || item.difficulty === difficulty) &&
       (status === "all" ||
         (status === "solved" ? solved.has(item.id) : !solved.has(item.id))) &&
-      `${item.title} ${item.tags?.join(" ") ?? ""} ${item.id}`
+      `${item.title} ${localize(item.title)} ${item.tags?.join(" ") ?? ""} ${item.tags?.map(localize).join(" ") ?? ""} ${item.id}`
         .toLowerCase()
         .includes(search.trim().toLowerCase()),
   );
@@ -61,9 +65,11 @@ export function TasksPage() {
   return (
     <>
       <PageHeading
-        eyebrow="PYTHON / ТРЕНАЖЁР"
-        title="Задачи для самостоятельной практики."
-        description="Выберите сложность, разберите условие и напишите решение здесь же. От коротких упражнений до алгоритмов с собеседований."
+        eyebrow={localize("PYTHON / ТРЕНАЖЁР")}
+        title={localize("Задачи для самостоятельной практики.")}
+        description={localize(
+          "Выберите сложность, разберите условие и напишите решение здесь же. От коротких упражнений до алгоритмов с собеседований.",
+        )}
       />
       <CachedDataNotice query={catalog} />
       <CachedDataNotice query={progress} />
@@ -71,7 +77,7 @@ export function TasksPage() {
         <PageSkeleton variant="practice" />
       ) : catalog.error && !catalog.data ? (
         <ErrorState
-          message={errorMessage(catalog.error)}
+          message={localize(errorMessage(catalog.error))}
           retry={() => {
             void catalog.refetch();
           }}
@@ -80,27 +86,31 @@ export function TasksPage() {
         <>
           <div className="trainer-summary">
             <span>
-              <strong>{items.length}</strong> самостоятельных задач
+              <strong>{items.length}</strong>
+              {localize(" самостоятельных задач ")}
             </span>
             <span>
-              <strong>{user ? solved.size : "—"}</strong> решено вами
+              <strong>{localize(user ? solved.size : "—")}</strong>
+              {localize(" решено вами ")}
             </span>
             <span>
-              +30 XP за первое решение · прогресс курса считается отдельно
+              {localize(
+                " +30 XP за первое решение · прогресс курса считается отдельно ",
+              )}
             </span>
           </div>
           <div className="trainer-layout">
             <section
               className="trainer-catalog"
               id="task-catalog"
-              aria-label="Каталог задач"
+              aria-label={localize("Каталог задач")}
             >
               <div className="trainer-filters">
                 <label className="search-field">
                   <Search size={17} />
                   <input
-                    aria-label="Поиск задачи"
-                    placeholder="Название, тема или номер"
+                    aria-label={localize("Поиск задачи")}
+                    placeholder={localize("Название, тема или номер")}
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                   />
@@ -108,13 +118,14 @@ export function TasksPage() {
                 <div
                   className="trainer-difficulties"
                   role="group"
-                  aria-label="Сложность задач"
+                  aria-label={localize("Сложность задач")}
                 >
                   <button
                     aria-pressed={difficulty === "all"}
                     onClick={() => setDifficulty("all")}
                   >
-                    Все <span>{items.length}</span>
+                    {localize(" Все ")}
+                    <span>{items.length}</span>
                   </button>
                   {Object.entries(difficultyLabels).map(([value, label]) => (
                     <button
@@ -122,7 +133,7 @@ export function TasksPage() {
                       aria-pressed={difficulty === value}
                       onClick={() => setDifficulty(value)}
                     >
-                      {label}{" "}
+                      {localize(label)}{" "}
                       <span>
                         {
                           items.filter((item) => item.difficulty === value)
@@ -134,23 +145,27 @@ export function TasksPage() {
                 </div>
                 <label className="trainer-status">
                   <ListFilter size={16} />
-                  <span>Статус</span>
+                  <span>{localize("Статус")}</span>
                   <select
-                    aria-label="Статус решения"
+                    aria-label={localize("Статус решения")}
                     value={status}
                     onChange={(event) => setStatus(event.target.value)}
                   >
-                    <option value="all">Все задачи</option>
-                    <option value="unsolved">Не решены</option>
-                    <option value="solved">Решены</option>
+                    <option value="all">{localize("Все задачи")}</option>
+                    <option value="unsolved">{localize("Не решены")}</option>
+                    <option value="solved">{localize("Решены")}</option>
                   </select>
                 </label>
               </div>
               <p className="trainer-result-count" aria-live="polite">
-                Найдено: {filtered.length}
+                {localize(" Найдено: ")}
+                {filtered.length}
               </p>
               {filtered.length ? (
-                <ul className="trainer-list" aria-label="Задачи тренажёра">
+                <ul
+                  className="trainer-list"
+                  aria-label={localize("Задачи тренажёра")}
+                >
                   {filtered.map((item) => (
                     <li key={item.id}>
                       <Link
@@ -161,11 +176,11 @@ export function TasksPage() {
                         className={solved.has(item.id) ? "solved" : ""}
                       >
                         <span className="trainer-task-number">
-                          {item.id.replace("trainer-", "")}
+                          {localize(item.id.replace("trainer-", ""))}
                         </span>
                         <div>
-                          <strong>{item.title}</strong>
-                          <small>{item.tags?.join(" · ")}</small>
+                          <strong>{localize(item.title)}</strong>
+                          <small>{item.tags?.map(localize).join(" · ")}</small>
                           <Tag
                             tone={
                               difficultyTones[
@@ -173,13 +188,15 @@ export function TasksPage() {
                               ] ?? ""
                             }
                           >
-                            {taskDifficultyLabels[
-                              item.difficulty as keyof typeof taskDifficultyLabels
-                            ] ?? item.difficulty}
+                            {localize(
+                              taskDifficultyLabels[
+                                item.difficulty as keyof typeof taskDifficultyLabels
+                              ] ?? item.difficulty,
+                            )}
                           </Tag>
                         </div>
                         {solved.has(item.id) ? (
-                          <Check size={18} aria-label="Решена" />
+                          <Check size={18} aria-label={localize("Решена")} />
                         ) : (
                           <ArrowRight size={16} aria-hidden="true" />
                         )}
@@ -189,9 +206,9 @@ export function TasksPage() {
                 </ul>
               ) : (
                 <div className="trainer-empty">
-                  <p>Нет задач с такими фильтрами.</p>
+                  <p>{localize("Нет задач с такими фильтрами.")}</p>
                   <Button className="secondary" onClick={clearFilters}>
-                    Сбросить фильтры
+                    {localize(" Сбросить фильтры ")}
                   </Button>
                 </div>
               )}
@@ -199,15 +216,16 @@ export function TasksPage() {
             <section
               className="trainer-workspace"
               id="task-workspace"
-              aria-label="Решение задачи"
+              aria-label={localize("Решение задачи")}
             >
               {selected ? (
                 <>
                   <div className="trainer-workspace-heading">
-                    <a href="#task-catalog">← К списку задач</a>
+                    <a href="#task-catalog">{localize("← К списку задач")}</a>
                     {next && (
                       <Link href={`/tasks/${next.id}#task-workspace`}>
-                        Следующая задача <ArrowRight size={15} />
+                        {localize(" Следующая задача ")}
+                        <ArrowRight size={15} />
                       </Link>
                     )}
                   </div>
@@ -215,7 +233,7 @@ export function TasksPage() {
                     <PageSkeleton variant="exercise" />
                   ) : progress.error && !progress.data ? (
                     <ErrorState
-                      message={errorMessage(progress.error)}
+                      message={localize(errorMessage(progress.error))}
                       retry={() => {
                         void progress.refetch();
                       }}
@@ -231,10 +249,10 @@ export function TasksPage() {
                 </>
               ) : (
                 <div className="trainer-empty">
-                  <h2>Задача не найдена</h2>
-                  <p>Выберите задачу в каталоге.</p>
+                  <h2>{localize("Задача не найдена")}</h2>
+                  <p>{localize("Выберите задачу в каталоге.")}</p>
                   <Link className="button secondary" href="/tasks">
-                    Все задачи
+                    {localize(" Все задачи ")}
                   </Link>
                 </div>
               )}

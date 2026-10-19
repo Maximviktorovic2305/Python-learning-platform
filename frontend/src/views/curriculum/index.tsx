@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -31,6 +33,8 @@ import { errorMessage } from "@/shared/api";
 export function CurriculumPage({
   initialCourse,
 }: { initialCourse?: Course } = {}) {
+  const { text: localize } = useI18n();
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const { user } = useAuth();
@@ -49,7 +53,7 @@ export function CurriculumPage({
           .map((m) => ({
             ...m,
             topics: m.topics.filter((t) =>
-              `${t.title} ${t.tags.join(" ")}`
+              `${t.title} ${localize(t.title)} ${t.tags.join(" ")} ${t.tags.map(localize).join(" ")}`
                 .toLowerCase()
                 .includes(search.toLowerCase()),
             ),
@@ -62,48 +66,55 @@ export function CurriculumPage({
       <CachedDataNotice query={progress} />
       <CachedDataNotice query={course} />
       <PageHeading
-        eyebrow="ПРОГРАММА / 01 → 04"
-        title="Твой маршрут в Python."
-        description="4 раздела, 50 тем. От первого запуска до баз данных, тестов и асинхронности."
+        eyebrow={localize("ПРОГРАММА / 01 → 04")}
+        title={localize("Твой маршрут в Python.")}
+        description={localize(
+          "4 раздела, 50 тем. От первого запуска до баз данных, тестов и асинхронности.",
+        )}
       />
       <div className="curriculum-banner">
         <div>
-          <Tag tone="blue">PYTHON / ТЕОРИЯ И ПРАКТИКА</Tag>
+          <Tag tone="blue">{localize("PYTHON / ТЕОРИЯ И ПРАКТИКА")}</Tag>
           <h2>
-            Понимание складывается
+            {localize(" Понимание складывается ")}
             <br />
-            по одной теме.
+            {localize(" по одной теме. ")}
           </h2>
           <p>
-            В каждой теме: теория с разобранным кодом, практика с одной открытой
-            проверкой результата и тест с объяснениями.
+            {localize(
+              " В каждой теме: теория с разобранным кодом, практика с одной открытой проверкой результата и тест с объяснениями. ",
+            )}
           </p>
         </div>
         <div>
           <strong>
-            {course.isPending ? (
-              <Skeleton width={64} height={34} />
-            ) : (
-              (course.data?.question_count ?? "—")
+            {localize(
+              course.isPending ? (
+                <Skeleton width={64} height={34} />
+              ) : (
+                (course.data?.question_count ?? "—")
+              ),
             )}
           </strong>
-          <span>вопросов для проверки знаний</span>
+          <span>{localize("вопросов для проверки знаний")}</span>
           <strong>
-            {course.isPending ? (
-              <Skeleton width={64} height={34} />
-            ) : (
-              (course.data?.exercise_count ?? "—")
+            {localize(
+              course.isPending ? (
+                <Skeleton width={64} height={34} />
+              ) : (
+                (course.data?.exercise_count ?? "—")
+              ),
             )}
           </strong>
-          <span>практических задач</span>
+          <span>{localize("практических задач")}</span>
         </div>
       </div>
       <div className="curriculum-toolbar">
         <label className="search-field">
           <Search size={18} />
           <input
-            aria-label="Поиск темы"
-            placeholder="Найти тему: функции, циклы, SQL…"
+            aria-label={localize("Поиск темы")}
+            placeholder={localize("Найти тему: функции, циклы, SQL…")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -113,13 +124,13 @@ export function CurriculumPage({
             className={filter === "all" ? "active" : ""}
             onClick={() => setFilter("all")}
           >
-            Вся программа
+            {localize(" Вся программа ")}
           </button>
           <button
             className={filter === "available" ? "active" : ""}
             onClick={() => setFilter("available")}
           >
-            Доступные уроки
+            {localize(" Доступные уроки ")}
           </button>
         </div>
       </div>
@@ -128,16 +139,18 @@ export function CurriculumPage({
         <PageSkeleton variant="curriculum" />
       ) : course.error && !course.data ? (
         <ErrorState
-          message={errorMessage(course.error)}
+          message={localize(errorMessage(course.error))}
           retry={() => {
             void course.refetch();
           }}
         />
       ) : !levels.length ? (
-        <div className="state">Темы не найдены. Попробуйте другой запрос.</div>
+        <div className="state">
+          {localize("Темы не найдены. Попробуйте другой запрос.")}
+        </div>
       ) : progress.error && !progress.data ? (
         <ErrorState
-          message={errorMessage(progress.error)}
+          message={localize(errorMessage(progress.error))}
           retry={() => {
             void progress.refetch();
           }}
@@ -147,29 +160,37 @@ export function CurriculumPage({
           {levels.map((level) => (
             <section className="curriculum-level" key={level.id} id={level.id}>
               <div className="level-rail">
-                <span>{String(level.position + 1).padStart(2, "0")}</span>
+                <span>
+                  {localize(String(level.position + 1).padStart(2, "0"))}
+                </span>
                 <i />
               </div>
               <div className="level-content">
                 <div className="level-heading">
                   <div>
-                    <div className="eyebrow">РАЗДЕЛ {level.position + 1}</div>
-                    <h2>{level.title}</h2>
-                    <p>{level.description}</p>
+                    <div className="eyebrow">
+                      {localize("РАЗДЕЛ ")}
+                      {level.position + 1}
+                    </div>
+                    <h2>{localize(level.title)}</h2>
+                    <p>{localize(level.description)}</p>
                   </div>
-                  <Tag tone="green">ДОСТУПНО</Tag>
+                  <Tag tone="green">{localize("ДОСТУПНО")}</Tag>
                 </div>
                 {user && (
                   <ProgressBar
                     value={progress.data?.level_percent[level.id] ?? 0}
-                    label={level.title}
+                    label={localize(level.title)}
                   />
                 )}
                 {level.modules.map((module) => (
                   <div className="curriculum-module" key={module.id}>
                     <h3>
-                      {module.title}
-                      <span>{module.topics.length} тем</span>
+                      {localize(module.title)}
+                      <span>
+                        {module.topics.length}
+                        {localize(" тем")}
+                      </span>
                     </h3>
                     {module.topics.map((topic) =>
                       topic.published ? (
@@ -194,8 +215,10 @@ export function CurriculumPage({
                             )}
                           </span>
                           <div>
-                            <strong>{topic.title}</strong>
-                            <small>{topic.tags.slice(0, 4).join(" · ")}</small>
+                            <strong>{localize(topic.title)}</strong>
+                            <small>
+                              {topic.tags.slice(0, 4).map(localize).join(" · ")}
+                            </small>
                             {user && (
                               <TopicStatusBadge
                                 status={getTopicStatus(topic.id, progress.data)}
@@ -204,7 +227,8 @@ export function CurriculumPage({
                           </div>
                           <span className="topic-meta">
                             <Clock3 size={13} />
-                            {topic.minutes} мин
+                            {topic.minutes}
+                            {localize(" мин ")}
                           </span>
                           <ArrowUpRight size={16} />
                         </Link>
@@ -212,8 +236,10 @@ export function CurriculumPage({
                         <div className="topic-row unpublished" key={topic.id}>
                           <LockKeyhole size={15} />
                           <div>
-                            <strong>{topic.title}</strong>
-                            <small>Материалы готовятся к публикации</small>
+                            <strong>{localize(topic.title)}</strong>
+                            <small>
+                              {localize("Материалы готовятся к публикации")}
+                            </small>
                           </div>
                         </div>
                       ),

@@ -14,6 +14,7 @@ from app.core.security import (
     verify_password,
 )
 from app.domain.errors import AuthenticationRequired, InvalidRequest
+from app.domain.locales import Locale
 from app.models.tables import AuthSession, UsedRefreshToken, User
 from app.repositories import users as records
 from app.schemas.contracts import AuthView, Login, PasswordChange, ProfileUpdate, Register, UserView
@@ -42,6 +43,7 @@ async def register(session: AsyncSession, payload: Register) -> tuple[AuthView, 
         data_consent_version=payload.legal_version,
         legal_accepted_at=datetime.now(UTC),
         username=payload.username,
+        locale=payload.locale,
         password_hash=await to_thread(hash_password, payload.password),
     )
     session.add(user)
@@ -136,6 +138,9 @@ async def logout(session: AsyncSession, access: str | None, refresh_token: str |
 
 
 async def update_profile(session: AsyncSession, user: User, payload: ProfileUpdate) -> UserView:
+    await records.lock_user(session, user)
+    if payload.locale is not None:
+        user.locale = payload.locale
     user.username, user.daily_goal, user.timezone = (
         payload.username,
         payload.daily_goal,
@@ -151,3 +156,10 @@ async def change_password(session: AsyncSession, user: User, payload: PasswordCh
         raise InvalidRequest("Текущий пароль неверен")
     user.password_hash = await to_thread(hash_password, payload.new_password)
     await revoke_sessions(session, user)
+
+
+async def update_locale(session: AsyncSession, user: User, locale: Locale) -> UserView:
+    await records.lock_user(session, user)
+    user.locale = locale
+    await session.flush()
+    return UserView.model_validate(user)

@@ -1,8 +1,12 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import Link from "next/link";
 import { LEGAL_ROUTES } from "@/shared/config";
 import styles from "./Legal.module.css";
 import type { FormValidation } from "../use-form-validation";
 export function ConsentFields({ validation }: { validation: FormValidation }) {
+  const { text: localize } = useI18n();
+
   return (
     <div className={styles.consentChecks}>
       <label>
@@ -13,13 +17,13 @@ export function ConsentFields({ validation }: { validation: FormValidation }) {
           {...validation.field("acceptTerms")}
         />
         <span>
-          Принимаю{" "}
+          {localize(" Принимаю")}{" "}
           <Link
             href={LEGAL_ROUTES.terms}
             target="_blank"
             rel="noopener noreferrer"
           >
-            условия использования
+            {localize(" условия использования ")}
           </Link>
           .
         </span>
@@ -33,13 +37,13 @@ export function ConsentFields({ validation }: { validation: FormValidation }) {
           {...validation.field("acceptDataProcessing")}
         />
         <span>
-          Даю{" "}
+          {localize(" Даю")}{" "}
           <Link
             href={LEGAL_ROUTES.consent}
             target="_blank"
             rel="noopener noreferrer"
           >
-            согласие на обработку персональных данных
+            {localize(" согласие на обработку персональных данных ")}
           </Link>
           .{" "}
           <Link
@@ -47,7 +51,7 @@ export function ConsentFields({ validation }: { validation: FormValidation }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Политика конфиденциальности
+            {localize(" Политика конфиденциальности ")}
           </Link>
           .
         </span>

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicCourse, getPublicLesson } from "@/shared/api/public-content";
 import { publicMetadata } from "@/shared/config";
+import { localizeMetadata } from "@/shared/i18n/server";
 export async function generateMetadata({
   params,
 }: {
@@ -10,9 +11,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const lesson = await getPublicLesson(id);
-  return lesson
-    ? publicMetadata(lesson.topic.title, lesson.topic.summary, `/learn/${id}`)
-    : { title: "Урок недоступен", robots: { index: false, follow: false } };
+  return localizeMetadata(
+    lesson
+      ? publicMetadata(lesson.topic.title, lesson.topic.summary, `/learn/${id}`)
+      : { title: "Урок недоступен", robots: { index: false, follow: false } },
+  );
 }
 export default async function Page({
   params,

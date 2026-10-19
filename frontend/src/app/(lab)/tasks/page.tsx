@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Задачи по Python — тренажёр" };
+import { localizeMetadata } from "@/shared/i18n/server";
+export const generateMetadata = () =>
+  localizeMetadata({ title: "Задачи по Python — тренажёр" });
 export default function Page() {
   return null;
 }

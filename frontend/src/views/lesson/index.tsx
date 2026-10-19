@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useRef, useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Clock3, ArrowRight } from "lucide-react";
@@ -49,6 +51,8 @@ export function LessonPage({
   initialLesson?: Lesson;
   initialCourse?: Course;
 }) {
+  const { text: localize } = useI18n();
+
   const interactive = useSyncExternalStore(
     subscribeToClient,
     clientSnapshot,
@@ -104,14 +108,14 @@ export function LessonPage({
       <CachedDataNotice query={progress} />
       {progress.error && !progress.data ? (
         <ErrorState
-          message={errorMessage(progress.error)}
+          message={localize(errorMessage(progress.error))}
           retry={() => {
             void progress.refetch();
           }}
         />
       ) : lesson.error && !lesson.data ? (
         <ErrorState
-          message={errorMessage(lesson.error)}
+          message={localize(errorMessage(lesson.error))}
           retry={() => {
             void lesson.refetch();
           }}
@@ -125,7 +129,7 @@ export function LessonPage({
             onClick={() => setNavOpen(!navOpen)}
             aria-expanded={navOpen}
           >
-            Навигация по урокам
+            {localize(" Навигация по урокам ")}
           </button>
           {course.data ? (
             <div
@@ -143,7 +147,7 @@ export function LessonPage({
           ) : course.error ? (
             <div className="lesson-sidebar">
               <ErrorState
-                message={errorMessage(course.error)}
+                message={localize(errorMessage(course.error))}
                 retry={() => {
                   void course.refetch();
                 }}
@@ -155,38 +159,48 @@ export function LessonPage({
           <article className="lesson-main">
             <div className="lesson-heading">
               <div className="eyebrow">
-                PYTHON / {lesson.data.topic.tags[0]?.toUpperCase()}
+                PYTHON / {localize(lesson.data.topic.tags[0]?.toUpperCase())}
               </div>
-              <h1>{lesson.data.topic.title}</h1>
+              <h1>{localize(lesson.data.topic.title)}</h1>
               <div className="meta-row">
                 <span>
                   <Clock3 size={14} />
-                  {lesson.data.topic.minutes} мин
+                  {lesson.data.topic.minutes}
+                  {localize(" мин ")}
                 </span>
                 {hasPractice && (
-                  <Tag>ПРАКТИКА: {lesson.data.exercise_count}</Tag>
+                  <Tag>
+                    {localize("ПРАКТИКА: ")}
+                    {lesson.data.exercise_count}
+                  </Tag>
                 )}
                 {hasQuiz && (
-                  <Tag>ВОПРОСОВ В БАНКЕ: {lesson.data.question_count}</Tag>
+                  <Tag>
+                    {localize("ВОПРОСОВ В БАНКЕ: ")}
+                    {lesson.data.question_count}
+                  </Tag>
                 )}
-                {!hasPractice && !hasQuiz && <Tag>Теория и закрепление</Tag>}
+                {!hasPractice && !hasQuiz && (
+                  <Tag>{localize("Теория и закрепление")}</Tag>
+                )}
                 <TopicStatusBadge
                   status={getTopicStatus(id, progress.data, id)}
                 />
                 {completed && (
                   <Tag tone="green">
                     <Check size={12} />
-                    Теория изучена
+                    {localize(" Теория изучена ")}
                   </Tag>
                 )}
               </div>
               {user && progress.data && (!hasPractice || exercises.data) && (
                 <p className="muted small-text" aria-live="polite">
-                  Теория: {completed ? "изучена" : "не изучена"}
+                  {localize(" Теория: ")}
+                  {localize(completed ? "изучена" : "не изучена")}
                   {hasPractice && exercises.data && (
                     <>
                       {" "}
-                      · Практика:{" "}
+                      {localize(" · Практика:")}{" "}
                       {
                         exercises.data.filter((exercise) =>
                           progress.data.exercise_ids.includes(exercise.id),
@@ -198,18 +212,22 @@ export function LessonPage({
                   {hasQuiz && (
                     <>
                       {" "}
-                      · Тест:{" "}
-                      {progress.data.quiz_ids.includes(`${id}-quiz`)
-                        ? "зачтён"
-                        : "не зачтён"}
+                      {localize(" · Тест:")}{" "}
+                      {localize(
+                        progress.data.quiz_ids.includes(`${id}-quiz`)
+                          ? "зачтён"
+                          : "не зачтён",
+                      )}
                     </>
                   )}
                   .
-                  {progress.data.completed_topics.includes(id)
-                    ? " Тема завершена."
-                    : hasPractice || hasQuiz
-                      ? " Для завершения темы изучите теорию, решите все задания и сдайте тест на 70% или выше."
-                      : " Для завершения этой темы достаточно отметить теорию изученной."}
+                  {localize(
+                    progress.data.completed_topics.includes(id)
+                      ? " Тема завершена."
+                      : hasPractice || hasQuiz
+                        ? " Для завершения темы изучите теорию, решите все задания и сдайте тест на 70% или выше."
+                        : " Для завершения этой темы достаточно отметить теорию изученной.",
+                  )}
                 </p>
               )}
             </div>
@@ -217,18 +235,18 @@ export function LessonPage({
               className="lesson-tabs"
               ref={tabsRef}
               role="tablist"
-              aria-label="Этапы урока"
+              aria-label={localize("Этапы урока")}
             >
               {lessonSteps.map((t) => (
                 <button
                   role="tab"
                   disabled={!interactive || !isStepEnabled(t.id)}
                   aria-disabled={!isStepEnabled(t.id)}
-                  title={
+                  title={localize(
                     !isStepEnabled(t.id)
                       ? "В этой теме этап не предусмотрен"
-                      : undefined
-                  }
+                      : undefined,
+                  )}
                   aria-selected={tab === t.id}
                   aria-controls={`panel-${t.id}`}
                   id={`tab-${t.id}`}
@@ -254,7 +272,7 @@ export function LessonPage({
                   }}
                   className={tab === t.id ? "active" : ""}
                 >
-                  {t.name}
+                  {localize(t.name)}
                 </button>
               ))}
             </div>
@@ -268,15 +286,17 @@ export function LessonPage({
                 <div className="theory-content">
                   {lesson.data.theory.map((section) => (
                     <section key={section.title}>
-                      <h2>{section.title}</h2>
+                      <h2>{localize(section.title)}</h2>
                       <LearningText text={section.body} />
                     </section>
                   ))}
                   <div className="lesson-bottom">
                     <p>
-                      {hasPractice
-                        ? "Теперь применим изученное в практике."
-                        : "Закрепим основные мысли этой темы."}
+                      {localize(
+                        hasPractice
+                          ? "Теперь применим изученное в практике."
+                          : "Закрепим основные мысли этой темы.",
+                      )}
                     </p>
                     {loading || (user && progress.isPending) ? (
                       <Skeleton className="skeleton-button" />
@@ -291,10 +311,11 @@ export function LessonPage({
                     ) : (
                       <div className="lesson-guest-actions">
                         <Button onClick={() => goToStep(theoryNextStep.id)}>
-                          {theoryNextStep.action} <ArrowRight size={16} />
+                          {localize(theoryNextStep.action)}{" "}
+                          <ArrowRight size={16} />
                         </Button>
                         <Link href="/register" className="button secondary">
-                          Создать аккаунт и сохранить прогресс
+                          {localize(" Создать аккаунт и сохранить прогресс ")}
                         </Link>
                       </div>
                     )}
@@ -307,7 +328,7 @@ export function LessonPage({
                     <PageSkeleton variant="exercise" />
                   ) : exercises.error ? (
                     <ErrorState
-                      message={errorMessage(exercises.error)}
+                      message={localize(errorMessage(exercises.error))}
                       retry={() => {
                         void exercises.refetch();
                       }}
@@ -317,13 +338,15 @@ export function LessonPage({
                       <div
                         className="exercise-selector"
                         ref={exerciseSelectorRef}
-                        aria-label="Выбор задания"
+                        aria-label={localize("Выбор задания")}
                       >
                         {exercises.data?.map((exercise, i) => (
                           <button
                             key={exercise.id}
                             className={`${i === exerciseIndex ? "active" : ""} ${progress.data?.exercise_ids.includes(exercise.id) ? "completed" : ""}`}
-                            aria-label={`Задание ${i + 1}, ${exercise.difficulty}`}
+                            aria-label={localize(
+                              `Задание ${i + 1}, ${exercise.difficulty}`,
+                            )}
                             aria-pressed={i === exerciseIndex}
                             onClick={() => setExerciseIndex(i)}
                           >
@@ -364,25 +387,33 @@ export function LessonPage({
               )}
               {tab === "review" && (
                 <div className="review-content">
-                  <div className="eyebrow">TAKEAWAYS</div>
-                  <h2>Что важно сохранить в памяти.</h2>
+                  <div className="eyebrow">
+                    {localize("Что важно запомнить")}
+                  </div>
+                  <h2>{localize("Что важно сохранить в памяти.")}</h2>
                   <ul>
                     {lesson.data.review.map((point) => (
                       <li key={point}>
                         <Check size={17} />
-                        {point}
+                        {localize(point)}
                       </li>
                     ))}
                   </ul>
                   <p>
-                    Вернитесь к теории, объясните разобранный код своими словами
-                    {hasQuiz ? " и пройдите ещё одну попытку теста." : "."}{" "}
-                    Повторение помогает заметить границы, которые легко
-                    пропустить при первом чтении.
+                    {localize(
+                      " Вернитесь к теории, объясните разобранный код своими словами ",
+                    )}
+                    {localize(
+                      hasQuiz ? " и пройдите ещё одну попытку теста." : ".",
+                    )}{" "}
+                    {localize(
+                      " Повторение помогает заметить границы, которые легко пропустить при первом чтении. ",
+                    )}
                   </p>
                   {next && (
                     <Link className="button" href={`/learn/${next.id}`}>
-                      Следующая тема: {next.title}
+                      {localize(" Следующая тема: ")}
+                      {localize(next.title)}
                       <ArrowRight size={16} />
                     </Link>
                   )}
@@ -391,7 +422,7 @@ export function LessonPage({
               {previousStep && (tab !== "quiz" || quizNavigationVisible) && (
                 <nav
                   className="lesson-bottom"
-                  aria-label="Переходы между этапами"
+                  aria-label={localize("Переходы между этапами")}
                 >
                   <Button
                     className="secondary"
@@ -401,9 +432,11 @@ export function LessonPage({
                         : goToStep(previousStep.id)
                     }
                   >
-                    {tab === "practice" && exerciseIndex > 0
-                      ? "Предыдущее задание"
-                      : `Назад: ${previousStep.name}`}
+                    {localize(
+                      tab === "practice" && exerciseIndex > 0
+                        ? "Предыдущее задание"
+                        : `Назад: ${previousStep.name}`,
+                    )}
                   </Button>
                   {nextStep && (
                     <Button
@@ -414,9 +447,11 @@ export function LessonPage({
                           : goToStep(nextStep.id)
                       }
                     >
-                      {tab === "practice" && nextExercise
-                        ? "Следующее задание"
-                        : nextStep.action}{" "}
+                      {localize(
+                        tab === "practice" && nextExercise
+                          ? "Следующее задание"
+                          : nextStep.action,
+                      )}{" "}
                       <ArrowRight size={15} />
                     </Button>
                   )}

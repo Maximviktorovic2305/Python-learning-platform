@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import { AuthorSupport } from "@/shared/ui/author-support";
 import Link from "next/link";
 import {
@@ -23,6 +25,8 @@ const stages = [
   "Продвинутый Python",
 ];
 export function LandingPage() {
+  const { text: localize } = useI18n();
+
   return (
     <LandingSnake>
       <Header />
@@ -31,38 +35,43 @@ export function LandingPage() {
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="status-dot" />
-              ОТ ПЕРВОЙ СТРОКИ ДО PRODUCTION
+              {localize(" ОТ ПЕРВОЙ СТРОКИ ДО PRODUCTION ")}
             </div>
             <h1>
-              {"Курс по Python "}
+              {localize("Курс по Python ")}
               <br />
               <span>
-                {"абсолютно "}
+                {localize("абсолютно ")}
                 <br />
-                бесплатно!
+                {localize(" бесплатно! ")}
               </span>
             </h1>
             <p>
-              Разберись в основах. Пиши настоящий код.
+              {localize(" Разберись в основах. Пиши настоящий код. ")}
               <br />
-              Создавай проекты, которыми хочется поделиться.
+              {localize(" Создавай проекты, которыми хочется поделиться. ")}
             </p>
             <div className="hero-buttons">
-              <ActionLink href="/register">Начать свой путь</ActionLink>
+              <ActionLink href="/register">
+                {localize("Начать свой путь")}
+              </ActionLink>
               <Link href="/curriculum" className="text-link">
-                Изучить программу <ArrowRight size={16} />
+                {localize(" Изучить программу ")}
+                <ArrowRight size={16} />
               </Link>
             </div>
             <div className="hero-footnote">
               <span>
-                <Check size={14} />С нуля, без опыта
-              </span>
-              <span>
-                <Check size={14} />В своём темпе
+                <Check size={14} />
+                {localize("С нуля, без опыта ")}
               </span>
               <span>
                 <Check size={14} />
-                Практика в каждой теме
+                {localize("В своём темпе ")}
+              </span>
+              <span>
+                <Check size={14} />
+                {localize(" Практика в каждой теме ")}
               </span>
             </div>
           </div>
@@ -76,11 +85,11 @@ export function LandingPage() {
                   <i />
                 </span>
                 <span>your_first_step.py</span>
-                <Tag tone="green">RUNNING</Tag>
+                <Tag tone="green">{localize("Выполняется")}</Tag>
               </div>
               <code>
                 <span className="syntax-comment">
-                  # Большой путь начинается с одной строки
+                  {localize(" # Большой путь начинается с одной строки ")}
                 </span>
                 <br />
                 <span className="syntax-keyword">print</span>(
@@ -100,36 +109,37 @@ export function LandingPage() {
           <div className="container metrics-inner">
             <div>
               <strong>4</strong>
-              <span>раздела курса</span>
+              <span>{localize("раздела курса")}</span>
             </div>
             <div>
               <strong>100</strong>
-              <span>практических заданий</span>
+              <span>{localize("практических заданий")}</span>
             </div>
             <div>
               <strong>960</strong>
-              <span>вопросов для закрепления</span>
+              <span>{localize("вопросов для закрепления")}</span>
             </div>
             <div>
               <strong>50</strong>
-              <span>тем с примерами</span>
+              <span>{localize("тем с примерами")}</span>
             </div>
           </div>
         </section>
         <section className="container section why-section">
           <div>
-            <div className="eyebrow">01 / ЯЗЫК ВОЗМОЖНОСТЕЙ</div>
+            <div className="eyebrow">{localize("01 / ЯЗЫК ВОЗМОЖНОСТЕЙ")}</div>
             <h2>
-              Один язык.
+              {localize(" Один язык. ")}
               <br />
-              Много направлений.
+              {localize(" Много направлений. ")}
             </h2>
             <p>
-              Python — точка входа в разработку и инструмент, с которым
-              продолжают работать профессионалы.
+              {localize(
+                " Python — точка входа в разработку и инструмент, с которым продолжают работать профессионалы. ",
+              )}
             </p>
             <ActionLink href="/curriculum" secondary>
-              Найти своё направление
+              {localize(" Найти своё направление ")}
             </ActionLink>
           </div>
           <div className="directions">
@@ -158,8 +168,8 @@ export function LandingPage() {
               <div key={name}>
                 <span className="direction-number">0{i + 1}</span>
                 <Icon size={24} />
-                <h3>{name}</h3>
-                <p>{desc}</p>
+                <h3>{localize(name)}</h3>
+                <p>{localize(desc)}</p>
                 <ArrowUpRight size={18} />
               </div>
             ))}
@@ -168,15 +178,17 @@ export function LandingPage() {
         <section className="container section">
           <div className="section-heading">
             <div>
-              <div className="eyebrow">02 / ПРОГРАММА ОБУЧЕНИЯ</div>
+              <div className="eyebrow">
+                {localize("02 / ПРОГРАММА ОБУЧЕНИЯ")}
+              </div>
               <h2>
-                От «что такое переменная?»
+                {localize(" От «что такое переменная?» ")}
                 <br />
-                до «готово к production».
+                {localize(" до «готово к production». ")}
               </h2>
             </div>
             <ActionLink href="/curriculum" secondary>
-              Вся программа
+              {localize(" Вся программа ")}
             </ActionLink>
           </div>
           <div className="roadmap">
@@ -187,15 +199,17 @@ export function LandingPage() {
                 className={i < 3 ? "available" : ""}
               >
                 <span className="roadmap-index">
-                  {String(i).padStart(2, "0")}
+                  {localize(String(i).padStart(2, "0"))}
                 </span>
                 <span>
                   <small>
-                    {i < 3
-                      ? "ДОСТУПНО ДЛЯ ОБУЧЕНИЯ"
-                      : "В ПРОГРАММЕ · МАТЕРИАЛЫ ГОТОВЯТСЯ"}
+                    {localize(
+                      i < 3
+                        ? "ДОСТУПНО ДЛЯ ОБУЧЕНИЯ"
+                        : "В ПРОГРАММЕ · МАТЕРИАЛЫ ГОТОВЯТСЯ",
+                    )}
                   </small>
-                  <strong>{name}</strong>
+                  <strong>{localize(name)}</strong>
                 </span>
                 <ArrowUpRight size={19} />
               </Link>
@@ -205,38 +219,41 @@ export function LandingPage() {
         <section className="lab-section section">
           <div className="container lab-grid">
             <div>
-              <div className="eyebrow">03 / ТВОЯ PYTHON-ЛАБОРАТОРИЯ</div>
+              <div className="eyebrow">
+                {localize("03 / ТВОЯ PYTHON-ЛАБОРАТОРИЯ")}
+              </div>
               <h2>
-                Меньше переключений.
+                {localize(" Меньше переключений. ")}
                 <br />
-                Больше кода.
+                {localize(" Больше кода. ")}
               </h2>
               <p>
-                Редактор, примеры и результат — рядом. Запускай Python прямо в
-                браузере, пробуй идеи и разбирай ошибки в своём темпе.
+                {localize(
+                  " Редактор, примеры и результат — рядом. Запускай Python прямо в браузере, пробуй идеи и разбирай ошибки в своём темпе. ",
+                )}
               </p>
               <ul className="check-list">
                 <li>
                   <Check size={16} />
-                  Подсветка синтаксиса и номера строк
+                  {localize(" Подсветка синтаксиса и номера строк ")}
                 </li>
                 <li>
                   <Check size={16} />
-                  Задачи трёх уровней сложности
+                  {localize(" Задачи трёх уровней сложности ")}
                 </li>
                 <li>
                   <Check size={16} />
-                  Подсказки, когда нужен следующий шаг
+                  {localize(" Подсказки, когда нужен следующий шаг ")}
                 </li>
               </ul>
               <ActionLink href="/learn/academy-introduction">
-                Открыть первый урок
+                {localize(" Открыть первый урок ")}
               </ActionLink>
             </div>
             <div className="lab-example">
               <div className="lab-tabs">
                 <span className="active">challenge.py</span>
-                <span>Твоя первая функция</span>
+                <span>{localize("Твоя первая функция")}</span>
                 <Tag>PYTHON 3</Tag>
               </div>
               <CodeBlock
@@ -246,10 +263,11 @@ export function LandingPage() {
                 }
               />
               <div className="lab-output">
-                <span>OUTPUT</span>
+                <span>{localize("Результат")}</span>
                 <code>Hello, developer!</code>
                 <span className="green-text">
-                  <Check size={14} />У тебя получится
+                  <Check size={14} />
+                  {localize("У тебя получится ")}
                 </span>
               </div>
             </div>
@@ -257,11 +275,12 @@ export function LandingPage() {
         </section>
         <section className="container section faq-section">
           <div>
-            <div className="eyebrow">04 / ПЕРЕД ПЕРВЫМ ШАГОМ</div>
-            <h2>Хорошие вопросы.</h2>
+            <div className="eyebrow">{localize("04 / ПЕРЕД ПЕРВЫМ ШАГОМ")}</div>
+            <h2>{localize("Хорошие вопросы.")}</h2>
             <p>
-              Отзывы появятся после первого набора учащихся. Сейчас лучшее
-              знакомство с платформой — первый урок.
+              {localize(
+                " Отзывы появятся после первого набора учащихся. Сейчас лучшее знакомство с платформой — первый урок. ",
+              )}
             </p>
           </div>
           <div>
@@ -289,26 +308,27 @@ export function LandingPage() {
             ].map(({ q, a }) => (
               <details key={q}>
                 <summary>
-                  {q}
+                  {localize(q)}
                   <ChevronDown size={18} />
                 </summary>
-                <p>{a}</p>
+                <p>{localize(a)}</p>
               </details>
             ))}
           </div>
         </section>
         <section className="final-cta">
           <div className="container">
-            <div className="eyebrow">НАЧНИ С ОДНОЙ СТРОКИ</div>
+            <div className="eyebrow">{localize("НАЧНИ С ОДНОЙ СТРОКИ")}</div>
             <h2>
-              Твоя следующая версия
+              {localize(" Твоя следующая версия ")}
               <br />
-              умеет писать на Python.
+              {localize(" умеет писать на Python. ")}
             </h2>
             <ActionLink href="/register">
-              Начать обучение <ArrowRight size={17} />
+              {localize(" Начать обучение ")}
+              <ArrowRight size={17} />
             </ActionLink>
-            <span>Без опыта. Без спешки. С пониманием.</span>
+            <span>{localize("Без опыта. Без спешки. С пониманием.")}</span>
           </div>
         </section>
       </main>
@@ -316,10 +336,10 @@ export function LandingPage() {
         <Link href="/" className="brand">
           python<span className="brand-light">/lab</span>
         </Link>
-        <p>Учись. Экспериментируй. Создавай.</p>
+        <p>{localize("Учись. Экспериментируй. Создавай.")}</p>
         <div>
-          <Link href="/curriculum">Программа</Link>
-          <Link href="/projects">Проекты</Link>
+          <Link href="/curriculum">{localize("Программа")}</Link>
+          <Link href="/projects">{localize("Проекты")}</Link>
         </div>
         <small>© {new Date().getFullYear()} Python Lab</small>
         <AuthorSupport />

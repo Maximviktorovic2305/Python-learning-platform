@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -24,6 +26,7 @@ import { PageSkeleton, type PageSkeletonVariant } from "./skeleton";
 import { Skeleton, SkeletonRegion } from "@/shared/ui";
 export { PageSkeleton, LessonNavigationSkeleton } from "./skeleton";
 import { errorMessage } from "@/shared/api";
+import { ChangeLanguage } from "@/features/change-language";
 
 const items = [
   { href: "/dashboard", title: "Мой прогресс", icon: LayoutDashboard },
@@ -58,7 +61,9 @@ function skeletonVariant(path: string): PageSkeletonVariant {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user, loading, loggingOut, logout } = useAuth();
+  const { text: localize } = useI18n();
+
+  const { user, loading, loggingOut, logout, updateUser } = useAuth();
   const router = useRouter();
   const path = usePathname();
   const protectedPage = [
@@ -102,8 +107,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
           python<span>/lab</span>
         </Link>
-        <div className="sidebar-caption">ВАША ЛАБОРАТОРИЯ</div>
-        <nav aria-label="Навигация кабинета">
+        <div className="sidebar-caption">{localize("ВАША ЛАБОРАТОРИЯ")}</div>
+        <nav aria-label={localize("Навигация кабинета")}>
           {items.map(({ href, title, icon: Icon }) => (
             <Link
               key={href}
@@ -118,14 +123,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               onClick={() => setOpen(false)}
             >
               <Icon size={18} />
-              {title}
+              {localize(title)}
               {path === href && <span className="nav-dot" />}
             </Link>
           ))}
         </nav>
         <div className="sidebar-bottom">
           {loading ? (
-            <SkeletonRegion label="Восстанавливаем сессию…">
+            <SkeletonRegion label={localize("Восстанавливаем сессию…")}>
               <div className="skeleton-row">
                 <Skeleton width={36} height={36} circle />
                 <Skeleton width={110} height={14} />
@@ -134,9 +139,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           ) : user ? (
             <>
               <div className="user-chip ym-hide-content">
-                <span>{user.username.slice(0, 2).toUpperCase()}</span>
+                <span>{localize(user.username.slice(0, 2).toUpperCase())}</span>
                 <div>
-                  <strong>{user.username}</strong>
+                  <strong>{localize(user.username)}</strong>
                   <small>Python Explorer</small>
                 </div>
               </div>
@@ -152,13 +157,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }}
               >
                 <LogOut size={17} />
-                Выйти
+                {localize(" Выйти ")}
               </button>
-              {error && <small role="alert">{error}</small>}
+              {error && <small role="alert">{localize(error)}</small>}
             </>
           ) : (
             <Link href="/register" className="button">
-              Создать аккаунт
+              {localize(" Создать аккаунт ")}
             </Link>
           )}
         </div>
@@ -167,7 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           className="sidebar-backdrop"
-          aria-label="Закрыть навигацию"
+          aria-label={localize("Закрыть навигацию")}
           onClick={hideSidebar}
         />
       )}
@@ -177,11 +182,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="icon-button sidebar-toggle"
             ref={toggle}
             type="button"
-            aria-label={
+            aria-label={localize(
               sidebarVisible
                 ? "Скрыть боковую панель"
-                : "Открыть боковую панель"
-            }
+                : "Открыть боковую панель",
+            )}
             aria-controls="main-sidebar"
             aria-expanded={sidebarVisible}
             onClick={() =>
@@ -195,23 +200,31 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           </button>
           <span className="breadcrumb">
-            ЛАБОРАТОРИЯ <span>/</span>{" "}
-            {items.find((i) => i.href === path)?.title ?? "Обучение"}
+            {localize(" ЛАБОРАТОРИЯ ")}
+            <span>/</span>{" "}
+            {localize(items.find((i) => i.href === path)?.title ?? "Обучение")}
           </span>
           <div>
             <span className="system-status">
               <i />
-              Система готова
+              {localize(" Система готова ")}
             </span>
+            <ChangeLanguage
+              user={user}
+              onSaved={updateUser}
+              disabled={loading || loggingOut}
+            />
             <ThemeToggle />
           </div>
         </header>
         <PrivacyPreferences inline />
         <main id="main" className="app-content">
-          {protectedPage && (loading || !user) ? (
-            <PageSkeleton variant={skeletonVariant(path)} heading />
-          ) : (
-            children
+          {localize(
+            protectedPage && (loading || !user) ? (
+              <PageSkeleton variant={skeletonVariant(path)} heading />
+            ) : (
+              children
+            ),
           )}
         </main>
       </div>

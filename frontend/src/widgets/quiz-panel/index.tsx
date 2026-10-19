@@ -1,4 +1,7 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+import { translateOption } from "@/shared/i18n/learning";
+
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,8 +29,13 @@ import { CodeBlock } from "@/shared/ui/code";
 import { errorMessage, refreshLearningData } from "@/shared/api";
 
 function QuizSkeleton() {
+  const { text: localize } = useI18n();
+
   return (
-    <SkeletonRegion label="Готовим вопросы теста…" className="skeleton-quiz">
+    <SkeletonRegion
+      label={localize("Готовим вопросы теста…")}
+      className="skeleton-quiz"
+    >
       <div className="skeleton-stack">
         <div className="skeleton-row">
           <Skeleton width={130} height={12} />
@@ -58,6 +66,8 @@ export function QuizPanel({
   topicId: string;
   onNavigationChange?: (visible: boolean) => void;
 }) {
+  const { text: localize } = useI18n();
+
   const { user, loading } = useAuth();
   const client = useQueryClient();
   const progress = useQuery(progressQuery(user?.id));
@@ -117,10 +127,10 @@ export function QuizPanel({
     return (
       <div className="quiz-intro">
         <ClipboardCheck size={35} />
-        <h2>Проверим понимание?</h2>
-        <p>Войдите, чтобы сохранить попытку и получить разбор.</p>
+        <h2>{localize("Проверим понимание?")}</h2>
+        <p>{localize("Войдите, чтобы сохранить попытку и получить разбор.")}</p>
         <Link className="button" href="/login">
-          Войти
+          {localize(" Войти ")}
         </Link>
       </div>
     );
@@ -130,45 +140,55 @@ export function QuizPanel({
       <div className="quiz-results">
         <div className="result-summary">
           <Tag tone={result.score >= 70 ? "green" : "yellow"}>
-            {result.score >= 70
-              ? "ТЕСТ ПРОЙДЕН"
-              : "ЕЩЁ ОДНА ПОПЫТКА — И ПОЛУЧИТСЯ"}
+            {localize(
+              result.score >= 70
+                ? "ТЕСТ ПРОЙДЕН"
+                : "ЕЩЁ ОДНА ПОПЫТКА — И ПОЛУЧИТСЯ",
+            )}
           </Tag>
           <strong>
             {result.score}
             <small>%</small>
           </strong>
           <h2>
-            {result.score >= 70
-              ? "Хорошо разобрались."
-              : "Теперь понятно, что повторить."}
+            {localize(
+              result.score >= 70
+                ? "Хорошо разобрались."
+                : "Теперь понятно, что повторить.",
+            )}
           </h2>
           <div>
             <span>
-              {result.correct_count} / {result.total} верно
+              {result.correct_count} / {result.total}
+              {localize(" верно ")}
             </span>
             <span>
-              {Math.floor(result.seconds / 60)} мин {result.seconds % 60} сек
+              {Math.floor(result.seconds / 60)}
+              {localize(" мин ")}
+              {result.seconds % 60}
+              {localize(" сек ")}
             </span>
             <span>
-              {result.xp > 0
-                ? `+${result.xp} XP за первый зачёт · однократно`
-                : result.score >= 70 || completed
-                  ? "Баллы за тест уже получены"
-                  : "XP не начислены"}
+              {localize(
+                result.xp > 0
+                  ? `+${result.xp} XP за первый зачёт · однократно`
+                  : result.score >= 70 || completed
+                    ? "Баллы за тест уже получены"
+                    : "XP не начислены",
+              )}
             </span>
           </div>
           <Button onClick={start} pending={pending} className="secondary">
             <RotateCcw size={15} />
-            Новая попытка
+            {localize(" Новая попытка ")}
           </Button>
           {error && (
             <p className="form-error" role="alert">
-              {errorMessage(error)}
+              {localize(errorMessage(error))}
             </p>
           )}
         </div>
-        <h3>Разбор каждого ответа</h3>
+        <h3>{localize("Разбор каждого ответа")}</h3>
         {result.review.map((review, i) => (
           <article
             className={`review-question ${review.correct ? "correct" : "incorrect"}`}
@@ -178,24 +198,36 @@ export function QuizPanel({
               <span>
                 {review.correct ? <Check size={18} /> : <X size={18} />}
               </span>
-              {i + 1}. {review.question.prompt}
+              {i + 1}. {localize(review.question.prompt)}
             </h4>
             {review.question.code && <CodeBlock code={review.question.code} />}
             <div>
-              <small>ВАШ ОТВЕТ</small>
+              <small>{localize("ВАШ ОТВЕТ")}</small>
               <p>
                 {review.selected
-                  .map((i) => review.question.options[i])
-                  .join("; ") || "Ни одного варианта"}
+                  .map((i) =>
+                    translateOption(
+                      review.question.kind,
+                      review.question.options[i] ?? "",
+                      localize,
+                    ),
+                  )
+                  .join("; ") || localize("Ни одного варианта")}
               </p>
-              <small>ВЕРНЫЙ ОТВЕТ</small>
+              <small>{localize("ВЕРНЫЙ ОТВЕТ")}</small>
               <p>
                 {review.correct_answer
-                  .map((i) => review.question.options[i])
-                  .join("; ") || "Ни одного варианта"}
+                  .map((i) =>
+                    translateOption(
+                      review.question.kind,
+                      review.question.options[i] ?? "",
+                      localize,
+                    ),
+                  )
+                  .join("; ") || localize("Ни одного варианта")}
               </p>
             </div>
-            <p className="review-explanation">{review.explanation}</p>
+            <p className="review-explanation">{localize(review.explanation)}</p>
           </article>
         ))}
       </div>
@@ -206,23 +238,28 @@ export function QuizPanel({
       {!attempt || !question ? (
         <div className="quiz-intro">
           <ClipboardCheck size={40} />
-          <div className="eyebrow">UNDERSTAND, DON’T MEMORIZE</div>
-          <h2>10 вопросов. Новая комбинация.</h2>
+          <div className="eyebrow">
+            {localize("Понимание вместо зубрёжки.")}
+          </div>
+          <h2>{localize("10 вопросов. Новая комбинация.")}</h2>
           <p>
-            4 простых, 4 средних и 2 сложных вопроса из банка этой темы. После
-            теста — подробный разбор. Для зачёта нужно 70%.
+            {localize(
+              " 4 простых, 4 средних и 2 сложных вопроса из банка этой темы. После теста — подробный разбор. Для зачёта нужно 70%. ",
+            )}
           </p>
           <div className="quiz-rules">
-            <span>Без повторов в попытке</span>
-            <span>Подсказки доступны</span>
+            <span>{localize("Без повторов в попытке")}</span>
+            <span>{localize("Подсказки доступны")}</span>
             <span>
-              {completed
-                ? "Тест уже зачтён · повторение без XP"
-                : "+50 XP за первый зачёт"}
+              {localize(
+                completed
+                  ? "Тест уже зачтён · повторение без XP"
+                  : "+50 XP за первый зачёт",
+              )}
             </span>
           </div>
           <Button pending={pending} onClick={start}>
-            Начать тест
+            {localize(" Начать тест ")}
             <ArrowRight size={16} />
           </Button>
         </div>
@@ -230,20 +267,33 @@ export function QuizPanel({
         <section className="quiz-active">
           <div className="quiz-progress">
             <span>
-              ВОПРОС {current + 1} / {attempt.questions.length}
+              {localize(" ВОПРОС ")}
+              {current + 1} / {attempt.questions.length}
             </span>
-            <Tag>{question.difficulty}</Tag>
+            <Tag>
+              {localize(
+                (
+                  {
+                    easy: "Лёгкая",
+                    medium: "Средняя",
+                    hard: "Сложная",
+                  } as Record<string, string>
+                )[question.difficulty] ?? question.difficulty,
+              )}
+            </Tag>
           </div>
           <ProgressBar
             value={((current + 1) / attempt.questions.length) * 100}
-            label="Вопросы теста"
+            label={localize("Вопросы теста")}
           />
-          <h2>{question.prompt}</h2>
+          <h2>{localize(question.prompt)}</h2>
           {question.code && <CodeBlock code={question.code} />}
           <p className="muted">
-            {question.kind === "multiple_select"
-              ? "Выберите все верные варианты. Возможен ответ без выбранных вариантов."
-              : "Выберите один ответ."}
+            {localize(
+              question.kind === "multiple_select"
+                ? "Выберите все верные варианты. Возможен ответ без выбранных вариантов."
+                : "Выберите один ответ.",
+            )}
           </p>
           <div className="quiz-options">
             {question.options.map((option, i) => (
@@ -274,9 +324,9 @@ export function QuizPanel({
                   }
                 />
                 <span className="option-letter">
-                  {String.fromCharCode(65 + i)}
+                  {localize(String.fromCharCode(65 + i))}
                 </span>
-                <span>{option}</span>
+                <span>{translateOption(question.kind, option, localize)}</span>
               </label>
             ))}
           </div>
@@ -288,14 +338,14 @@ export function QuizPanel({
                   setSelections((prev) => ({ ...prev, [question.id]: [] }))
                 }
               >
-                Подтвердить выбор (включая пустой)
+                {localize(" Подтвердить выбор (включая пустой) ")}
               </Button>
             )}
           <button className="hint-button" onClick={() => setHint(!hint)}>
             <Lightbulb size={16} />
-            Подсказка
+            {localize(" Подсказка ")}
           </button>
-          {hint && <p className="hint-box">{question.hint}</p>}
+          {hint && <p className="hint-box">{localize(question.hint)}</p>}
           <div className="quiz-navigation">
             <Button
               className="secondary"
@@ -305,11 +355,11 @@ export function QuizPanel({
                 setHint(false);
               }}
             >
-              Назад
+              {localize(" Назад ")}
             </Button>
             <span>
               {Object.keys(selections).length} / {attempt.questions.length}{" "}
-              ответов
+              {localize(" ответов ")}
             </span>
             {current < attempt.questions.length - 1 ? (
               <Button
@@ -319,7 +369,8 @@ export function QuizPanel({
                   setHint(false);
                 }}
               >
-                Далее <ArrowRight size={16} />
+                {localize(" Далее ")}
+                <ArrowRight size={16} />
               </Button>
             ) : (
               <Button
@@ -330,7 +381,7 @@ export function QuizPanel({
                 onClick={submit}
                 pending={pending}
               >
-                Завершить тест
+                {localize(" Завершить тест ")}
                 <Check size={16} />
               </Button>
             )}
@@ -339,7 +390,7 @@ export function QuizPanel({
       )}
       {error && (
         <p className="form-error" role="alert">
-          {errorMessage(error)}
+          {localize(errorMessage(error))}
         </p>
       )}
     </div>

@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useQuery } from "@tanstack/react-query";
 import { FolderCode, ArrowUpRight, Check, ClipboardList } from "lucide-react";
 import Link from "next/link";
@@ -9,6 +11,8 @@ import { ProjectForm } from "@/features/submit-project";
 import { PageHeading, Tag, ErrorState, CachedDataNotice } from "@/shared/ui";
 import { errorMessage } from "@/shared/api";
 export function ProjectsPage() {
+  const { text: localize } = useI18n();
+
   const { user, loading } = useAuth();
   const projects = useQuery(projectsQuery);
   const submissions = useQuery(submissionsQuery(user?.id));
@@ -17,9 +21,11 @@ export function ProjectsPage() {
       <CachedDataNotice query={projects} />
       <CachedDataNotice query={submissions} />
       <PageHeading
-        eyebrow="BUILD SOMETHING REAL / PORTFOLIO"
-        title="От знаний к работающим вещам."
-        description="Четыре проекта, чтобы связать отдельные темы в полноценное приложение."
+        eyebrow={localize("Проекты")}
+        title={localize("От знаний к работающим вещам.")}
+        description={localize(
+          "Четыре проекта, чтобы связать отдельные темы в полноценное приложение.",
+        )}
       />
       {loading ||
       projects.isPending ||
@@ -27,14 +33,14 @@ export function ProjectsPage() {
         <PageSkeleton variant="projects" />
       ) : projects.error && !projects.data ? (
         <ErrorState
-          message={errorMessage(projects.error)}
+          message={localize(errorMessage(projects.error))}
           retry={() => {
             void projects.refetch();
           }}
         />
       ) : submissions.error && !submissions.data ? (
         <ErrorState
-          message={errorMessage(submissions.error)}
+          message={localize(errorMessage(submissions.error))}
           retry={() => {
             void submissions.refetch();
           }}
@@ -48,34 +54,36 @@ export function ProjectsPage() {
             return (
               <article key={project.id} className="project-detail">
                 <div className="project-detail-label">
-                  <span>PROJECT {String(i + 1).padStart(2, "0")}</span>
+                  <span>
+                    PROJECT {localize(String(i + 1).padStart(2, "0"))}
+                  </span>
                   <FolderCode size={35} />
                   <Tag tone="blue">
-                    LEVEL {project.level_id.replace("level-", "")}
+                    LEVEL {localize(project.level_id.replace("level-", ""))}
                   </Tag>
                 </div>
                 <div>
-                  <h2>{project.title}</h2>
-                  <p>{project.description}</p>
+                  <h2>{localize(project.title)}</h2>
+                  <p>{localize(project.description)}</p>
                   <div className="project-requirements">
                     <div>
-                      <h3>Что построить</h3>
+                      <h3>{localize("Что построить")}</h3>
                       <ul>
                         {project.requirements.map((r) => (
                           <li key={r}>
                             <Check size={14} />
-                            {r}
+                            {localize(r)}
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div>
-                      <h3>Критерии проверки</h3>
+                      <h3>{localize("Критерии проверки")}</h3>
                       <ul>
                         {project.rubric.map((r) => (
                           <li key={r}>
                             <ClipboardList size={14} />
-                            {r}
+                            {localize(r)}
                           </li>
                         ))}
                       </ul>
@@ -85,24 +93,29 @@ export function ProjectsPage() {
                     <Tag
                       tone={submission?.status === "approved" ? "green" : ""}
                     >
-                      {submission?.status === "approved"
-                        ? "ПРИНЯТО · +500 XP"
-                        : submission
-                          ? "ОЖИДАЕТ ПРОВЕРКИ"
-                          : "САМОСТОЯТЕЛЬНЫЙ ПРОЕКТ"}
+                      {localize(
+                        submission?.status === "approved"
+                          ? "ПРИНЯТО · +500 XP"
+                          : submission
+                            ? "ОЖИДАЕТ ПРОВЕРКИ"
+                            : "САМОСТОЯТЕЛЬНЫЙ ПРОЕКТ",
+                      )}
                     </Tag>
                     {!user && (
                       <Link href="/register" className="text-link">
-                        Создать аккаунт <ArrowUpRight size={16} />
+                        {localize(" Создать аккаунт ")}
+                        <ArrowUpRight size={16} />
                       </Link>
                     )}
                   </div>
                   {user && submission?.status !== "approved" && (
                     <details>
                       <summary>
-                        {submission
-                          ? "Обновить работу"
-                          : "Отправить свою работу"}
+                        {localize(
+                          submission
+                            ? "Обновить работу"
+                            : "Отправить свою работу",
+                        )}
                         <ArrowUpRight size={16} />
                       </summary>
                       <ProjectForm

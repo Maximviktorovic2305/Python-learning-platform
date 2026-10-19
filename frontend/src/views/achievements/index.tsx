@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import { useQuery } from "@tanstack/react-query";
 import { Award, Flame, Trophy, LockKeyhole, Check } from "lucide-react";
 import { PageSkeleton } from "@/widgets/app-shell";
@@ -14,6 +16,8 @@ import {
 import { errorMessage } from "@/shared/api";
 import { PythonLogo } from "@/shared/ui/python-logo";
 export function AchievementsPage() {
+  const { text: localize, locale } = useI18n();
+
   const { user } = useAuth();
   const query = useQuery(achievementsQuery(user?.id));
   const earned = query.data?.filter((a) => a.earned_at).length ?? 0;
@@ -21,18 +25,22 @@ export function AchievementsPage() {
     <>
       <CachedDataNotice query={query} />
       <PageHeading
-        eyebrow="MILESTONES / SMALL WINS MATTER"
-        title="Каждый шаг имеет значение."
-        description="Достижения отмечают вашу практику, точность и регулярность."
+        eyebrow={localize("Достижения")}
+        title={localize("Каждый шаг имеет значение.")}
+        description={localize(
+          "Достижения отмечают вашу практику, точность и регулярность.",
+        )}
         action={
           <Tag tone="yellow">
             {query.isPending ? (
               <Skeleton width={110} height={15} />
             ) : (
               <>
-                {query.data
-                  ? `${earned} / ${query.data.length} ОТКРЫТО`
-                  : "Нет данных"}
+                {localize(
+                  query.data
+                    ? `${earned} / ${query.data.length} ОТКРЫТО`
+                    : "Нет данных",
+                )}
               </>
             )}
           </Tag>
@@ -40,7 +48,7 @@ export function AchievementsPage() {
       />
       {query.error && !query.data ? (
         <ErrorState
-          message={errorMessage(query.error)}
+          message={localize(errorMessage(query.error))}
           retry={() => {
             void query.refetch();
           }}
@@ -71,20 +79,20 @@ export function AchievementsPage() {
                   {a.earned_at ? (
                     <>
                       <Check size={11} />
-                      ОТКРЫТО
+                      {localize(" ОТКРЫТО ")}
                     </>
                   ) : (
                     <>
                       <LockKeyhole size={11} />
-                      ВПЕРЕДИ
+                      {localize(" ВПЕРЕДИ ")}
                     </>
                   )}
                 </Tag>
-                <h2>{a.title}</h2>
-                <p>{a.description}</p>
+                <h2>{localize(a.title)}</h2>
+                <p>{localize(a.description)}</p>
                 {a.earned_at && (
                   <small>
-                    {new Date(a.earned_at).toLocaleDateString("ru-RU")}
+                    {new Date(a.earned_at).toLocaleDateString(locale)}
                   </small>
                 )}
               </article>

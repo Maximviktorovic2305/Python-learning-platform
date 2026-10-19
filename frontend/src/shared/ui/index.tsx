@@ -1,3 +1,5 @@
+"use client";
+import { useI18n } from "@/shared/i18n";
 import Link from "next/link";
 import { ArrowUpRight, AlertCircle, LoaderCircle } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
@@ -13,6 +15,8 @@ export function Button({
   pending = false,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { pending?: boolean }) {
+  const { text: localize } = useI18n();
+
   return (
     <button
       className={`button ${pending ? "button-pending" : ""} ${className}`}
@@ -23,7 +27,7 @@ export function Button({
       {pending && (
         <LoaderCircle className="button-loader" size={18} aria-hidden="true" />
       )}
-      {children}
+      {localize(children)}
     </button>
   );
 }
@@ -36,9 +40,11 @@ export function ActionLink({
   children: ReactNode;
   secondary?: boolean;
 }) {
+  const { text: localize } = useI18n();
+
   return (
     <Link className={`button ${secondary ? "secondary" : ""}`} href={href}>
-      {children}
+      {localize(children)}
       <ArrowUpRight size={17} />
     </Link>
   );
@@ -50,7 +56,9 @@ export function Tag({
   children: ReactNode;
   tone?: string;
 }) {
-  return <span className={`tag ${tone}`}>{children}</span>;
+  const { text: localize } = useI18n();
+
+  return <span className={`tag ${tone}`}>{localize(children)}</span>;
 }
 export function ProgressBar({
   value,
@@ -59,11 +67,13 @@ export function ProgressBar({
   value: number;
   label: string;
 }) {
+  const { text: localize } = useI18n();
+
   return (
     <div
       className="progress-track"
       role="progressbar"
-      aria-label={label}
+      aria-label={localize(label)}
       aria-valuenow={Math.min(100, Math.max(0, value))}
       aria-valuemin={0}
       aria-valuemax={100}
@@ -79,13 +89,15 @@ export function ErrorState({
   message: string;
   retry?: () => void;
 }) {
+  const { text: localize } = useI18n();
+
   return (
     <div className="state error" role="alert">
       <AlertCircle size={25} />
-      <p>{message}</p>
+      <p>{localize(message)}</p>
       {retry && (
         <Button onClick={retry} className="secondary">
-          Повторить
+          {localize(" Повторить ")}
         </Button>
       )}
     </div>
@@ -96,10 +108,14 @@ export function CachedDataNotice({
 }: {
   query: { data: unknown; error: unknown; refetch: () => Promise<unknown> };
 }) {
+  const { text: localize } = useI18n();
+
   if (!query.error || query.data === undefined) return null;
   return (
     <ErrorState
-      message="Не удалось обновить данные. Показаны последние загруженные значения."
+      message={localize(
+        "Не удалось обновить данные. Показаны последние загруженные значения.",
+      )}
       retry={() => {
         void query.refetch();
       }}
@@ -117,14 +133,16 @@ export function PageHeading({
   description?: string;
   action?: ReactNode;
 }) {
+  const { text: localize } = useI18n();
+
   return (
     <div className="page-heading">
       <div>
-        <div className="eyebrow">{eyebrow}</div>
-        <h1>{title}</h1>
-        {description && <p>{description}</p>}
+        <div className="eyebrow">{localize(eyebrow)}</div>
+        <h1>{localize(title)}</h1>
+        {description && <p>{localize(description)}</p>}
       </div>
-      {action}
+      {localize(action)}
     </div>
   );
 }

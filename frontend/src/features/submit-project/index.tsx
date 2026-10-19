@@ -1,4 +1,6 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
+
 import type { FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap, type Schema } from "@/shared/api";
@@ -18,6 +20,8 @@ export function ProjectForm({
   initialUrl?: string;
   initialNotes?: string;
 }) {
+  const { text: localize } = useI18n();
+
   const client = useQueryClient();
   const validation = useFormValidation(projectRules, {
     url: initialUrl,
@@ -60,7 +64,7 @@ export function ProjectForm({
       }}
     >
       <label>
-        Ссылка на репозиторий
+        {localize(" Ссылка на репозиторий ")}
         <input
           name="url"
           {...validation.field("url")}
@@ -73,7 +77,7 @@ export function ProjectForm({
         {validation.error("url")}
       </label>
       <label>
-        Что реализовано и как запустить
+        {localize(" Что реализовано и как запустить ")}
         <textarea
           name="notes"
           {...validation.field("notes")}
@@ -93,15 +97,17 @@ export function ProjectForm({
           (mutation.isError && !canRetryFormError(mutation.error))
         }
       >
-        Сохранить работу
+        {localize(" Сохранить работу ")}
       </Button>
       {mutation.error && (
         <p className="form-error" role="alert">
-          {formErrorMessage(mutation.error)}
+          {localize(formErrorMessage(mutation.error))}
         </p>
       )}
       {mutation.isSuccess && (
-        <p role="status">Работа сохранена и ожидает проверки администратора.</p>
+        <p role="status">
+          {localize("Работа сохранена и ожидает проверки администратора.")}
+        </p>
       )}
     </form>
   );

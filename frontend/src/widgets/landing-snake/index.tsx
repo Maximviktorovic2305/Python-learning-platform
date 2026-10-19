@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/shared/i18n";
 
 import Image from "next/image";
 import {
@@ -16,6 +17,8 @@ import { startSnakeAnimation } from "./renderer";
 const PausedContext = createContext(false);
 
 export function LandingSnake({ children }: { children: ReactNode }) {
+  const { text: localize } = useI18n();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<ReturnType<typeof startSnakeAnimation> | null>(
     null,
@@ -40,7 +43,9 @@ export function LandingSnake({ children }: { children: ReactNode }) {
         <button
           type="button"
           className="snake-motion-toggle"
-          aria-label={paused ? "Продолжить анимации" : "Приостановить анимации"}
+          aria-label={localize(
+            paused ? "Продолжить анимации" : "Приостановить анимации",
+          )}
           aria-pressed={paused}
           onClick={() => {
             const next = !paused;
@@ -49,9 +54,9 @@ export function LandingSnake({ children }: { children: ReactNode }) {
           }}
         >
           {paused ? <Play size={14} /> : <Pause size={14} />}
-          <span>Анимация</span>
+          <span>{localize("Анимация")}</span>
         </button>
-        {children}
+        {localize(children)}
       </div>
     </PausedContext.Provider>
   );
