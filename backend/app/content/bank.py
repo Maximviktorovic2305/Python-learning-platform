@@ -73,7 +73,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
             scenario.code,
             [output or "(пустой вывод)" for output in [scenario.output, *distractors]],
             [0],
-            f"{scenario.explanation} Этот приём связывает разобранный код и практику в разделе «От теории к решению».",
+            f"{scenario.explanation} Подробности — в теории: «Правила и границы применения».",
             "easy" if i < 2 else "medium",
         )
     for i in range(4):

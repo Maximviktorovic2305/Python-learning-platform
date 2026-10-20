@@ -19,63 +19,15 @@ def rule_notes(topic: TopicContent) -> str:
     )
 
 
-def practice_bridge(topic: TopicContent) -> str:
-    path = PATHS[topic.slug]
-    return "\n\n".join(
-        f"Задание {index}: «{exercise.title}». {guidance.approach}"
-        for index, (exercise, guidance) in enumerate(
-            zip(topic.practice, path.practice, strict=True), start=1
-        )
-    ) + (
-        "\n\nДанные уже находятся в начале solution.py. Сначала предскажите результат, "
-        "затем допишите алгоритм и сравните вывод с условием. Изменение данных полезно "
-        "для собственного эксперимента; перед проверкой восстановите заданный пример. "
-        "Сервер проверяет результат на открытом примере, поэтому самостоятельно "
-        "проверьте также случаи из закрепления."
-    )
-
-
 def build_theory(topic: TopicContent) -> Theory:
     path = PATHS[topic.slug]
-    organizational = topic.slug in THEORY_ONLY_TOPICS
-    sections: Theory = (
+    return (
         ("Цель и связь с изученным", f"{path.goal}\n\n{path.connection}"),
         ("Понятие и механизм", f"{topic.summary}\n\n{topic.mechanics}"),
         ("Разбираем программу по шагам", EXAMPLES[topic.slug]),
         *DETAILS[topic.slug],
         ("Правила и границы применения", rule_notes(topic)),
-        (
-            "Как выбрать приём и избежать ошибки",
-            f"{topic.use}\n\n{topic.caution}\n\n{topic.mistake}",
-        ),
     )
-    if not organizational:
-        sections += (
-            ("От теории к решению", practice_bridge(topic)),
-            (
-                "Что проверяет тест",
-                "Утверждения проверяют правила из раздела «Правила и границы применения». "
-                "В вопросах с кодом проследите состояние программы по строкам, затем "
-                "определите вывод или выберите объяснение использованного приёма. "
-                "Эти же приёмы разобраны в разделе «От теории к решению». "
-                "В тесте встречаются другие данные: запоминать конкретный ответ примера не нужно. "
-                "В вопросах с несколькими ответами оцените каждое утверждение отдельно. "
-                "После ошибки прочитайте объяснение, вернитесь к правилу и проверьте его "
-                "на собственном небольшом примере. В попытке 10 вопросов, для зачёта нужно 70%.",
-            ),
-        )
-    sections += (
-        (
-            "Самопроверка без подсказки",
-            "\n\n".join(guidance.transfer for guidance in path.practice)
-            + (
-                "\n\nСначала ответьте своими словами без открытой теории. Если ответ "
-                "не получается обосновать, вернитесь к объяснению соответствующего "
-                "приёма, затем повторите рассуждение на других данных."
-            ),
-        ),
-    )
-    return sections
 
 
 def build_review(topic: TopicContent) -> list[str]:
