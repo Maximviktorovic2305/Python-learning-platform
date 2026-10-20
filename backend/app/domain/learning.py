@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from typing import Protocol
 
-QUESTION_BANK_REVISION = "qv2"
+QUESTION_BANK_REVISION = "qv3"
 THEORY_ONLY_TOPICS = frozenset({"academy-course-structure", "academy-community"})
 
 

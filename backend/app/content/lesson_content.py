@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from app.content.exercises import with_given_data
+from app.content.learning_paths import PATHS
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,21 @@ def lesson(
     facts: tuple[tuple[str, bool, str], ...],
     practice: tuple[Practice, ...],
 ) -> TopicContent:
+    path = PATHS[slug]
+    # Keep solution/data contracts stable while rewriting the learner's instructions.
+    practice = tuple(
+        Practice(
+            exercise.title,
+            exercise.description.partition(". ")[0] + ". " + guidance.instruction
+            if guidance.instruction
+            else exercise.description,
+            exercise.solution,
+            exercise.tests,
+            guidance.approach or exercise.hint,
+            exercise.difficulty,
+        )
+        for exercise, guidance in zip(practice, path.practice, strict=True)
+    )
     examples = tuple(
         Case(
             exercise.title,

@@ -2,6 +2,7 @@ import random
 from dataclasses import dataclass
 
 from app.content.curriculum import TopicContent
+from app.content.learning_paths import PATHS
 from app.domain.learning import QUESTION_BANK_REVISION
 
 
@@ -45,7 +46,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
                 options=[options[i] for i in order],
                 correct_answer=[i for i, original in enumerate(order) if original in correct],
                 explanation=explanation,
-                hint=topic.mistake,
+                hint=f"В теории вернитесь к разделу «Правила и границы применения». {topic.mistake}",
                 tags=list(topic.tags),
             )
         )
@@ -57,7 +58,7 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
             None,
             ["Верно", "Неверно"],
             [0 if truth else 1],
-            reason,
+            f"{reason} Разбор правила находится в теории: «Правила и границы применения».",
             "easy" if i < 4 else "medium",
         )
     for i, scenario in enumerate(topic.cases):
@@ -68,11 +69,11 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
         distractors = other_outputs[:2] + ["Возникнет исключение до вывода"]
         add(
             "output_prediction",
-            f"{scenario.task}: что появится в выводе этой программы?",
+            f"{scenario.task}: проследите значения по строкам и выберите точный вывод.",
             scenario.code,
             [output or "(пустой вывод)" for output in [scenario.output, *distractors]],
             [0],
-            scenario.explanation,
+            f"{scenario.explanation} Этот приём связывает разобранный код и практику в разделе «От теории к решению».",
             "easy" if i < 2 else "medium",
         )
     for i in range(4):
@@ -84,18 +85,18 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
         ]
         add(
             "code_review",
-            f"{scenario.task}: какое объяснение правильно описывает работу программы?",
+            f"{scenario.task}: какой ход рассуждений объясняет результат программы?",
             scenario.code,
             reasons,
             [0],
-            scenario.explanation,
+            f"{scenario.explanation} Цель темы: {PATHS[topic.slug].goal}",
             "hard",
         )
     for i in range(4):
         selected = [topic.facts[(i * 2 + j) % 8] for j in range(3)]
         add(
             "multiple_select",
-            f"Какие утверждения по теме «{topic.title}» верны?",
+            f"Примените правила темы «{topic.title}»: выберите все верные утверждения.",
             None,
             [s for s, _, _ in selected],
             [j for j, (_, truth, _) in enumerate(selected) if truth],

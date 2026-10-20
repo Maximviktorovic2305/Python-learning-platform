@@ -142,6 +142,19 @@ test("the English catalog instructs printing the exact required value", async ()
 for (const { code } of languages.filter(({ code }) => code !== "ru")) {
   test(`${code}: complete catalog with intact code and interpolation`, async () => {
     const dictionary = await json(`../src/shared/i18n/messages/${code}.json`);
+    for (const [prefix, name] of [
+      ["Определите знак number.", "number"],
+      ["Нормализуйте text:", "text"],
+      ["Реализуйте make_counter(start)", "make_counter"],
+      ["На основе number вычислите", "number"],
+    ]) {
+      const source = sources.find((item) => item.startsWith(prefix));
+      assert.ok(source, `Missing curriculum instruction: ${prefix}`);
+      assert.ok(
+        dictionary[source]?.includes(name),
+        `Curriculum identifier ${name} was translated in ${code}`,
+      );
+    }
     const missing = sources.filter((source) => !dictionary[source]);
     assert.equal(
       missing.length,

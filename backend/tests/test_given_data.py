@@ -13,7 +13,7 @@ from app.content.bank import build_bank
 from app.content.curriculum import TOPICS
 from app.content.exercises import exercise_starter, uses_input, with_given_data
 from app.content.trainer import TASKS
-from app.domain.learning import question_concepts, select_questions
+from app.domain.learning import QUESTION_BANK_REVISION, question_concepts, select_questions
 from app.models.tables import Exercise, ExerciseTest, Question, QuizAttempt
 from app.schemas.contracts import QuestionView
 from app.seed import seed
@@ -161,7 +161,7 @@ async def test_old_question_revision_is_preserved_but_not_offered(client, studen
     async with factory.begin() as session:
         session.add(
             Question(
-                id="academy-introduction-q1",
+                id="academy-introduction-qv2-1",
                 topic_id="academy-introduction",
                 difficulty="easy",
                 kind="true_false",
@@ -178,16 +178,16 @@ async def test_old_question_revision_is_preserved_but_not_offered(client, studen
     assert course["question_count"] == 960
     questions = (await client.get("/api/questions?topic_id=academy-introduction&limit=100")).json()
     assert len(questions) == 20
-    assert all("-qv2-" in item["id"] for item in questions)
+    assert all(f"-{QUESTION_BANK_REVISION}-" in item["id"] for item in questions)
     async with factory() as session:
-        old = await session.get(Question, "academy-introduction-q1")
+        old = await session.get(Question, "academy-introduction-qv2-1")
         assert old is not None and old.correct_answer == [0]
     user = (await client.get("/api/users/me", headers=student)).json()
     async with factory.begin() as session:
         attempt = QuizAttempt(
             user_id=UUID(user["id"]),
             quiz_id="academy-introduction-quiz",
-            question_ids=["academy-introduction-q1"],
+            question_ids=["academy-introduction-qv2-1"],
         )
         session.add(attempt)
         await session.flush()
@@ -197,7 +197,7 @@ async def test_old_question_revision_is_preserved_but_not_offered(client, studen
     submitted = await client.post(
         f"/api/attempts/{attempt_id}/submit",
         headers=student,
-        json={"answers": [{"question_id": "academy-introduction-q1", "selected": [0]}]},
+        json={"answers": [{"question_id": "academy-introduction-qv2-1", "selected": [0]}]},
     )
     assert submitted.status_code == 200
     assert submitted.json()["score"] == 100
