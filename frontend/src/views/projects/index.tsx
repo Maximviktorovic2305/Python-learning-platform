@@ -110,23 +110,26 @@ export function ProjectsPage({
                       </Link>
                     )}
                   </div>
-                  {user && submission?.status !== "approved" && (
-                    <details>
-                      <summary>
-                        {localize(
-                          submission
-                            ? "Обновить работу"
-                            : "Отправить свою работу",
-                        )}
-                        <ArrowUpRight size={16} />
-                      </summary>
-                      <ProjectForm
-                        projectId={project.id}
-                        initialUrl={submission?.repository_url}
-                        initialNotes={submission?.notes}
-                      />
-                    </details>
-                  )}
+                  {user &&
+                    !submissions.isPending &&
+                    submission?.status !== "approved" && (
+                      <details>
+                        <summary>
+                          {localize(
+                            submission
+                              ? "Обновить работу"
+                              : "Отправить свою работу",
+                          )}
+                          <ArrowUpRight size={16} />
+                        </summary>
+                        <ProjectForm
+                          key={`${project.id}:${user.id}`}
+                          projectId={project.id}
+                          initialUrl={submission?.repository_url}
+                          initialNotes={submission?.notes}
+                        />
+                      </details>
+                    )}
                 </div>
               </article>
             );
