@@ -35,7 +35,7 @@ async def test_repeating_all_topic_stages_preserves_xp_and_completion(
         theory = await client.post("/api/lessons/academy-introduction/complete", headers=student)
         assert theory.status_code == 200
         assert theory.json()["message"].endswith(f"+{20 if round_number == 0 else 0} XP")
-        for index in range(1, 3):
+        for index in range(1, 4):
             result = await client.post(
                 f"/api/exercises/academy-introduction-e{index}/submit",
                 headers=student,
@@ -68,12 +68,12 @@ async def test_repeating_all_topic_stages_preserves_xp_and_completion(
         )
         assert failed.json()["xp"] == 0
         progress = (await client.get("/api/progress", headers=student)).json()
-        assert progress["user"]["total_xp"] == progress["daily_xp"] == 130
+        assert progress["user"]["total_xp"] == progress["daily_xp"] == 160
         assert progress["completed_topics"] == ["academy-introduction"]
-        assert len(progress["activity"]) == 4
+        assert len(progress["activity"]) == 5
         async with factory() as session:
-            assert await session.scalar(select(func.count()).select_from(Completion)) == 4
-            assert await session.scalar(select(func.sum(Completion.xp))) == 130
+            assert await session.scalar(select(func.count()).select_from(Completion)) == 5
+            assert await session.scalar(select(func.sum(Completion.xp))) == 160
 
 
 async def test_concurrent_exercise_and_distinct_quiz_attempts_award_once(

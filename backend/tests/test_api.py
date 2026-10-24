@@ -30,8 +30,8 @@ async def test_catalog_and_idempotent_seed(
         "Продвинутый Python",
     ]
     assert course["published_topics"] == 50
-    assert course["exercise_count"] == 96
-    assert course["question_count"] == 960
+    assert course["exercise_count"] == 144
+    assert course["question_count"] == 1056
     topics = [
         topic
         for level in course["levels"]
@@ -40,12 +40,12 @@ async def test_catalog_and_idempotent_seed(
     ]
     assert all(
         (topic["exercise_count"], topic["question_count"])
-        == ((0, 0) if topic["id"] in THEORY_ONLY_TOPICS else (2, 20))
+        == ((0, 0) if topic["id"] in THEORY_ONLY_TOPICS else (3, 22))
         for topic in topics
     )
     assert all(
         sum(topic["practice_difficulties"].values())
-        == (0 if topic["id"] in THEORY_ONLY_TOPICS else 2)
+        == (0 if topic["id"] in THEORY_ONLY_TOPICS else 3)
         for topic in topics
     )
     assert (await client.get("/api/lessons/classes")).status_code == 404

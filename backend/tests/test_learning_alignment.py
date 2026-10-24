@@ -82,5 +82,6 @@ async def test_seed_publishes_the_connected_learning_path(client):
         assert guide.instruction in exercise["description"]
         assert guide.approach in exercise["hints"]
     bank = (await client.get(f"/api/questions?topic_id={topic.slug}&limit=100")).json()
-    assert len(bank) == 20
-    assert all("Правила и границы применения" in question["hint"] for question in bank)
+    assert len(bank) == 22
+    section_titles = [section["title"] for section in lesson["theory"]]
+    assert all(any(title in question["hint"] for title in section_titles) for question in bank)

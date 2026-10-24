@@ -14,7 +14,7 @@ class PracticeGuide:
 class LearningPath:
     goal: str
     connection: str
-    practice: tuple[PracticeGuide, PracticeGuide]
+    practice: tuple[PracticeGuide, ...]
 
 
 def guide(instruction: str, approach: str, transfer: str) -> PracticeGuide:

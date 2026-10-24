@@ -9,7 +9,7 @@ import pytest
 from app.content.bank import build_bank
 from app.content.curriculum import TOPICS
 from app.content.exercises import exercise_starter
-from app.domain.learning import next_streak, select_questions
+from app.domain.learning import THEORY_ONLY_TOPICS, next_streak, select_questions
 
 
 @pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)
@@ -72,9 +72,10 @@ def test_practice_solutions_pass_all_cases(topic):
 @pytest.mark.parametrize("topic", TOPICS, ids=lambda topic: topic.slug)
 def test_bank_is_answerable_and_quiz_preserves_distribution(topic):
     bank = build_bank(topic)
-    assert len(bank) == 20
-    assert len({q.id for q in bank}) == 20
-    assert len({(q.prompt, q.code, tuple(q.options)) for q in bank}) == 20
+    expected = 20 if topic.slug in THEORY_ONLY_TOPICS else 22
+    assert len(bank) == expected
+    assert len({q.id for q in bank}) == expected
+    assert len({(q.prompt, q.code, tuple(q.options)) for q in bank}) == expected
     for question in bank:
         assert len(question.options) == len(set(question.options)), question.id
         assert all(0 <= index < len(question.options) for index in question.correct_answer)

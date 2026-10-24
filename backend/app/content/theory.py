@@ -2,6 +2,7 @@
 
 from app.content.curriculum import TOPICS, TopicContent
 from app.content.learning_paths import PATHS
+from app.content.supplements import expanded_sections
 from app.content.theory_examples import EXAMPLES
 from app.content.theory_expansion import DETAILS
 from app.domain.learning import THEORY_ONLY_TOPICS
@@ -26,6 +27,7 @@ def build_theory(topic: TopicContent) -> Theory:
         ("Понятие и механизм", f"{topic.summary}\n\n{topic.mechanics}"),
         ("Разбираем программу по шагам", EXAMPLES[topic.slug]),
         *DETAILS[topic.slug],
+        *expanded_sections(topic.slug),
         ("Правила и границы применения", rule_notes(topic)),
     )
 

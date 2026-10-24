@@ -60,6 +60,7 @@ jobs:
         run: |
           docker build -t python-lab-sandbox:2026-10 runner/sandbox
           pytest runner/test_sandbox.py -q
+          python scripts/check_curriculum_sandbox.py
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci

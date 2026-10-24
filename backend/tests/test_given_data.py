@@ -138,7 +138,7 @@ async def test_published_practice_has_no_unnecessary_input_fields(client, databa
     async with factory() as session:
         exercises = list(await session.scalars(select(Exercise)))
         checks = list(await session.scalars(select(ExerciseTest)))
-    assert len(exercises) == 124
+    assert len(exercises) == 172
     assert all(not uses_input(exercise.solution) for exercise in exercises)
     assert all(check.stdin == "" for check in checks)
     for topic in TOPICS:
@@ -175,9 +175,9 @@ async def test_old_question_revision_is_preserved_but_not_offered(client, studen
             )
         )
     course = (await client.get("/api/courses/python")).json()
-    assert course["question_count"] == 960
+    assert course["question_count"] == 1056
     questions = (await client.get("/api/questions?topic_id=academy-introduction&limit=100")).json()
-    assert len(questions) == 20
+    assert len(questions) == 22
     assert all(f"-{QUESTION_BANK_REVISION}-" in item["id"] for item in questions)
     async with factory() as session:
         old = await session.get(Question, "academy-introduction-qv2-1")

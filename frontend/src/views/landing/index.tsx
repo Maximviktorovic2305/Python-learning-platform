@@ -112,11 +112,11 @@ export function LandingPage() {
               <span>{localize("раздела курса")}</span>
             </div>
             <div>
-              <strong>100</strong>
+              <strong>144</strong>
               <span>{localize("практических заданий")}</span>
             </div>
             <div>
-              <strong>960</strong>
+              <strong>1056</strong>
               <span>{localize("вопросов для закрепления")}</span>
             </div>
             <div>

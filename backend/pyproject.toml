@@ -19,6 +19,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["app*"]
 
+[tool.setuptools.package-data]
+"app.content" = ["expanded_theory/*.md"]
+
 [tool.mypy]
 python_version = "3.14"
 strict = true

@@ -94,7 +94,7 @@ async def test_reseed_keeps_one_visible_check_per_exercise(client, database):
     async with factory() as session:
         exercises = list(await session.scalars(select(Exercise)))
         checks = list(await session.scalars(select(ExerciseTest)))
-    assert len(checks) == len(exercises) == 124
+    assert len(checks) == len(exercises) == 172
     for exercise in exercises:
         check = next(item for item in checks if item.exercise_id == exercise.id)
         assert check.id == f"{exercise.id}-t1"

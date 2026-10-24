@@ -1,8 +1,9 @@
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from app.content.curriculum import TopicContent
 from app.content.learning_paths import PATHS
+from app.content.supplements import SUPPLEMENTS
 from app.domain.learning import QUESTION_BANK_REVISION
 
 
@@ -103,4 +104,34 @@ def build_bank(topic: TopicContent) -> list[BankQuestion]:
             " ".join(reason for _, _, reason in selected),
             "medium",
         )
+    extra = SUPPLEMENTS.get(topic.slug)
+    if extra is not None:
+        # Append only: the original twenty IDs, options and answers stay intact.
+        explanation = f"{extra.example.explanation} {extra.guide.approach} Разбор — в разделе «Развёрнутый пример»."
+        add(
+            "code_review",
+            extra.question,
+            extra.example.code,
+            list(extra.options),
+            [0],
+            explanation,
+            "hard",
+        )
+        alternatives = ["(пустой вывод)", "Возникнет исключение до вывода", "None", "0", "False"]
+        output = extra.example.output or "(пустой вывод)"
+        options = [output, *[item for item in alternatives if item != output][:2]]
+        add(
+            "output_prediction",
+            "Какой точный вывод даст развёрнутый пример?",
+            extra.example.code,
+            options,
+            [0],
+            explanation,
+            "medium",
+        )
+        for index in (-2, -1):
+            questions[index] = replace(
+                questions[index],
+                hint="Вернитесь к разделу «Развёрнутый пример». " + extra.guide.approach,
+            )
     return questions

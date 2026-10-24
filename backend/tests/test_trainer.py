@@ -48,7 +48,7 @@ async def test_trainer_catalog_is_separate_public_and_hides_solutions(client):
     )
     assert all(task["test_count"] == 1 and task["tags"] for task in tasks)
     course = (await client.get("/api/courses/python")).json()
-    assert course["exercise_count"] == 96 and course["published_topics"] == 50
+    assert course["exercise_count"] == 144 and course["published_topics"] == 50
 
 
 async def test_trainer_rewards_once_without_completing_course(client, student):

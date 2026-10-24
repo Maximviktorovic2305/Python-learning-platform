@@ -13,8 +13,8 @@ from app.seed import seed
 
 async def test_only_organizational_topics_have_no_active_assessments(client, database):
     course = (await client.get("/api/courses/python")).json()
-    assert course["exercise_count"] == 96
-    assert course["question_count"] == 960
+    assert course["exercise_count"] == 144
+    assert course["question_count"] == 1056
     topics = [
         topic
         for level in course["levels"]

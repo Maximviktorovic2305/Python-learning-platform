@@ -5,8 +5,9 @@ from app.content.applied import TOPICS as APPLIED
 from app.content.fundamentals import TOPICS as FUNDAMENTALS
 from app.content.introduction import TOPICS as INTRODUCTION
 from app.content.lesson_content import TopicContent as TopicContent
+from app.content.supplements import extend_topics
 
-TOPICS = INTRODUCTION + FUNDAMENTALS + APPLIED + ADVANCED
+TOPICS = extend_topics(INTRODUCTION + FUNDAMENTALS + APPLIED + ADVANCED)
 LEVELS = (
     (
         "Введение",

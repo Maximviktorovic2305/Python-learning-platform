@@ -24,8 +24,8 @@ async def test_reset_keeps_exact_account_and_reseeds_course(database, student):
         assert await session.scalar(select(func.count()).select_from(AuthSession)) == 0
         assert await session.scalar(select(func.count()).select_from(Completion)) == 0
         assert await session.scalar(select(func.count()).select_from(Lesson)) == 50
-        assert await session.scalar(select(func.count()).select_from(Exercise)) == 124
-        assert await session.scalar(select(func.count()).select_from(Question)) == 1000
+        assert await session.scalar(select(func.count()).select_from(Exercise)) == 172
+        assert await session.scalar(select(func.count()).select_from(Question)) == 1096
 
 
 async def test_reset_refuses_missing_account_before_deleting(database, student):
