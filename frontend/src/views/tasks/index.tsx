@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Check, Search, ArrowRight, ListFilter } from "lucide-react";
-import { taskCatalogQuery } from "@/entities/exercise";
+import { taskCatalogQuery, type Exercise } from "@/entities/exercise";
 import { progressQuery } from "@/entities/progress";
 import { useAuth } from "@/features/auth";
 import { CodeEditor } from "@/widgets/code-editor";
@@ -32,12 +32,12 @@ const difficultyTones = {
   hard: "yellow",
 } as const;
 
-export function TasksPage() {
+export function TasksPage({ initialTasks }: { initialTasks?: Exercise[] }) {
   const { text: localize } = useI18n();
 
   const taskId = usePathname().split("/")[2];
-  const { user, loading } = useAuth();
-  const catalog = useQuery(taskCatalogQuery);
+  const { user } = useAuth();
+  const catalog = useQuery({ ...taskCatalogQuery, initialData: initialTasks });
   const progress = useQuery(progressQuery(user?.id));
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("all");
@@ -66,7 +66,11 @@ export function TasksPage() {
     <>
       <PageHeading
         eyebrow={localize("PYTHON / ТРЕНАЖЁР")}
-        title={localize("Задачи для самостоятельной практики.")}
+        title={
+          taskId && selected
+            ? localize(selected.title)
+            : localize("Задачи для самостоятельной практики.")
+        }
         description={localize(
           "Выберите сложность, разберите условие и напишите решение здесь же. От коротких упражнений до алгоритмов с собеседований.",
         )}
@@ -229,7 +233,7 @@ export function TasksPage() {
                       </Link>
                     )}
                   </div>
-                  {loading || (user && progress.isPending) ? (
+                  {user && progress.isPending ? (
                     <PageSkeleton variant="exercise" />
                   ) : progress.error && !progress.data ? (
                     <ErrorState

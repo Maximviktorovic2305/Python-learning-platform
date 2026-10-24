@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { getPublicCourse, getPublicLesson } from "@/shared/api/public-content";
 import { publicMetadata } from "@/shared/config";
 import { localizeMetadata } from "@/shared/i18n/server";
+import { JsonLd } from "@/shared/ui/json-ld";
+import { breadcrumb } from "@/shared/lib/seo-data";
+import { SITE_URL } from "@/shared/config";
 export async function generateMetadata({
   params,
 }: {
@@ -30,6 +33,7 @@ export default async function Page({
     getPublicLesson(id),
     getPublicCourse(),
   ]);
+  if (!lesson) notFound();
   if (
     course &&
     !course.levels.some((level) =>
@@ -40,16 +44,42 @@ export default async function Page({
   )
     notFound();
   return (
-    <LessonPage
-      key={id}
-      id={id}
-      initialLesson={lesson}
-      initialCourse={course}
-      initialTab={
-        ["theory", "practice", "quiz", "review"].includes(tab ?? "")
-          ? tab
-          : "theory"
-      }
-    />
+    <>
+      <JsonLd
+        data={breadcrumb([
+          { name: "Python Lab", path: "/" },
+          { name: "Программа курса", path: "/curriculum" },
+          { name: lesson.topic.title, path: `/learn/${id}` },
+        ])}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "LearningResource",
+          name: lesson.topic.title,
+          description: lesson.topic.summary,
+          url: `${SITE_URL}/learn/${id}`,
+          inLanguage: "ru",
+          isAccessibleForFree: true,
+          learningResourceType: "Урок с практикой",
+          isPartOf: {
+            "@type": "Course",
+            name: "Бесплатный курс Python",
+            url: `${SITE_URL}/curriculum`,
+          },
+        }}
+      />
+      <LessonPage
+        key={id}
+        id={id}
+        initialLesson={lesson}
+        initialCourse={course}
+        initialTab={
+          ["theory", "practice", "quiz", "review"].includes(tab ?? "")
+            ? tab
+            : "theory"
+        }
+      />
+    </>
   );
 }

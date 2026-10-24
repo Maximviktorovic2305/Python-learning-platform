@@ -9,4 +9,7 @@ export const generateMetadata = () =>
     ),
   );
 import { ProjectsPage } from "@/views/projects";
-export default ProjectsPage;
+import { getPublicProjects } from "@/shared/api/public-content";
+export default async function Page() {
+  return <ProjectsPage initialProjects={await getPublicProjects()} />;
+}

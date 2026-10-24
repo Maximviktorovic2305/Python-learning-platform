@@ -9,12 +9,16 @@ import { projectsQuery, submissionsQuery } from "@/entities/project";
 import { useAuth } from "@/features/auth";
 import { ProjectForm } from "@/features/submit-project";
 import { PageHeading, Tag, ErrorState, CachedDataNotice } from "@/shared/ui";
-import { errorMessage } from "@/shared/api";
-export function ProjectsPage() {
+import { errorMessage, type Schema } from "@/shared/api";
+export function ProjectsPage({
+  initialProjects,
+}: {
+  initialProjects?: Schema<"ProjectView">[];
+}) {
   const { text: localize } = useI18n();
 
-  const { user, loading } = useAuth();
-  const projects = useQuery(projectsQuery);
+  const { user } = useAuth();
+  const projects = useQuery({ ...projectsQuery, initialData: initialProjects });
   const submissions = useQuery(submissionsQuery(user?.id));
   return (
     <>
@@ -27,9 +31,7 @@ export function ProjectsPage() {
           "Четыре проекта, чтобы связать отдельные темы в полноценное приложение.",
         )}
       />
-      {loading ||
-      projects.isPending ||
-      (user && submissions.isPending && !projects.error) ? (
+      {projects.isPending ? (
         <PageSkeleton variant="projects" />
       ) : projects.error && !projects.data ? (
         <ErrorState

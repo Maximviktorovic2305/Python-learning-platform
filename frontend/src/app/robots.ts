@@ -5,14 +5,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: [
-        "/api/",
-        "/dashboard",
-        "/profile",
-        "/achievements",
-        "/login",
-        "/register",
-      ],
+      // Allow crawlers to read noindex on account pages. robots.txt is not
+      // access control, and blocking them would hide their noindex directives.
+      disallow: ["/api/"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

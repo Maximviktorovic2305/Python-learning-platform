@@ -87,6 +87,7 @@ jobs:
           npm run typecheck
           npm run lint
           npm run lint:fsd
+          npm run seo:check
           npm run i18n:check
           npm run format:check
           npm audit --omit=dev --audit-level=low

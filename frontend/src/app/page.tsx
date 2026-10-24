@@ -1,6 +1,7 @@
 import { getLanguage, localizeMetadata } from "@/shared/i18n/server";
 import { LandingPage } from "@/views/landing";
 import { publicMetadata, SITE_DESCRIPTION, SITE_URL } from "@/shared/config";
+import { JsonLd } from "@/shared/ui/json-ld";
 export const generateMetadata = () =>
   localizeMetadata(
     publicMetadata("Бесплатный курс Python с практикой", SITE_DESCRIPTION, "/"),
@@ -34,9 +35,7 @@ export default async function Page() {
   };
   return (
     <>
-      <script type="application/ld+json">
-        {JSON.stringify(data).replace(/</g, "\\u003c")}
-      </script>
+      <JsonLd data={data} />
       <LandingPage />
     </>
   );

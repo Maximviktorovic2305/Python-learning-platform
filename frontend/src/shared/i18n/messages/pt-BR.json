@@ -5583,5 +5583,12 @@
   "числа": "números",
   "экземпляры": "cópias",
   "я кот длинно": "Eu sou um gato comprido",
-  "← К списку задач": "← Para a lista de tarefas"
+  "← К списку задач": "← Para a lista de tarefas",
+  "{0} — задача по Python": "{0} — exercício de Python",
+  "Задачи Python": "Exercícios de Python",
+  "Практическая задача по Python: {0}": "Exercício prático de Python: {0}",
+  "Практическое задание": "Exercício prático",
+  "Решите задачу «{0}» на Python: условие, заготовка кода и бесплатная проверка решения.": "Resolva «{0}» em Python: instruções, código inicial e verificação gratuita de soluções.",
+  "Урок с практикой": "Lição com prática",
+  "Практические задачи по Python: условия, редактор кода и бесплатная проверка решений. От простых упражнений до алгоритмов.": "Exercícios de Python com instruções, editor de código e verificação gratuita de soluções. De exercícios simples a algoritmos."
 }

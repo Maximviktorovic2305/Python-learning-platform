@@ -21,9 +21,9 @@ export function publicMetadata(
       locale: "ru_RU",
       images: [
         {
-          url: `${SITE_URL}/social-preview.webp`,
-          width: 960,
-          height: 600,
+          url: `${SITE_URL}/social-preview.png`,
+          width: 1200,
+          height: 630,
           alt: "Python Lab — бесплатный курс Python",
         },
       ],
@@ -32,7 +32,7 @@ export function publicMetadata(
       card: "summary_large_image",
       title,
       description,
-      images: [`${SITE_URL}/social-preview.webp`],
+      images: [`${SITE_URL}/social-preview.png`],
     },
   };
 }
