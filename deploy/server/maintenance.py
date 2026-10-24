@@ -1,4 +1,5 @@
 #!/usr/bin/python3 -I
+# ruff: noqa: UP017 -- host administration also runs on Ubuntu Python 3.10
 """Root-owned fixed cleanup; no caller-supplied paths, commands or service names."""
 
 import datetime
@@ -74,7 +75,7 @@ def health():
 def compressed_backup(port):
     folder = pathlib.Path("/var/backups/postgresql-sites")
     folder.mkdir(mode=0o700, exist_ok=True)
-    stamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     dest = folder / f"native-final-{port}-{stamp}.sql.gz"
     temp = dest.with_suffix(".gz.tmp")
     with temp.open("xb") as raw, gzip.GzipFile(fileobj=raw, mode="wb") as gz:

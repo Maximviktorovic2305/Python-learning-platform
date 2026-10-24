@@ -1,4 +1,5 @@
 #!/usr/bin/python3 -I
+# ruff: noqa: UP017 -- host administration also runs on Ubuntu Python 3.10
 """Root-owned native site activator: fixed sites, SHA-only releases, no arbitrary commands."""
 
 import datetime
@@ -192,7 +193,7 @@ def backup(site):
         return
     root = pathlib.Path("/var/backups/native-sites") / site
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
-    stamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     f = root / ("database-" + stamp + ".sql.gz")
     tmp = f.with_suffix(".gz.tmp")
     with tmp.open("xb") as raw, gzip.GzipFile(fileobj=raw, mode="wb") as dest:
