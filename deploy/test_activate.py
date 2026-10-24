@@ -78,3 +78,19 @@ def test_incomplete_migration_prevents_activation(host):
     with pytest.raises(RuntimeError, match="native migration"):
         admin.activate(NEW)
     assert not operations.called
+
+
+def test_deployment_migrates_schema_without_running_curriculum_seed(host, monkeypatch):
+    root, operations = host
+    monkeypatch.setattr(
+        admin, "environment", lambda kind: {"ENVIRONMENT": "production"}
+    )
+    admin.migrate(NEW)
+    operations.assert_called_once()
+    assert operations.call_args.args[0] == [
+        str(root / "runtime" / NEW / "api/bin/python"),
+        "-m",
+        "alembic",
+        "upgrade",
+        "head",
+    ]

@@ -39,6 +39,11 @@ builds a locked Python environment and Next.js standalone output in
 health and updates the `current` symlink. A failed deployment restores previous
 services. Database migrations are not automatically reversed: retain
 compatible migrations and use the private database backup for manual recovery.
+Production deployment runs only Alembic schema migrations. It does not execute
+curriculum seed: the published course is already stored in PostgreSQL. Future
+content changes require a reviewed data migration. `python -m app.seed` remains
+a development/test initializer; in production it exits without changing data,
+including when invoked by an older installed deployment helper.
 After health checks, deployment rotates `current` and `previous`
 and runs `deploy/maintain.py --apply` under the same deployment lock. These two
 releases and their native runtimes are protected: one current version and one

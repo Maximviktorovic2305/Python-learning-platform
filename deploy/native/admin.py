@@ -101,16 +101,17 @@ def backup() -> None:
 def migrate(revision: str) -> None:
     release = release_path(revision, "releases")
     runtime = release_path(revision, "runtime")
-    for module, args in [("alembic", ["upgrade", "head"]), ("app.seed", [])]:
-        subprocess.run(
-            [str(runtime / "api/bin/python"), "-m", module, *args],
-            cwd=release / "backend",
-            env=environment("migrate"),
-            user="python-migrate",
-            group="python-migrate",
-            extra_groups=[],
-            check=True,
-        )
+    # Release deployment migrates the schema; the published catalogue and
+    # learning history are not regenerated from development fixtures.
+    subprocess.run(
+        [str(runtime / "api/bin/python"), "-m", "alembic", "upgrade", "head"],
+        cwd=release / "backend",
+        env=environment("migrate"),
+        user="python-migrate",
+        group="python-migrate",
+        extra_groups=[],
+        check=True,
+    )
 
 
 def health() -> None:

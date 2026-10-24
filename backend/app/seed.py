@@ -1,6 +1,6 @@
 import asyncio
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.content.bank import build_bank
@@ -8,11 +8,10 @@ from app.content.curriculum import LEVELS, TOPICS, TopicContent
 from app.content.exercises import exercise_description, exercise_starter, with_given_data
 from app.content.theory import REVIEWS, THEORY
 from app.content.trainer import TASKS
+from app.core.config import get_settings
 from app.core.database import SessionFactory, engine
 from app.models.tables import (
     Achievement,
-    Answer,
-    Completion,
     Course,
     Exercise,
     ExerciseTest,
@@ -20,11 +19,8 @@ from app.models.tables import (
     Level,
     Module,
     Project,
-    ProjectSubmission,
     Question,
-    QuestionMemory,
     Quiz,
-    QuizAttempt,
     Topic,
 )
 
@@ -124,34 +120,8 @@ async def seed(session: AsyncSession) -> None:
         )
     )
     await session.flush()
-    # New resource IDs prevent old completion records from crediting different lessons.
-    # Remove legacy learning material; retain earned XP in its append-only ledger.
-    legacy_topics = select(Topic.id).where(Topic.id.not_in([topic.slug for topic in TOPICS]))
-    legacy_questions = select(Question.id).where(Question.topic_id.in_(legacy_topics))
-    legacy_quizzes = select(Quiz.id).where(Quiz.topic_id.in_(legacy_topics))
-    legacy_attempts = select(QuizAttempt.id).where(QuizAttempt.quiz_id.in_(legacy_quizzes))
-    await session.execute(delete(Answer).where(Answer.attempt_id.in_(legacy_attempts)))
-    await session.execute(delete(QuizAttempt).where(QuizAttempt.id.in_(legacy_attempts)))
-    await session.execute(
-        delete(QuestionMemory).where(QuestionMemory.question_id.in_(legacy_questions))
-    )
-    await session.execute(
-        update(Completion).where(Completion.topic_id.in_(legacy_topics)).values(topic_id=None)
-    )
-    legacy_exercises = select(Exercise.id).where(Exercise.topic_id.in_(legacy_topics))
-    await session.execute(
-        delete(ExerciseTest).where(ExerciseTest.exercise_id.in_(legacy_exercises))
-    )
-    await session.execute(delete(Exercise).where(Exercise.topic_id.in_(legacy_topics)))
-    await session.execute(delete(Question).where(Question.topic_id.in_(legacy_topics)))
-    await session.execute(delete(Quiz).where(Quiz.topic_id.in_(legacy_topics)))
-    await session.execute(delete(Lesson).where(Lesson.id.in_(legacy_topics)))
-    await session.execute(delete(Topic).where(Topic.id.in_(legacy_topics)))
-    # All old positions must be clear before inserting the replacement catalogue.
-    await session.execute(delete(Module).where(~Module.id.like("academy-%")))
-    await session.execute(
-        update(Level).where(~Level.id.like("academy-%")).values(position=Level.position + 100)
-    )
+    # Initial filling is additive. Retiring published content and its history
+    # belongs to an explicit data migration, never to this initialization tool.
     authored = {topic.slug: topic for topic in TOPICS}
     for i, (title, description, modules) in enumerate(LEVELS):
         lid = f"academy-level-{i}"
@@ -270,20 +240,10 @@ async def seed(session: AsyncSession) -> None:
             )
         )
     await session.flush()
-    current_projects = [project[0] for project in projects]
-    await session.execute(
-        delete(ProjectSubmission).where(ProjectSubmission.project_id.not_in(current_projects))
-    )
-    await session.execute(delete(Project).where(Project.id.not_in(current_projects)))
-    await session.execute(delete(Level).where(~Level.id.like("academy-%")))
     await seed_trainer(session)
 
 
 async def seed_trainer(session: AsyncSession) -> None:
-    current = [item.id for item in TASKS]
-    obsolete = select(Exercise.id).where(Exercise.catalog == "trainer", Exercise.id.not_in(current))
-    await session.execute(delete(ExerciseTest).where(ExerciseTest.exercise_id.in_(obsolete)))
-    await session.execute(delete(Exercise).where(Exercise.id.in_(obsolete)))
     for item in TASKS:
         content = item.practice
         stdin, stdout = content.tests[0]
@@ -318,6 +278,11 @@ async def seed_trainer(session: AsyncSession) -> None:
 
 
 async def main() -> None:
+    # Older root-owned deployment helpers may still invoke this command.
+    # Production already has the published catalogue: do not rewrite its data.
+    if get_settings().environment == "production":
+        print("Production curriculum initialization is disabled; no data changed.")
+        return
     async with SessionFactory.begin() as session:
         await seed(session)
     await engine.dispose()
