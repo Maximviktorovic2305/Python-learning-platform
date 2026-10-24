@@ -2,6 +2,7 @@
 """Restrict local service accounts; never alter SSH, nginx, UFW or administrator traffic."""
 
 import pwd
+import shlex
 import subprocess
 
 POLICIES = {
@@ -16,16 +17,27 @@ POLICIES = {
     "jslab-web": ([8020], False, False),
     "jslab-api": ([5432, 8092], False, False),
     "jslab-runner": ([], False, False),
+    "music-migrate": ([5432], False, False),
+    "chat-migrate": ([5432], False, False),
+    "jslab-migrate": ([5432], False, False),
+    "python-migrate": ([5433], False, False),
 }
 for binary, version in [("/usr/sbin/iptables", 4), ("/usr/sbin/ip6tables", 6)]:
+    pending = ["*filter"]
 
-    def rule(*args, check=True, binary=binary):
-        return subprocess.run(
-            [binary, "-w", "5", *args],
-            check=check,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+    def rule(*args, check=True, binary=binary, pending=pending):
+        if args[0] == "-C":
+            return subprocess.run(
+                [binary, "-w", "5", *args],
+                check=check,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        if args[0] == "-N":
+            pending.append(":" + args[1] + " - [0:0]")
+        else:
+            pending.append(shlex.join(args))
+        return None
 
     chain = "NATIVE_SITES_OUT"
     rule("-N", chain, check=False)
@@ -109,4 +121,17 @@ for binary, version in [("/usr/sbin/iptables", 4), ("/usr/sbin/ip6tables", 6)]:
     rule("-A", chain, "-j", "RETURN")
     if rule("-C", "OUTPUT", "-j", chain, check=False).returncode:
         rule("-I", "OUTPUT", "1", "-j", chain)
-print("Native service UID network isolation installed for IPv4 and IPv6")
+    payload = "\n".join([*pending, "COMMIT", ""])
+    restore = binary + "-restore"
+    # One table transaction closes the temporary allow window of flushing live chains.
+    # --noflush leaves nginx, SSH, UFW and all unrelated rules intact.
+    subprocess.run(
+        [restore, "--test", "--noflush", "--wait", "5"],
+        input=payload,
+        text=True,
+        check=True,
+    )
+    subprocess.run(
+        [restore, "--noflush", "--wait", "5"], input=payload, text=True, check=True
+    )
+print("Atomic native UID network isolation installed for IPv4 and IPv6")

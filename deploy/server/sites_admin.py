@@ -233,7 +233,7 @@ def migrate(site, sha):
         folder.resolve() == folder
         and (folder / "node_modules/prisma/build/index.js").is_file()
     )
-    user = pwd.getpwnam(site + "-api")
+    user = pwd.getpwnam(site + "-migrate")
     subprocess.run(
         [NODE, str(folder / "node_modules/prisma/build/index.js"), "migrate", "deploy"],
         cwd=folder,

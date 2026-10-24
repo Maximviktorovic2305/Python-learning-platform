@@ -56,7 +56,7 @@ jobs:
         working-directory: backend
         run: pytest -q
       - name: Deployment retention safety
-        run: python -m pytest deploy/test_maintain.py deploy/test_activate.py deploy/server/test_sites_admin.py -q
+        run: python -m pytest deploy/test_maintain.py deploy/test_activate.py deploy/server/test_sites_admin.py deploy/server/test_firewall.py -q
       - name: Sandbox isolation tests
         env:
           RUN_NATIVE_TESTS: '1'

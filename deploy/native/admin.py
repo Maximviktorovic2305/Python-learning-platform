@@ -106,8 +106,8 @@ def migrate(revision: str) -> None:
             [str(runtime / "api/bin/python"), "-m", module, *args],
             cwd=release / "backend",
             env=environment("migrate"),
-            user="python-api",
-            group="python-api",
+            user="python-migrate",
+            group="python-migrate",
             extra_groups=[],
             check=True,
         )

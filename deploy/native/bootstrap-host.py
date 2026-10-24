@@ -15,7 +15,7 @@ def run(args, **kwargs):
 app = pathlib.Path("/home/max/python-platform")
 source = pathlib.Path(__file__).resolve().parent
 assert pathlib.Path("/usr/local/bin/nsjail").is_file()
-for name in ["python-api", "python-web", "python-runner"]:
+for name in ["python-api", "python-web", "python-runner", "python-migrate"]:
     import pwd
 
     try:
