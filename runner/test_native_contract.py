@@ -1,6 +1,5 @@
 """The privileged entry point accepts only bounded payloads and fixed unit names."""
 
-import base64
 import importlib.util
 from pathlib import Path
 
@@ -47,10 +46,9 @@ def test_job_stops_only_its_validated_unit():
 def test_payload_is_passed_as_data_under_resource_controls():
     source = "print('$(arbitrary); `not-a-shell`')"
     command = helper.command(["start", JOB, source, "input", READY])
-    assert base64.b64decode(command[-3]).decode() == source
-    assert base64.b64decode(command[-2]).decode() == "input"
-    assert command[-1] == READY
-    assert "$" not in command[-3] and "$" not in command[-2]
+    assert command[-1] == helper.BOOTSTRAP
+    assert source not in command and "input" not in command and READY not in command
+    assert "--description=Python Learning isolated exercise" in command
     assert "--property=MemoryMax=128M" in command
     assert "--property=TasksMax=32" in command
     assert "--property=MemorySwapMax=0" in command

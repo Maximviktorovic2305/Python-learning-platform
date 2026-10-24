@@ -1,14 +1,13 @@
 #!/usr/bin/python3 -I
 """Root-owned, narrow sudo entry point. Never accept paths or shell commands."""
 
-import base64
+import json
 import os
 import re
 import sys
 
-BOOTSTRAP = """import base64, io, sys
-source, data, ready = sys.argv[1:]
-source, data = (base64.b64decode(value).decode('utf-8') for value in (source, data))
+BOOTSTRAP = """import io, json, sys
+source, data, ready = json.load(sys.stdin)
 sys.argv = ['solution.py']
 sys.stdin = io.TextIOWrapper(io.BytesIO(data.encode('utf-8')), encoding='utf-8')
 print(ready, flush=True)
@@ -39,6 +38,7 @@ def command(args: list[str]) -> list[str]:
         "--collect",
         "--service-type=exec",
         "--unit=" + unit,
+        "--description=Python Learning isolated exercise",
         "--property=MemoryMax=128M",
         "--property=MemorySwapMax=0",
         "--property=TasksMax=32",
@@ -55,15 +55,19 @@ def command(args: list[str]) -> list[str]:
         "-B",
         "-c",
         BOOTSTRAP,
-        base64.b64encode(source.encode()).decode("ascii"),
-        base64.b64encode(stdin.encode()).decode("ascii"),
-        ready,
     ]
 
 
 if __name__ == "__main__":
     try:
         argv = command(sys.argv[1:])
+        if sys.argv[1] == "start":
+            payload = json.dumps(sys.argv[3:6]).encode()
+            descriptor = os.memfd_create("python-learning-job", 0)
+            os.write(descriptor, payload)
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            os.dup2(descriptor, 0)
+            os.close(descriptor)
     except ValueError:
         sys.exit("Invalid sandbox request")
     os.execve(
