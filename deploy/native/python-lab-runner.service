@@ -19,7 +19,9 @@ CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=read-only
-InaccessiblePaths=/home/max/.ssh /home/max/.config /home/max/.pm2 /home/max/my-songs-site /home/max/chat-gpt-app /home/max/portfolio /home/max/releases
+ProtectProc=invisible
+ProcSubset=pid
+InaccessiblePaths=/home/max/.ssh /home/max/.config /home/max/.pm2 /home/max/my-songs-site /home/max/chat-gpt-app /home/max/portfolio /home/max/releases /srv/native-sites /etc/native-sites /var/backups /home/max/jslab /etc/jslab
 # Seccomp-based service restrictions imply no_new_privs for an unprivileged user
 # and would prevent the sole approved sudo helper. Student processes receive
 # namespace/seccomp restrictions in the separate NsJail unit instead.
