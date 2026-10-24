@@ -1,12 +1,14 @@
 #!/usr/bin/python3 -I
 """Root-owned, narrow sudo entry point. Never accept paths or shell commands."""
 
+import base64
 import os
 import re
 import sys
 
-BOOTSTRAP = """import io, sys
+BOOTSTRAP = """import base64, io, sys
 source, data, ready = sys.argv[1:]
+source, data = (base64.b64decode(value).decode('utf-8') for value in (source, data))
 sys.argv = ['solution.py']
 sys.stdin = io.TextIOWrapper(io.BytesIO(data.encode('utf-8')), encoding='utf-8')
 print(ready, flush=True)
@@ -53,8 +55,8 @@ def command(args: list[str]) -> list[str]:
         "-B",
         "-c",
         BOOTSTRAP,
-        source,
-        stdin,
+        base64.b64encode(source.encode()).decode("ascii"),
+        base64.b64encode(stdin.encode()).decode("ascii"),
         ready,
     ]
 

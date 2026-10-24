@@ -21,6 +21,18 @@ async def test_real_python_executes_with_stdin():
 
 
 @pytest.mark.asyncio
+async def test_systemd_does_not_expand_student_dollar_literals():
+    source = "print('${HOME} $USER $$'); print(input())"
+    out, err, status, timeout = await run_case(source, "${HOME} $USER $$\n")
+    assert (out, err, status, timeout) == (
+        "${HOME} $USER $$\n${HOME} $USER $$\n",
+        "",
+        0,
+        False,
+    )
+
+
+@pytest.mark.asyncio
 async def test_teaching_libraries_available_without_network():
     out, err, status, timeout = await run_case(
         "import sqlalchemy, pytest; print(callable(sqlalchemy.create_engine), callable(pytest.fixture))",

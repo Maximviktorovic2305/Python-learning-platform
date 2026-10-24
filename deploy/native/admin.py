@@ -23,7 +23,7 @@ SERVICES = [
 ]
 
 
-def environment() -> dict[str, str]:
+def environment(kind: str = "api") -> dict[str, str]:
     import shlex
 
     values = {
@@ -31,7 +31,12 @@ def environment() -> dict[str, str]:
         "LANG": "C.UTF-8",
         "PYTHONDONTWRITEBYTECODE": "1",
     }
-    for line in Path("/etc/python-platform/api.env").read_text().splitlines():
+    if kind not in {"api", "migrate"}:
+        raise ValueError("Invalid configuration kind")
+    config = Path("/etc/python-platform") / f"{kind}.env"
+    if not config.exists() and kind == "migrate":
+        config = config.with_name("api.env")
+    for line in config.read_text().splitlines():
         if line and not line.startswith("#"):
             key, value = line.split("=", 1)
             values[key] = shlex.split(value)[0]
@@ -100,7 +105,7 @@ def migrate(revision: str) -> None:
         subprocess.run(
             [str(runtime / "api/bin/python"), "-m", module, *args],
             cwd=release / "backend",
-            env=environment(),
+            env=environment("migrate"),
             user="python-api",
             group="python-api",
             extra_groups=[],
