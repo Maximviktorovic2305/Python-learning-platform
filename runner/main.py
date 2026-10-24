@@ -1,4 +1,4 @@
-"""Trusted execution broker; user code executes only in disposable Docker containers."""
+"""Trusted broker; user code executes only in a disposable isolated sandbox."""
 
 import asyncio
 import os
@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 slots = asyncio.Semaphore(4)
 IMAGE = os.environ.get("SANDBOX_IMAGE", "python-lab-sandbox:2026-10")
+ENGINE = os.environ.get("SANDBOX_ENGINE", "docker")
 TOKEN = os.environ.get("RUNNER_TOKEN", "")
 MAX_OUTPUT = 16000
 STARTUP_TIMEOUT = 10
@@ -60,11 +61,14 @@ async def read_bounded(reader: asyncio.StreamReader, budget: list[int]) -> str:
 
 
 async def remove_container(name: str) -> None:
+    if ENGINE == "nsjail":
+        args = ["sudo", "-n", "--", "/usr/local/sbin/python-lab-jail", "stop", name]
+    elif ENGINE == "docker":
+        args = ["docker", "rm", "-f", name]
+    else:
+        raise RuntimeError("Unsupported sandbox engine")
     process = await asyncio.create_subprocess_exec(
-        "docker",
-        "rm",
-        "-f",
-        name,
+        *args,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
     )
@@ -75,7 +79,7 @@ async def remove_container(name: str) -> None:
 async def run_case(code: str, stdin: str) -> tuple[str, str, int, bool]:
     name = f"python-lab-{uuid4().hex}"
     ready = secrets.token_hex(16)
-    process = await asyncio.create_subprocess_exec(
+    docker_command = [
         "docker",
         "run",
         "--name",
@@ -102,6 +106,25 @@ async def run_case(code: str, stdin: str) -> tuple[str, str, int, bool]:
         code,
         stdin,
         ready,
+    ]
+    if ENGINE == "docker":
+        command = docker_command
+    elif ENGINE == "nsjail":
+        command = [
+            "sudo",
+            "-n",
+            "--",
+            "/usr/local/sbin/python-lab-jail",
+            "start",
+            name,
+            code,
+            stdin,
+            ready,
+        ]
+    else:
+        raise RuntimeError("Unsupported sandbox engine")
+    process = await asyncio.create_subprocess_exec(
+        *command,
         stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,

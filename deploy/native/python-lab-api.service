@@ -1,0 +1,32 @@
+[Unit]
+Description=Python Learning API
+After=network.target postgresql@18-python.service
+Requires=postgresql@18-python.service
+
+[Service]
+User=python-api
+Group=python-api
+WorkingDirectory=/home/max/python-platform/current/backend
+EnvironmentFile=/etc/python-platform/api.env
+Environment=PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ExecStart=/home/max/python-platform/current-runtime/api/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8011 --no-access-log --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+RestartSec=3
+MemoryMax=384M
+TasksMax=64
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+InaccessiblePaths=/home/max/.ssh /home/max/.config /home/max/.pm2 /home/max/my-songs-site /home/max/chat-gpt-app /home/max/portfolio /home/max/releases
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

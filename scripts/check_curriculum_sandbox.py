@@ -1,4 +1,4 @@
-"""Verify published, repository-authored solutions only inside disposable Docker."""
+"""Verify published repository-authored solutions inside disposable sandboxes."""
 
 import argparse
 import asyncio
@@ -14,7 +14,7 @@ async def main(workers: int) -> None:
     from app.content.trainer import TASKS
     from app.domain.learning import THEORY_ONLY_TOPICS
 
-    from runner.main import run_case
+    from runner.main import ENGINE, run_case
 
     jobs = [
         (f"{topic.slug}-e{index}", practice)
@@ -43,7 +43,7 @@ async def main(workers: int) -> None:
         raise SystemExit(
             f"{len(failures)} authored solutions failed: {', '.join(failures)}"
         )
-    print(f"Validated {len(jobs)} published solutions in isolated Docker containers.")
+    print(f"Validated {len(jobs)} published solutions in isolated {ENGINE} sandboxes.")
 
 
 if __name__ == "__main__":

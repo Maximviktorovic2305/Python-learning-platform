@@ -31,6 +31,7 @@ jobs:
       ALLOWED_ORIGIN: http://localhost:3010
       EXECUTION_RUNNER: remote
       RUNNER_URL: http://127.0.0.1:8090
+      SANDBOX_ENGINE: nsjail
       NEXT_PUBLIC_YANDEX_METRIKA_ID: '12345678'
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -46,20 +47,23 @@ jobs:
         run: pip install -r backend/requirements-dev.lock -e backend
       - name: Python lint and typing
         run: |
-          ruff check backend runner
-          ruff format --check backend runner
+          ruff check backend runner deploy
+          ruff format --check backend runner deploy
           cd backend
           mypy
           mypy --strict ../runner/main.py
       - name: PostgreSQL integration tests
         working-directory: backend
         run: pytest -q
+      - name: Deployment retention safety
+        run: pytest deploy/test_maintain.py deploy/test_activate.py -q
       - name: Sandbox isolation tests
         env:
-          RUN_DOCKER_TESTS: '1'
+          RUN_NATIVE_TESTS: '1'
+          SANDBOX_ENGINE: nsjail
         run: |
-          docker build -t python-lab-sandbox:2026-10 runner/sandbox
-          pytest runner/test_sandbox.py -q
+          sudo SANDBOX_BROKER_USER="$USER" bash deploy/native/install-sandbox.sh
+          pytest runner/test_sandbox.py runner/test_native_contract.py -q
           python scripts/check_curriculum_sandbox.py
       - name: Install frontend dependencies
         working-directory: frontend

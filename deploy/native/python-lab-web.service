@@ -1,0 +1,32 @@
+[Unit]
+Description=Python Learning frontend
+After=network.target python-lab-api.service
+
+[Service]
+User=python-web
+Group=python-web
+WorkingDirectory=/home/max/python-platform/current-runtime/web
+Environment=NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=127.0.0.1 PORT=3010 API_URL=http://127.0.0.1:8011 WEB_ORIGIN=https://python-learning.tech
+ExecStart=/home/max/python-platform/node/bin/node server.js
+Restart=on-failure
+RestartSec=3
+MemoryMax=512M
+TasksMax=64
+CacheDirectory=python-platform-web
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/cache/python-platform-web
+InaccessiblePaths=/home/max/.ssh /home/max/.config /home/max/.pm2 /home/max/my-songs-site /home/max/chat-gpt-app /home/max/portfolio /home/max/releases
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

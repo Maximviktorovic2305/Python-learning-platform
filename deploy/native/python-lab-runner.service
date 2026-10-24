@@ -1,0 +1,31 @@
+[Unit]
+Description=Python Learning isolated execution broker
+After=network.target
+
+[Service]
+User=python-runner
+Group=python-runner
+WorkingDirectory=/home/max/python-platform/current-runtime/runner
+EnvironmentFile=/etc/python-platform/runner.env
+Environment=PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ExecStart=/home/max/python-platform/current-runtime/api/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8091 --no-access-log
+Restart=on-failure
+RestartSec=3
+MemoryMax=256M
+TasksMax=64
+# Only the fixed root-owned jail helper may elevate; API and web cannot sudo.
+NoNewPrivileges=no
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+InaccessiblePaths=/home/max/.ssh /home/max/.config /home/max/.pm2 /home/max/my-songs-site /home/max/chat-gpt-app /home/max/portfolio /home/max/releases
+# Seccomp-based service restrictions imply no_new_privs for an unprivileged user
+# and would prevent the sole approved sudo helper. Student processes receive
+# namespace/seccomp restrictions in the separate NsJail unit instead.
+IPAddressDeny=any
+IPAddressAllow=localhost
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -8,8 +8,9 @@ from runner import main
 from runner.main import run_case
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("RUN_DOCKER_TESTS") != "1",
-    reason="Requires Docker and sandbox image",
+    os.environ.get("RUN_DOCKER_TESTS") != "1"
+    and os.environ.get("RUN_NATIVE_TESTS") != "1",
+    reason="Requires a real Docker or native isolated sandbox",
 )
 
 
@@ -29,6 +30,10 @@ async def test_teaching_libraries_available_without_network():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    main.ENGINE == "nsjail",
+    reason="Native bootstrap is root-owned and immutable to the broker",
+)
 async def test_slow_startup_does_not_consume_execution_budget(monkeypatch):
     monkeypatch.setattr(
         main, "BOOTSTRAP", "import time; time.sleep(6)\n" + main.BOOTSTRAP
@@ -86,16 +91,19 @@ async def test_cancelled_execution_removes_its_container(monkeypatch):
         with pytest.raises(asyncio.CancelledError):
             await task
     assert len(removed) == 1
+    command = (
+        ["systemctl", "is-active", f"python-jail-{removed[0]}.service"]
+        if main.ENGINE == "nsjail"
+        else ["docker", "ps", "-aq", "--filter", f"name=^{removed[0]}$"]
+    )
     process = await asyncio.create_subprocess_exec(
-        "docker",
-        "ps",
-        "-aq",
-        "--filter",
-        f"name=^{removed[0]}$",
-        stdout=asyncio.subprocess.PIPE,
+        *command, stdout=asyncio.subprocess.PIPE
     )
     stdout, _ = await process.communicate()
-    assert process.returncode == 0 and not stdout.strip()
+    if main.ENGINE == "nsjail":
+        assert process.returncode != 0 and stdout.strip() in {b"inactive", b"unknown"}
+    else:
+        assert process.returncode == 0 and not stdout.strip()
 
 
 @pytest.mark.asyncio
