@@ -56,14 +56,14 @@ jobs:
         working-directory: backend
         run: pytest -q
       - name: Deployment retention safety
-        run: pytest deploy/test_maintain.py deploy/test_activate.py -q
+        run: python -m pytest deploy/test_maintain.py deploy/test_activate.py -q
       - name: Sandbox isolation tests
         env:
           RUN_NATIVE_TESTS: '1'
           SANDBOX_ENGINE: nsjail
         run: |
           sudo SANDBOX_BROKER_USER="$USER" bash deploy/native/install-sandbox.sh
-          pytest runner/test_sandbox.py runner/test_native_contract.py -q
+          python -m pytest runner/test_sandbox.py runner/test_native_contract.py -q
           python scripts/check_curriculum_sandbox.py
       - name: Install frontend dependencies
         working-directory: frontend
