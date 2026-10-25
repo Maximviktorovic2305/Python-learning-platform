@@ -53,6 +53,9 @@ export function startMetrika(id: number): void {
   });
   if (sdkLoaded || document.getElementById(scriptId)) return;
   const script = document.createElement("script");
+  script.nonce =
+    document.querySelector<HTMLMetaElement>('meta[name="csp-nonce"]')
+      ?.content ?? "";
   script.id = scriptId;
   script.async = true;
   script.src = `https://mc.yandex.ru/metrika/tag.js?id=${id}`;

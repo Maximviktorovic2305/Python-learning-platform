@@ -1,5 +1,11 @@
 import { serializeJsonLd } from "@/shared/lib/seo-data";
+import { headers } from "next/headers";
 
-export function JsonLd({ data }: { data: unknown }) {
-  return <script type="application/ld+json">{serializeJsonLd(data)}</script>;
+export async function JsonLd({ data }: { data: unknown }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  return (
+    <script type="application/ld+json" nonce={nonce}>
+      {serializeJsonLd(data)}
+    </script>
+  );
 }

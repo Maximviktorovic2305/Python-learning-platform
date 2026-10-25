@@ -7,6 +7,7 @@ import { SITE_URL, SITE_DESCRIPTION, publicMetadata } from "@/shared/config";
 import { getLanguage, localizeMetadata } from "@/shared/i18n/server";
 import { direction } from "@/shared/i18n/config";
 import { SkipLink } from "@/shared/i18n";
+import { headers } from "next/headers";
 const geist = Geist({
   subsets: ["latin", "cyrillic"],
   variable: "--font-sans",
@@ -33,6 +34,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const { locale, dictionary } = await getLanguage();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang={locale}
@@ -41,12 +43,15 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
+      <head>
+        <meta name="csp-nonce" content={nonce} />
+      </head>
       {/* Browser extensions may add body attributes before React hydrates. */}
       <body
         className={`${geist.variable} ${mono.variable}`}
         suppressHydrationWarning
       >
-        <Providers locale={locale} dictionary={dictionary}>
+        <Providers locale={locale} dictionary={dictionary} nonce={nonce}>
           <SkipLink />
           {children}
           <AuthorSupportButton />

@@ -14,6 +14,7 @@
     "i18n:extract": "node scripts/extract-translations.mjs",
     "i18n:check": "node --test scripts/i18n.test.mjs",
     "seo:check": "node --test scripts/seo.test.mjs",
+    "security:check": "node --test scripts/csp.test.mjs",
     "lint:fsd": "node scripts/check-fsd.mjs",
     "test": "playwright test",
     "format": "prettier --write src tests scripts public/python-worker.js *.ts *.mjs *.json",

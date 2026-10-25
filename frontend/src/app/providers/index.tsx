@@ -12,16 +12,19 @@ export function Providers({
   children,
   locale,
   dictionary,
+  nonce,
 }: {
   children: ReactNode;
   locale: Locale;
   dictionary: Dictionary;
+  nonce?: string;
 }) {
   const [queryClient] = useState(createQueryClient);
   useEffect(() => subscribeLearningUpdates(queryClient), [queryClient]);
   return (
     <LanguageProvider initialLocale={locale} dictionary={dictionary}>
       <ThemeProvider
+        nonce={nonce}
         attribute="data-theme"
         defaultTheme="light"
         enableSystem

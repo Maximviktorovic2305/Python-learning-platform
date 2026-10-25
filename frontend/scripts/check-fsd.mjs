@@ -23,7 +23,9 @@ const errors = [];
 const graph = new Map();
 for (const file of files) {
   const parts = relative(root, file).replaceAll("\\", "/").split("/");
-  const [layer, slice] = parts;
+  // Next's proxy is a framework entrypoint beside app, with app-layer imports.
+  const [layer, slice] =
+    parts.length === 1 && parts[0] === "proxy.ts" ? ["app", "proxy"] : parts;
   if (!(layer in ranks)) {
     errors.push(`Unknown layer: ${file}`);
     continue;
