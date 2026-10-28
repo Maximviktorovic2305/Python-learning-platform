@@ -45,7 +45,7 @@ docker compose --profile sandbox down
 
 ## Разработка без контейнеров приложения
 
-Требуются Python 3.14+, Node.js 24+, npm и PostgreSQL 18. Создайте базу `python_lab` и задайте строку подключения в `backend/.env`, используя [backend/.env.example](backend/.env.example). `JWT_SECRET` должен содержать минимум 32 символа; секреты создавайте через `secrets.token_hex(40)` и сохраняйте локально. Frontend использует [frontend/.env.example](frontend/.env.example).
+Требуются Python 3.14+, Node.js 24.22.1+ в ветке 24, npm и PostgreSQL 18. Версия Node.js для разработки и CI закреплена в `.nvmrc`. Создайте базу `python_lab` и задайте строку подключения в `backend/.env`, используя [backend/.env.example](backend/.env.example). `JWT_SECRET` должен содержать минимум 32 символа; секреты создавайте через `secrets.token_hex(40)` и сохраняйте локально. Frontend использует [frontend/.env.example](frontend/.env.example).
 
 ```sh
 python -m venv .venv
